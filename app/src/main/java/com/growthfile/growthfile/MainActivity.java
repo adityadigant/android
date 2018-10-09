@@ -396,8 +396,12 @@ public class MainActivity extends AppCompatActivity {
     @JavascriptInterface
     public String getDeviceId(){
     String androidId = Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-    System.out.println("AndroidId " + androidId);
-    return androidId;
+    String deviceBrand  = Build.MANUFACTURER;
+    String deviceModel = Build.MODEL;
+    String osVersion = VERSION.RELEASE;
+    String deviceInformation = ""+androidId+"&"+deviceBrand+"&"+deviceModel+"&"+osVersion;
+    System.out.println("AndroidData " + deviceInformation);
+    return deviceInformation;
     }
   }
 
