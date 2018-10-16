@@ -1,6 +1,7 @@
 package com.growthfile.growthfile;
 
 import android.Manifest;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -37,15 +38,15 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.GeolocationPermissions;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+
+import java.io.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+
 import android.provider.Settings.Secure;
 
 
@@ -224,15 +225,15 @@ public class MainActivity extends AppCompatActivity {
 
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
 
-
-      setContentView(R.layout.activity_main);
 
     getWindow().setFlags(
       WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
       WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 
     new CertPin().execute();
+
 
 
     Log.d("activity", "start");
@@ -250,6 +251,7 @@ public class MainActivity extends AppCompatActivity {
 
   }
 
+ 
   @Override
   protected void onStart() {
     super.onStart();
@@ -284,6 +286,10 @@ public class MainActivity extends AppCompatActivity {
     mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "openAndroidKeyboard");
     mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "FetchHistory");
     mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),  "AndroidId");
+    mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),  "Internet");
+    mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),  "location");
+
+
     webSettings.setJavaScriptEnabled(true);
     webSettings.setLoadWithOverviewMode(true);
     webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NORMAL);
@@ -350,6 +356,7 @@ public class MainActivity extends AppCompatActivity {
       mWebView.requestFocus(View.FOCUS_DOWN);
     }
     if (type.equals("update")) {
+      
       swipeToRefresh.setRefreshing(true);
       String requestType = "Null";
       mWebView.loadUrl("javascript:requestCreator('" + requestType + "')");
@@ -357,6 +364,11 @@ public class MainActivity extends AppCompatActivity {
     }
   }
 
+private boolean isNetworkAvailable() {
+    ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+    NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+    return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+  }
 
   public class viewLoadJavaInterface {
     Context mContext;
@@ -403,13 +415,23 @@ public class MainActivity extends AppCompatActivity {
     System.out.println("AndroidData " + deviceInformation);
     return deviceInformation;
     }
+
+    @JavascriptInterface
+    public boolean isNetwork(){
+      return isNetworkAvailable()
+    }
+
+    @JavascriptInterface
+    public boolean isGPS(){
+      LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
+      boolean enabled = service.isProviderEnabled(LocationManager.GPS_PROVIDER);
+      return enabled
+    }
+
+
   }
 
-  private boolean isNetworkAvailable() {
-    ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-    NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-    return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-  }
+  
 
   public static boolean hasPermissions(Context context, String...permissions) {
     if (context != null && permissions != null) {
