@@ -1,10 +1,11 @@
 package com.growthfile.growthfile;
 
 import android.Manifest;
-import android.app.ActivityManager;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 
@@ -15,6 +16,7 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -28,6 +30,7 @@ import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
 import android.text.TextUtils;
@@ -55,6 +58,9 @@ import java.util.Date;
 import java.util.List;
 
 import android.provider.Settings.Secure;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -241,13 +247,21 @@ public class MainActivity extends AppCompatActivity {
         Log.d("activity", "start");
         mContext = getApplicationContext();
         Log.d("first load", "oncreate");
-        LoadApp(loadTypeInit);
+        try {
+            LoadApp(loadTypeInit);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         swipeToRefresh = (SwipeRefreshLayout) findViewById(R.id.swipeToRefresh);
         swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                LoadApp(loadTypeUpdate);
+                try {
+                    LoadApp(loadTypeUpdate);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -277,7 +291,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void LoadApp(String type) {
+    public void LoadApp(String type) throws JSONException {
         Log.d("running", "times");
         this.mWebView = (WebView) findViewById(R.id.activity_main_webview);
 
@@ -290,7 +304,7 @@ public class MainActivity extends AppCompatActivity {
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "AndroidId");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "Cellular");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "IsGpsEnabled");
-
+        mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),"Towers");
 
         webSettings.setJavaScriptEnabled(true);
         webSettings.setLoadWithOverviewMode(true);
@@ -331,7 +345,7 @@ public class MainActivity extends AppCompatActivity {
 
             swipeToRefresh.setRefreshing(true);
             String requestType = "Null";
-            mWebView.loadUrl("javascript:requestCreator('" + requestType + "')");
+            mWebView.loadUrl("javascript:requestCreator('" + requestType + "',true)");
             swipeToRefresh.setRefreshing(false);
         }
 
@@ -348,42 +362,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-        TelephonyManager tel = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-        String networkOperator = tel.getNetworkOperator();
-
-        if (!TextUtils.isEmpty(networkOperator)) {
-            int mcc = Integer.parseInt(networkOperator.substring(0, 3));
-            int mnc = Integer.parseInt(networkOperator.substring(3));
-            System.out.print("mcc " + mcc);
-            System.out.print("mnc " + mnc);
-            System.out.print("radio " + tel.getNetworkType());
-            System.out.print("carrier " + tel.getNetworkOperatorName());
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                String [] CoarsePerm = {
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                };
-                ActivityCompat.requestPermissions(this,CoarsePerm,1);
-                return;
-            }
-            GsmCellLocation cellLocation = (GsmCellLocation)tel.getCellLocation();
-            WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-            assert wifiManager != null;
-
-            WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-            int cellid= cellLocation.getCid();
-            int celllac = cellLocation.getLac();
-
-            System.out.print("cellid " + cellid);
-            System.out.print("lac " + celllac);
-            System.out.print("mac " + wifiInfo.getMacAddress());
-            List<ScanResult> apList = wifiManager.getScanResults();
-            Log.d("ap ", apList.toString());
-            Log.d("network type", networkType());
-    }
 
 
-
-    mWebView.setWebViewClient(new WebViewClient() {
+        mWebView.setWebViewClient(new WebViewClient() {
 
       @Override
       public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -404,6 +385,7 @@ public class MainActivity extends AppCompatActivity {
 
   
   }
+
     private String networkType() {
         TelephonyManager teleMan = (TelephonyManager)
                 getSystemService(Context.TELEPHONY_SERVICE);
@@ -489,6 +471,77 @@ public class MainActivity extends AppCompatActivity {
       assert service != null;
       return service.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
+    @JavascriptInterface
+      public String getCellularData() throws JSONException {
+        System.out.print("Cellular data");
+        JSONObject json = new JSONObject();
+
+        TelephonyManager tel = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        String networkOperator = tel.getNetworkOperator();
+
+        if (!TextUtils.isEmpty(networkOperator)) {
+            int mcc = Integer.parseInt(networkOperator.substring(0, 3));
+            int mnc = Integer.parseInt(networkOperator.substring(3));
+
+            if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                String [] CoarsePerm = {
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                };
+                ActivityCompat.requestPermissions(MainActivity.this,CoarsePerm,1);
+                String NotAllowed = json.toString(4);
+                return NotAllowed;
+            }
+
+            GsmCellLocation cellLocation = (GsmCellLocation)tel.getCellLocation();
+            final WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            assert wifiManager != null;
+
+            WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+
+
+            int cellid= cellLocation.getCid();
+            int celllac = cellLocation.getLac();
+
+
+            List<ScanResult> apList = wifiManager.getScanResults();
+
+
+            json.put("homeMobileCountryCode",mcc);
+            json.put("homeMobileNetworkCode",mnc);
+            json.put("radioType",networkType());
+            json.put("considerIp","true");
+
+
+            if(!apList.isEmpty()) {
+                JSONArray wifi = new JSONArray();
+
+                for (int i=0;i<apList.size();i++){
+                    JSONObject aps = new JSONObject();
+
+                    aps.put("macAddress",apList.get(i).BSSID);
+                    aps.put("signalStrength",new Integer(apList.get(i).level));
+                    wifi.put(aps);
+                }
+                json.put("wifiAccessPoints",wifi);
+
+            }
+
+            json.put("carrier",tel.getNetworkOperatorName());
+            JSONArray towers = new JSONArray();
+            JSONObject cells = new JSONObject();
+            cells.put("cellId",cellid);
+            cells.put("locationAreaCode",celllac);
+            cells.put("mobileCountryCode",mcc);
+            cells.put("mobileNetworkCode",mnc);
+            towers.put(cells);
+            json.put("cellTowers",towers);
+
+        }
+        Log.d("json " , json.toString(4));
+        String apiRequest = json.toString(4);
+        return apiRequest;
+    }
+
   }
 
   public static boolean hasPermissions(Context context, String...permissions) {
