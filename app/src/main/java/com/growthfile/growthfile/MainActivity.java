@@ -302,7 +302,6 @@ public class MainActivity extends AppCompatActivity {
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "openAndroidKeyboard");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "FetchHistory");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "AndroidId");
-        mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "Cellular");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "IsGpsEnabled");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),"Towers");
 
