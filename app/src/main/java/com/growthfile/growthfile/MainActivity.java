@@ -106,9 +106,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     photoFile = MainActivity.this.createImageFile();
                     takePictureIntent.putExtra("PhotoPath", MainActivity.this.mCM);
-                    System.out.println("photofile " + photoFile);
                 } catch (IOException ex) {
-                    Log.e(MainActivity.TAG, "Image file creation failed", ex);
                 }
                 if (photoFile != null) {
                     MainActivity mainActivity = MainActivity.this;
@@ -161,7 +159,6 @@ public class MainActivity extends AppCompatActivity {
 
         switch (requestCode) {
             case CAMERA_ONLY_REQUEST:
-                Log.isLoggable("result", resultCode);
                 if (resultCode == RESULT_OK) {
                     Bundle extras = intent.getExtras();
                     imageBitmap = (Bitmap) extras.get("data");
@@ -169,7 +166,6 @@ public class MainActivity extends AppCompatActivity {
                     imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
                     byte[] byteArray = byteArrayOutputStream.toByteArray();
                     String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
-                    Log.d("base64", "data:image/jpeg;base64, " + encoded);
                     mWebView.loadUrl("javascript:setFilePath('" + encoded + "')");
 
                 }
@@ -220,7 +216,6 @@ public class MainActivity extends AppCompatActivity {
 
     //     Create an image file
     private File createImageFile() throws IOException {
-        System.out.println("ceraeting image name");
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "img_" + timeStamp + "_";
         File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
@@ -244,9 +239,7 @@ public class MainActivity extends AppCompatActivity {
         new CertPin().execute();
 
 
-        Log.d("activity", "start");
         mContext = getApplicationContext();
-        Log.d("first load", "oncreate");
         try {
             LoadApp(loadTypeInit);
         } catch (JSONException e) {
@@ -275,7 +268,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onScrollChanged() {
                 if (mWebView.getScrollY() == 0) {
-                    Log.d("swipe", "true");
                     swipeToRefresh.setEnabled(true);
                 } else {
                     swipeToRefresh.setEnabled(false);
@@ -292,7 +284,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void LoadApp(String type) throws JSONException {
-        Log.d("running", "times");
         this.mWebView = (WebView) findViewById(R.id.activity_main_webview);
 
         WebSettings webSettings = this.mWebView.getSettings();
@@ -335,7 +326,6 @@ public class MainActivity extends AppCompatActivity {
                 webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
             }
 
-            Log.d("app laod", "new");
             mWebView.loadUrl("https://growthfile-207204.firebaseapp.com");
             // mWebView.loadUrl("https://frontend-testing-9d09e.firebaseapp.com/");
             mWebView.requestFocus(View.FOCUS_DOWN);
@@ -367,14 +357,12 @@ public class MainActivity extends AppCompatActivity {
 
       @Override
       public boolean shouldOverrideUrlLoading(WebView view, String url) {
-        Log.d("load url", "run");
         view.loadUrl(url);
         return true;
       }
 
       @Override
       public void onPageFinished(WebView view, String url) {
-        System.out.print("url is " + url);
       }
 
 
@@ -438,7 +426,6 @@ public class MainActivity extends AppCompatActivity {
 
     @JavascriptInterface
     public void startCamera() {
-      Log.d("camera", "start");
       Intent CAMERA_ONLY_INTENT = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
       if (CAMERA_ONLY_INTENT.resolveActivity(getPackageManager()) != null) {
         startActivityForResult(CAMERA_ONLY_INTENT, CAMERA_ONLY_REQUEST);
@@ -459,7 +446,6 @@ public class MainActivity extends AppCompatActivity {
     String deviceModel = Build.MODEL;
     String osVersion = VERSION.RELEASE;
     String deviceInformation = ""+androidId+"&"+deviceBrand+"&"+deviceModel+"&"+osVersion;
-    System.out.println("AndroidData " + deviceInformation);
     return deviceInformation;
     }
 
@@ -472,7 +458,6 @@ public class MainActivity extends AppCompatActivity {
     }
     @JavascriptInterface
       public String getCellularData() throws JSONException {
-        System.out.print("Cellular data");
         JSONObject json = new JSONObject();
 
         TelephonyManager tel = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
@@ -536,7 +521,6 @@ public class MainActivity extends AppCompatActivity {
             json.put("cellTowers",towers);
 
         }
-        Log.d("json " , json.toString(4));
         String apiRequest = json.toString(4);
         return apiRequest;
     }
@@ -564,7 +548,6 @@ public class MainActivity extends AppCompatActivity {
       cf = CertificateFactory.getInstance("X.509");
       ca = cf.generateCertificate(caInput);
     } catch (CertificateException e) {
-      Log.e(TAG, "exception", e);
     } finally {
       try {
         caInput.close();
