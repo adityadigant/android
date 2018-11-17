@@ -304,7 +304,7 @@ public class MainActivity extends AppCompatActivity {
         if(!gpsEnabled()){
             String title = "Location Service is Disabled";
             String message = "Please Enable Location Services to use Growthfile";
-            alertBox(MainActivity.this,title,message,null);
+            alertBox(MainActivity.this,title,message,null,null);
         }
 
     }
@@ -328,6 +328,7 @@ public class MainActivity extends AppCompatActivity {
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "AndroidId");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "gps");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),"Towers");
+        mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),"updateApp");
 
         webSettings.setJavaScriptEnabled(true);
         webSettings.setLoadWithOverviewMode(true);
@@ -370,7 +371,7 @@ public class MainActivity extends AppCompatActivity {
                 String messageString = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
                 String title = "App Incompatibility Issue";
                 String buttonText = "Okay";
-                alertBox(MainActivity.this, title,messageString,buttonText);
+                alertBox(MainActivity.this, title,messageString,buttonText,null);
             }
         }
 
@@ -570,21 +571,24 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    public void alertBox(@NonNull Context context, @NonNull String alertDialogTitle, @NonNull String alertDialogMessage, @NonNull String positiveButtonText)
+    public void alertBox(@NonNull Context context, @NonNull String alertDialogTitle, @NonNull String alertDialogMessage, @NonNull String positiveButtonText,@NonNull final String pckgName)
     {
         AlertDialog.Builder builder;
         builder = new AlertDialog.Builder(context, android.R.style.Theme_Material_Dialog_Alert);
         builder.setTitle(alertDialogTitle);
         builder.setMessage(alertDialogMessage);
+
         if(positiveButtonText != null) {
+            builder.setCancelable(false);
+
             builder.setPositiveButton(positiveButtonText, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
 
-                    try {
-                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.webview")));
-                    } catch(android.content.ActivityNotFoundException noPs){
-                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.google.android.webview")));
-                    }
+                        try {
+                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pckgName)));
+                        } catch (android.content.ActivityNotFoundException noPs) {
+                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + pckgName)));
+                        }
                 }
             });
         }
@@ -605,6 +609,15 @@ public class MainActivity extends AppCompatActivity {
     Context mContext;
     viewLoadJavaInterface(Context c) {
       mContext = c;
+    }
+
+    @JavascriptInterface
+    public void notification(JSONObject dialogData) throws  JSONException{
+        String title = dialogData.get("title").toString();
+        String message = dialogData.get("message").toString();
+        String buttonText = "Okay";
+        Log.d(TAG, "notification: "+dialogData.get("title").toString());
+        alertBox(MainActivity.this,title,message,buttonText,"com.growthfile.growthfile");
     }
 
     @JavascriptInterface
