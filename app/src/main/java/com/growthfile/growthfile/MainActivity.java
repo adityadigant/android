@@ -89,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int CAMERA_ONLY_REQUEST = 1888;
     private static final int CAMERA_ONLY_PERMISSION_CODE = 100;
     private boolean background_app = false;
+    public AlertDialog appAlert;
 
     public class NewWebChromeClient extends WebChromeClient {
 
@@ -271,6 +272,18 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         //check for permission
+        int PERMISSION_ALL = 1;
+        String[] PERMISSIONS = {
+                Manifest.permission.CAMERA,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+        };
+
+        if (!hasPermissions(this, PERMISSIONS)) {
+            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
+        }
+
+
 
         swipeToRefresh.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
             @Override
@@ -284,30 +297,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    public  void onResume(){
-
-        super.onResume();
-        Log.d(TAG, "onResume: app has again taken control");
-
-        int PERMISSION_ALL = 1;
-        String[] PERMISSIONS = {
-                Manifest.permission.CAMERA,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.ACCESS_FINE_LOCATION,
-        };
-
-        if (!hasPermissions(this, PERMISSIONS)) {
-            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
-        }
-
-        if(!gpsEnabled()){
-            String title = "Location Service is Disabled";
-            String message = "Please Enable Location Services to use Growthfile";
-            alertBox(MainActivity.this,title,message,null,null);
-        }
-
-    }
 
     @Override
     protected void onStop() {
@@ -328,7 +317,9 @@ public class MainActivity extends AppCompatActivity {
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "AndroidId");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "gps");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),"Towers");
-        mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),"updateApp");
+        mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),"Android");
+        mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),"AndroidRefreshing");
+
 
         webSettings.setJavaScriptEnabled(true);
         webSettings.setLoadWithOverviewMode(true);
@@ -358,6 +349,20 @@ public class MainActivity extends AppCompatActivity {
                 webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
             }
 
+            if(VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT) {
+                JSONObject alert = new JSONObject();
+                alert.put("title","App Incompatibility");
+                alert.put("message","This App is incompatible with your Android Device. Please upgrade your android version to use Growthfile");
+                alert.put("cancelable",false);
+                JSONObject button = new JSONObject();
+                button.put("text","");
+                button.put("show",false);
+                alert.put("button",button);
+
+                alertBox(MainActivity.this,alert.toString(4));
+                return;
+            }
+
 
             PackageManager pm = getApplicationContext().getPackageManager();
             boolean isWebViewInstalled = isAndroidSystemWebViewInstalled("com.google.android.webview", pm);
@@ -368,10 +373,7 @@ public class MainActivity extends AppCompatActivity {
                 mWebView.requestFocus(View.FOCUS_DOWN);
             }
             else {
-                String messageString = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
-                String title = "App Incompatibility Issue";
-                String buttonText = "Okay";
-                alertBox(MainActivity.this, title,messageString,buttonText,null);
+                createAlertBoxJson();
             }
         }
 
@@ -400,6 +402,41 @@ public class MainActivity extends AppCompatActivity {
     this.mWebView.setWebChromeClient(new NewWebChromeClient());
 
   
+  }
+
+  public  void createAlertBoxJson() throws  JSONException{
+      String messageString = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
+      String title = "App Incompatibility Issue";
+
+
+      JSONObject json = new JSONObject();
+      json.put("title",title);
+      json.put("message",messageString);
+    json.put("cancelable",false);
+
+      JSONObject button = new JSONObject();
+      button.put("text","Okay");
+      button.put("show",true);
+
+
+      JSONObject clickAction = new JSONObject();
+      JSONObject redirection = new JSONObject();
+      JSONObject enableGps = new JSONObject();
+
+      redirection.put("text","com.google.android.webview");
+      redirection.put("value",true);
+
+      enableGps.put("value",false);
+
+      clickAction.put("redirection",redirection);
+      clickAction.put("enableGps",enableGps);
+
+      button.put("clickAction",clickAction);
+
+      json.put("button",button);
+      String jsonString = json.toString(4);
+
+      alertBox(MainActivity.this, jsonString);
   }
 
     public static boolean isMockSettingsON(Context context) {
@@ -532,6 +569,7 @@ public class MainActivity extends AppCompatActivity {
 
   private  boolean isAndroidSystemWebViewInstalled(String pckgname,PackageManager packageManager){
 
+
         if(isDeviceBelowNougat()) {
             try {
 
@@ -555,6 +593,7 @@ public class MainActivity extends AppCompatActivity {
             }catch(PackageManager.NameNotFoundException e){
                 return false;
             }
+
         }
         else {
             return true;
@@ -565,45 +604,84 @@ public class MainActivity extends AppCompatActivity {
 
   private boolean isDeviceBelowNougat() {
 
-        if(VERSION.SDK_INT < Build.VERSION_CODES.N && VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+
+
+      if(VERSION.SDK_INT < Build.VERSION_CODES.N && VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
             return true;
-        }
+      }
         return false;
     }
 
-    public void alertBox(@NonNull Context context, @NonNull String alertDialogTitle, @NonNull String alertDialogMessage, @NonNull String positiveButtonText,@NonNull final String pckgName)
-    {
-        AlertDialog.Builder builder;
-        builder = new AlertDialog.Builder(context, android.R.style.Theme_Material_Dialog_Alert);
-        builder.setTitle(alertDialogTitle);
-        builder.setMessage(alertDialogMessage);
+    public void alertBox(@NonNull Context context, @NonNull String dialogData) throws JSONException {
 
-        if(positiveButtonText != null) {
-            builder.setCancelable(false);
+        if(appAlert != null) return;
 
-            builder.setPositiveButton(positiveButtonText, new DialogInterface.OnClickListener() {
+        final JSONObject data = new JSONObject(dialogData);
+        String title = data.getString("title");
+        String message = data.getString("message");
+
+        boolean cancelable = data.getBoolean("cancelable");
+
+        boolean showButton = data.getJSONObject("button").getBoolean("show");
+
+        Log.d(TAG, "alertBox: started");
+
+
+        final AlertDialog.Builder builder = new AlertDialog.Builder(context, android.R.style.Theme_Material_Dialog_Alert);
+
+        builder.setTitle(title);
+        builder.setMessage(message);
+         builder.setCancelable(cancelable);
+        if(showButton) {
+            final boolean allowRedirection = data.getJSONObject("button").getJSONObject("clickAction").getJSONObject("redirection").getBoolean("value");
+            final boolean enableGps = data.getJSONObject("button").getJSONObject("clickAction").getJSONObject("enableGps").getBoolean("value");
+
+            final String redirectionText = data.getJSONObject("button").getJSONObject("clickAction").getJSONObject("redirection").getString("text");
+            String buttonText = data.getJSONObject("button").getString("text");
+
+
+
+
+
+            Log.d(TAG, "alertBox: cancelable false");
+
+            builder.setPositiveButton(buttonText, new DialogInterface   .OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
 
-                        try {
-                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pckgName)));
-                        } catch (android.content.ActivityNotFoundException noPs) {
-                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + pckgName)));
+                        if(allowRedirection) {
+
+                            try {
+                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + redirectionText)));
+                            } catch (android.content.ActivityNotFoundException noPs) {
+                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + redirectionText)));
+                            }
+
+                        }
+                        else if (enableGps){
+
+                            Log.d(TAG, "onClick: "+gpsEnabled());
+                            if(!gpsEnabled()){
+                                appAlert.show();
+                            }
+
                         }
                 }
             });
         }
 
-
         builder.setIcon(android.R.drawable.ic_dialog_alert);
-        builder.show();
+        appAlert = builder.create();
+        appAlert.show();
     }
 
     private boolean gpsEnabled(){
         LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
 
         assert service != null;
+        Log.d(TAG, "gpsEnabled: "+service.isProviderEnabled(LocationManager.GPS_PROVIDER));
         return service.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
+
 
   public class viewLoadJavaInterface {
     Context mContext;
@@ -612,26 +690,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @JavascriptInterface
-    public void notification(JSONObject dialogData) throws  JSONException{
-        String title = dialogData.get("title").toString();
-        String message = dialogData.get("message").toString();
-        String buttonText = "Okay";
-        Log.d(TAG, "notification: "+dialogData.get("title").toString());
-        alertBox(MainActivity.this,title,message,buttonText,"com.growthfile.growthfile");
+    public void notification(String dialogData){
+
+        try {
+            alertBox(MainActivity.this,dialogData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     @JavascriptInterface
     public void startConversation(final String view) {
-      runOnUiThread(new Runnable() {
-        public void run() {
+        runOnUiThread(new Runnable() {
 
-          if (view.equals("conversation") || view.equals("selector") || view.equals("drawer")) {
-            swipeToRefresh.setEnabled(false);
-          } else {
-            swipeToRefresh.setEnabled(true);
-          }
-        }
-      });
+            @Override
+            public void run() {
+                if (view.equals("conversation") || view.equals("selector")) {
+                    Log.d(TAG, "run: yes");
+                    swipeToRefresh.setEnabled(false);
+                }
+            }
+        });
+
     }
 
     @JavascriptInterface
@@ -650,7 +730,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @JavascriptInterface
-    public JSONObject getDeviceId() throws  JSONException {
+    public String getDeviceId() throws  JSONException {
         JSONObject device = new JSONObject();
 
         String androidId = Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
@@ -668,12 +748,13 @@ public class MainActivity extends AppCompatActivity {
         try {
             PackageInfo packageInfo = MainActivity.this.getPackageManager().getPackageInfo(getPackageName(),0);
             String appVersion = packageInfo.versionName;
-            device.put("appVersion",appVersion);
+            device.put("appVersion","1.1.0");
 
         }catch (PackageManager.NameNotFoundException e) {
             device.put("appVersion",null);
         }
-        return device;
+        String deviceInfo =  device.toString(4);
+        return deviceInfo;
     };
 
 
@@ -756,19 +837,26 @@ public class MainActivity extends AppCompatActivity {
     };
     @JavascriptInterface
       public boolean isEnabled(){
-        int PERMISSION_ALL = 1;
-        String[] PERMISSIONS = {
 
-                Manifest.permission.ACCESS_FINE_LOCATION,
-        };
-
-        if (hasPermissions(MainActivity.this, PERMISSIONS) && gpsEnabled()) {
-            return true;
+        if(gpsEnabled()) {
+           return true;
         }
-        else {
-            return false;
-        }
+        return false;
+    }
 
+    @JavascriptInterface
+      public void stopRefreshing(final boolean stopRefreshing){
+        Log.d(TAG, "stopRefreshing: "+stopRefreshing);
+        Log.d(TAG, "stopRefreshing: "+ MainActivity.this.swipeToRefresh.canChildScrollUp());
+        runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+
+               swipeToRefresh.setRefreshing(!stopRefreshing);
+
+            }
+        });
     }
   }
 
