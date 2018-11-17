@@ -4,8 +4,11 @@ import android.Manifest;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 
@@ -27,8 +30,12 @@ import android.os.Environment;
 import android.provider.MediaStore;
 
 import android.provider.Settings;
+import android.support.annotation.IntDef;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 
 import android.telephony.TelephonyManager;
@@ -231,7 +238,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
         getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
@@ -264,6 +270,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        //check for permission
+
         swipeToRefresh.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
             @Override
             public void onScrollChanged() {
@@ -274,6 +282,31 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    @Override
+    public  void onResume(){
+
+        super.onResume();
+        Log.d(TAG, "onResume: app has again taken control");
+
+        int PERMISSION_ALL = 1;
+        String[] PERMISSIONS = {
+                Manifest.permission.CAMERA,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+        };
+
+        if (!hasPermissions(this, PERMISSIONS)) {
+            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
+        }
+
+        if(!gpsEnabled()){
+            String title = "Location Service is Disabled";
+            String message = "Please Enable Location Services to use Growthfile";
+            alertBox(MainActivity.this,title,message,null);
+        }
+
     }
 
     @Override
@@ -291,9 +324,9 @@ public class MainActivity extends AppCompatActivity {
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "Fetchview");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "FetchCameraForAttachment");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "openAndroidKeyboard");
-        mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "FetchHistory");
+        mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "androidLocation");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "AndroidId");
-        mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "IsGpsEnabled");
+        mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "gps");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),"Towers");
 
         webSettings.setJavaScriptEnabled(true);
@@ -316,8 +349,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             mWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        } else {
-            mWebView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         }
 
         if (type.equals("init")) {
@@ -326,34 +357,30 @@ public class MainActivity extends AppCompatActivity {
                 webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
             }
 
-            mWebView.loadUrl("https://growthfile-207204.firebaseapp.com");
-            // mWebView.loadUrl("https://frontend-testing-9d09e.firebaseapp.com/");
-            mWebView.requestFocus(View.FOCUS_DOWN);
+
+            PackageManager pm = getApplicationContext().getPackageManager();
+            boolean isWebViewInstalled = isAndroidSystemWebViewInstalled("com.google.android.webview", pm);
+
+            if(isWebViewInstalled) {
+                Log.d("webview", "LoadApp: Android system webview is installed");
+                mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
+                mWebView.requestFocus(View.FOCUS_DOWN);
+            }
+            else {
+                String messageString = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
+                String title = "App Incompatibility Issue";
+                String buttonText = "Okay";
+                alertBox(MainActivity.this, title,messageString,buttonText);
+            }
         }
+
         if (type.equals("update")) {
 
             swipeToRefresh.setRefreshing(true);
-            String requestType = "Null";
-            mWebView.loadUrl("javascript:requestCreator('" + requestType + "',true)");
-            swipeToRefresh.setRefreshing(false);
+            mWebView.evaluateJavascript("javascript:requestCreator('Null','true')",null);
         }
 
-        int PERMISSION_ALL = 1;
-        String[] PERMISSIONS = {
-                Manifest.permission.CAMERA,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.ACCESS_FINE_LOCATION,
-
-        };
-
-        if (!hasPermissions(this, PERMISSIONS)) {
-            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
-        }
-
-
-
-
-        mWebView.setWebViewClient(new WebViewClient() {
+     mWebView.setWebViewClient(new WebViewClient() {
 
       @Override
       public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -363,8 +390,9 @@ public class MainActivity extends AppCompatActivity {
 
       @Override
       public void onPageFinished(WebView view, String url) {
+          Log.d(TAG, "onPageFinished: page has finished loading");
+          mWebView.evaluateJavascript("native.setName('Android')",null);
       }
-
 
     });
 
@@ -373,7 +401,102 @@ public class MainActivity extends AppCompatActivity {
   
   }
 
-    private String networkType() {
+    public static boolean isMockSettingsON(Context context) {
+        // returns true if mock location enabled, false if not enabled.
+        if (Settings.Secure.getString(context.getContentResolver(),
+                Settings.Secure.ALLOW_MOCK_LOCATION).equals("0"))
+            return false;
+        else
+            return true;
+    }
+    public static boolean areThereMockPermissionApps(Context context) {
+        int count = 0;
+
+        PackageManager pm = context.getPackageManager();
+        List<ApplicationInfo> packages =
+                pm.getInstalledApplications(PackageManager.GET_META_DATA);
+
+        for (ApplicationInfo applicationInfo : packages) {
+            try {
+                PackageInfo packageInfo = pm.getPackageInfo(applicationInfo.packageName,
+                        PackageManager.GET_PERMISSIONS);
+
+                // Get Permissions
+                String[] requestedPermissions = packageInfo.requestedPermissions;
+
+                if (requestedPermissions != null) {
+                    for (int i = 0; i < requestedPermissions.length; i++) {
+                        if (requestedPermissions[i]
+                                .equals("android.permission.ACCESS_MOCK_LOCATION")
+                                && !applicationInfo.packageName.equals(context.getPackageName())) {
+                            count++;
+                        }
+                    }
+                }
+            } catch (PackageManager.NameNotFoundException e) {
+                Log.e("Got exception " , e.getMessage());
+            }
+        }
+
+        if (count > 0)
+            return true;
+        return false;
+    }
+
+    public static boolean hasPermissions(Context context, String...permissions) {
+        if (context != null && permissions != null) {
+            for (String permission: permissions) {
+                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public static Certificate getCertificateForRawResource(int resourceId, Context context) {
+        CertificateFactory cf = null;
+        Certificate ca = null;
+        Resources resources = context.getResources();
+        InputStream caInput = resources.openRawResource(resourceId);
+
+        try {
+            cf = CertificateFactory.getInstance("X.509");
+            ca = cf.generateCertificate(caInput);
+        } catch (CertificateException e) {
+        } finally {
+            try {
+                caInput.close();
+            } catch (IOException e) {
+                Log.e(TAG, "exception", e);
+            }
+        }
+
+        return ca;
+    }
+
+    public Uri getImageUri(Context inContext, Bitmap inImage) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
+        return Uri.parse(path);
+    }
+
+    public String getRealPathFromURI(Uri uri) {
+        String path = "";
+        if (getContentResolver() != null) {
+            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+            if (cursor != null) {
+                cursor.moveToFirst();
+                int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
+                path = cursor.getString(idx);
+                cursor.close();
+            }
+        }
+        return path;
+    }
+
+  private String networkType() {
         TelephonyManager teleMan = (TelephonyManager)
                 getSystemService(Context.TELEPHONY_SERVICE);
         int networkType = teleMan.getNetworkType();
@@ -403,6 +526,80 @@ public class MainActivity extends AppCompatActivity {
     NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
     return activeNetworkInfo != null && activeNetworkInfo.isConnected();
   }
+
+
+
+  private  boolean isAndroidSystemWebViewInstalled(String pckgname,PackageManager packageManager){
+
+        if(isDeviceBelowNougat()) {
+            try {
+
+                if(packageManager.getApplicationInfo(pckgname,0).enabled) {
+                    //minor hack
+                    int stableVersion = 70;
+
+                    PackageInfo pi = packageManager.getPackageInfo(pckgname, 0);
+                    String shortenVersionName = pi.versionName.length() < 2 ? pi.versionName : pi.versionName.substring(0, 2);
+                    int parsedShortenVersion = Integer.parseInt(shortenVersionName);
+                    if(parsedShortenVersion < stableVersion) {
+
+                        return false;
+                    }
+
+                    return true;
+
+                }
+                return false;
+
+            }catch(PackageManager.NameNotFoundException e){
+                return false;
+            }
+        }
+        else {
+            return true;
+        }
+
+
+  };
+
+  private boolean isDeviceBelowNougat() {
+
+        if(VERSION.SDK_INT < Build.VERSION_CODES.N && VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+            return true;
+        }
+        return false;
+    }
+
+    public void alertBox(@NonNull Context context, @NonNull String alertDialogTitle, @NonNull String alertDialogMessage, @NonNull String positiveButtonText)
+    {
+        AlertDialog.Builder builder;
+        builder = new AlertDialog.Builder(context, android.R.style.Theme_Material_Dialog_Alert);
+        builder.setTitle(alertDialogTitle);
+        builder.setMessage(alertDialogMessage);
+        if(positiveButtonText != null) {
+            builder.setPositiveButton(positiveButtonText, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+
+                    try {
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.webview")));
+                    } catch(android.content.ActivityNotFoundException noPs){
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.google.android.webview")));
+                    }
+                }
+            });
+        }
+
+
+        builder.setIcon(android.R.drawable.ic_dialog_alert);
+        builder.show();
+    }
+
+    private boolean gpsEnabled(){
+        LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        assert service != null;
+        return service.isProviderEnabled(LocationManager.GPS_PROVIDER);
+    }
 
   public class viewLoadJavaInterface {
     Context mContext;
@@ -440,22 +637,33 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @JavascriptInterface
-    public String getDeviceId(){
-    String androidId = Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-    String deviceBrand  = Build.MANUFACTURER;
-    String deviceModel = Build.MODEL;
-    String osVersion = VERSION.RELEASE;
-    String deviceInformation = ""+androidId+"&"+deviceBrand+"&"+deviceModel+"&"+osVersion;
-    return deviceInformation;
-    }
+    public JSONObject getDeviceId() throws  JSONException {
+        JSONObject device = new JSONObject();
 
-    @JavascriptInterface
-    public boolean gpsEnabled(){
-      LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
+        String androidId = Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+        String deviceBrand  = Build.MANUFACTURER;
+        String deviceModel = Build.MODEL;
+        String osVersion = VERSION.RELEASE;
+        String deviceBaseOs = "android";
 
-      assert service != null;
-      return service.isProviderEnabled(LocationManager.GPS_PROVIDER);
-    }
+        device.put("id",androidId);
+        device.put("deviceBrand",deviceBrand);
+        device.put("deviceModel",deviceModel);
+        device.put("osVersion",osVersion);
+        device.put("baseOs",deviceBaseOs);
+
+        try {
+            PackageInfo packageInfo = MainActivity.this.getPackageManager().getPackageInfo(getPackageName(),0);
+            String appVersion = packageInfo.versionName;
+            device.put("appVersion",appVersion);
+
+        }catch (PackageManager.NameNotFoundException e) {
+            device.put("appVersion",null);
+        }
+        return device;
+    };
+
+
     @JavascriptInterface
       public String getCellularData() throws JSONException {
         JSONObject json = new JSONObject();
@@ -521,64 +729,37 @@ public class MainActivity extends AppCompatActivity {
             json.put("cellTowers",towers);
 
         }
+
         String apiRequest = json.toString(4);
         return apiRequest;
+
     }
-
-  }
-
-  public static boolean hasPermissions(Context context, String...permissions) {
-    if (context != null && permissions != null) {
-      for (String permission: permissions) {
-        if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
-          return false;
+    @JavascriptInterface
+      public boolean isMock(){
+        if(areThereMockPermissionApps(MainActivity.this)){
+            return true;
         }
-      }
+        return false;
+    };
+    @JavascriptInterface
+      public boolean isEnabled(){
+        int PERMISSION_ALL = 1;
+        String[] PERMISSIONS = {
+
+                Manifest.permission.ACCESS_FINE_LOCATION,
+        };
+
+        if (hasPermissions(MainActivity.this, PERMISSIONS) && gpsEnabled()) {
+            return true;
+        }
+        else {
+            return false;
+        }
+
     }
-    return true;
   }
 
-  public static Certificate getCertificateForRawResource(int resourceId, Context context) {
-    CertificateFactory cf = null;
-    Certificate ca = null;
-    Resources resources = context.getResources();
-    InputStream caInput = resources.openRawResource(resourceId);
 
-    try {
-      cf = CertificateFactory.getInstance("X.509");
-      ca = cf.generateCertificate(caInput);
-    } catch (CertificateException e) {
-    } finally {
-      try {
-        caInput.close();
-      } catch (IOException e) {
-        Log.e(TAG, "exception", e);
-      }
-    }
-
-    return ca;
-  }
-
-  public Uri getImageUri(Context inContext, Bitmap inImage) {
-    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-    inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
-    String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
-    return Uri.parse(path);
-  }
-
-  public String getRealPathFromURI(Uri uri) {
-    String path = "";
-    if (getContentResolver() != null) {
-      Cursor cursor = getContentResolver().query(uri, null, null, null, null);
-      if (cursor != null) {
-        cursor.moveToFirst();
-        int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
-        path = cursor.getString(idx);
-        cursor.close();
-      }
-    }
-    return path;
-  }
 
   @Override
   public void onBackPressed() {
