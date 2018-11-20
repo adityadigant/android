@@ -350,12 +350,23 @@ public class MainActivity extends AppCompatActivity {
 
             if(VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT) {
                 JSONObject alert = new JSONObject();
-                alert.put("title","App Incompatibility");
+                alert.put("title","App Incompatible");
                 alert.put("message","This App is incompatible with your Android Device. Please upgrade your android version to use Growthfile");
                 alert.put("cancelable",false);
                 JSONObject button = new JSONObject();
                 button.put("text","");
                 button.put("show",false);
+
+
+                JSONObject clickAction = new JSONObject();
+                JSONObject redirection = new JSONObject();
+
+                redirection.put("text","");
+                redirection.put("value",false);
+
+                clickAction.put("redirection",redirection);
+
+                button.put("clickAction",clickAction);
                 alert.put("button",button);
 
                 alertBox(MainActivity.this,alert.toString(4));
@@ -420,15 +431,14 @@ public class MainActivity extends AppCompatActivity {
 
       JSONObject clickAction = new JSONObject();
       JSONObject redirection = new JSONObject();
-      JSONObject enableGps = new JSONObject();
+
 
       redirection.put("text","com.google.android.webview");
       redirection.put("value",true);
 
-      enableGps.put("value",false);
 
       clickAction.put("redirection",redirection);
-      clickAction.put("enableGps",enableGps);
+
 
       button.put("clickAction",clickAction);
 
@@ -613,7 +623,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void alertBox(@NonNull Context context, @NonNull String dialogData) throws JSONException {
 
-        if(appAlert != null) return;
+
 
         final JSONObject data = new JSONObject(dialogData);
         String title = data.getString("title");
@@ -633,14 +643,8 @@ public class MainActivity extends AppCompatActivity {
          builder.setCancelable(cancelable);
         if(showButton) {
             final boolean allowRedirection = data.getJSONObject("button").getJSONObject("clickAction").getJSONObject("redirection").getBoolean("value");
-            final boolean enableGps = data.getJSONObject("button").getJSONObject("clickAction").getJSONObject("enableGps").getBoolean("value");
-
             final String redirectionText = data.getJSONObject("button").getJSONObject("clickAction").getJSONObject("redirection").getString("text");
             String buttonText = data.getJSONObject("button").getString("text");
-
-
-
-
 
             Log.d(TAG, "alertBox: cancelable false");
 
@@ -654,15 +658,6 @@ public class MainActivity extends AppCompatActivity {
                             } catch (android.content.ActivityNotFoundException noPs) {
                                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + redirectionText)));
                             }
-
-                        }
-                        else if (enableGps){
-
-                            Log.d(TAG, "onClick: "+gpsEnabled());
-                            if(!gpsEnabled()){
-                                appAlert.show();
-                            }
-
                         }
                 }
             });
@@ -753,15 +748,7 @@ public class MainActivity extends AppCompatActivity {
         device.put("deviceModel",deviceModel);
         device.put("osVersion",osVersion);
         device.put("baseOs",deviceBaseOs);
-
-        try {
-            PackageInfo packageInfo = MainActivity.this.getPackageManager().getPackageInfo(getPackageName(),0);
-            String appVersion = packageInfo.versionName;
-            device.put("appVersion","1.1.0");
-
-        }catch (PackageManager.NameNotFoundException e) {
-            device.put("appVersion",null);
-        }
+        device.put("appVersion",2);
         String deviceInfo =  device.toString(4);
         return deviceInfo;
     };
@@ -847,12 +834,31 @@ public class MainActivity extends AppCompatActivity {
         return false;
     };
     @JavascriptInterface
-      public boolean isEnabled(){
+      public String isEnabled() throws  JSONException{
+        int PERMISSION_ALL = 1;
+        String[] PERMISSIONS = {
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
 
-        if(gpsEnabled()) {
-           return true;
+        };
+        JSONObject services = new JSONObject();
+
+
+         if (!gpsEnabled()){
+            services.put("active",false);
+            services.put("name","gps");
+            return  services.toString(4);
         }
-        return false;
+         if(!hasPermissions(MainActivity.this, PERMISSIONS)){
+
+            services.put("active",false);
+            services.put("name","permission");
+            return  services.toString(4);
+        }
+        services.put("active",true);
+        services.put("name","both");
+        return services.toString(4);
+
     }
 
     @JavascriptInterface
