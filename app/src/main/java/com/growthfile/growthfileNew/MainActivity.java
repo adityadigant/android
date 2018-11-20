@@ -1,12 +1,10 @@
-package com.growthfile.growthfile;
+package com.growthfile.growthfileNew;
 
 import android.Manifest;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -30,9 +28,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 
 import android.provider.Settings;
-import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
@@ -65,6 +61,7 @@ import java.util.Date;
 import java.util.List;
 
 import android.provider.Settings.Secure;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -277,6 +274,7 @@ public class MainActivity extends AppCompatActivity {
                 Manifest.permission.CAMERA,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
         };
 
         if (!hasPermissions(this, PERMISSIONS)) {
@@ -319,6 +317,7 @@ public class MainActivity extends AppCompatActivity {
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),"Towers");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),"Android");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),"AndroidRefreshing");
+        mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),"Internet");
 
 
         webSettings.setJavaScriptEnabled(true);
@@ -369,7 +368,7 @@ public class MainActivity extends AppCompatActivity {
 
             if(isWebViewInstalled) {
                 Log.d("webview", "LoadApp: Android system webview is installed");
-                mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
+                mWebView.loadUrl("https://growthfile-207204.firebaseapp.com");
                 mWebView.requestFocus(View.FOCUS_DOWN);
             }
             else {
@@ -690,6 +689,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @JavascriptInterface
+
+    private boolean isConnectionActive(){
+
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(MainActivity.this.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        return networkInfo != null && networkInfo.isConnected();
+
+    }
+
+    @JavascriptInterface
     public void notification(String dialogData){
 
         try {
@@ -756,6 +765,8 @@ public class MainActivity extends AppCompatActivity {
         String deviceInfo =  device.toString(4);
         return deviceInfo;
     };
+
+
 
 
     @JavascriptInterface
