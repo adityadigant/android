@@ -407,6 +407,20 @@ public class MainActivity extends AppCompatActivity {
           mWebView.evaluateJavascript("native.setName('Android')",null);
       }
 
+      public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+
+          AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+          alertDialog.setTitle("Message");
+          alertDialog.setMessage("Please Make sure that you have a working internet connection.");
+          alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Retry",
+                  new DialogInterface.OnClickListener() {
+                      public void onClick(DialogInterface dialog, int which) {
+                          mWebView.reload();
+                          dialog.dismiss();
+                      }
+                  });
+          alertDialog.show();
+      }
     });
 
     this.mWebView.setWebChromeClient(new NewWebChromeClient());
@@ -684,13 +698,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @JavascriptInterface
-
-    private boolean isConnectionActive(){
-
+    public boolean isConnectionActive () {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(MainActivity.this.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
         return networkInfo != null && networkInfo.isConnected();
-
     }
 
     @JavascriptInterface
@@ -715,7 +726,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
     }
 
     @JavascriptInterface
@@ -748,13 +758,10 @@ public class MainActivity extends AppCompatActivity {
         device.put("deviceModel",deviceModel);
         device.put("osVersion",osVersion);
         device.put("baseOs",deviceBaseOs);
-        device.put("appVersion",2);
+        device.put("appVersion",3);
         String deviceInfo =  device.toString(4);
         return deviceInfo;
     };
-
-
-
 
     @JavascriptInterface
       public String getCellularData() throws JSONException {
@@ -877,13 +884,11 @@ public class MainActivity extends AppCompatActivity {
     }
   }
 
-
-
   @Override
   public void onBackPressed() {
 
     if (mWebView.canGoBack()) {
-      mWebView.goBack(); // emulats back history
+      mWebView.goBack(); // emulates back history
     } else {
       super.onBackPressed();
     }
