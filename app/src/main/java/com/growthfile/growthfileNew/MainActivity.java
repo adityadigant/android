@@ -307,7 +307,6 @@ public class MainActivity extends AppCompatActivity {
         this.mWebView = (WebView) findViewById(R.id.activity_main_webview);
 
         WebSettings webSettings = this.mWebView.getSettings();
-
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "Fetchview");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "FetchCameraForAttachment");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "openAndroidKeyboard");
@@ -378,7 +377,7 @@ public class MainActivity extends AppCompatActivity {
 
             if(isWebViewInstalled) {
                 Log.d("webview", "LoadApp: Android system webview is installed");
-                mWebView.loadUrl("https://growthfile-207204.firebaseapp.com");
+                mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
                 mWebView.requestFocus(View.FOCUS_DOWN);
             }
             else {
@@ -462,13 +461,40 @@ public class MainActivity extends AppCompatActivity {
   }
 
     public static boolean isMockSettingsON(Context context) {
-        // returns true if mock location enabled, false if not enabled.
-        if (Settings.Secure.getString(context.getContentResolver(),
-                Settings.Secure.ALLOW_MOCK_LOCATION).equals("0"))
-            return false;
-        else
+        int count = 0;
+        PackageManager pm = context.getPackageManager();
+        List<ApplicationInfo> packages =
+                pm.getInstalledApplications(PackageManager.GET_META_DATA);
+
+        for (ApplicationInfo applicationInfo : packages) {
+            PackageInfo packageInfo = null;
+            try {
+                packageInfo = pm.getPackageInfo(applicationInfo.packageName,
+                        PackageManager.GET_PERMISSIONS);
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            // Get Permissions
+            assert packageInfo != null;
+            String[] requestedPermissions = packageInfo.requestedPermissions;
+
+            if (requestedPermissions != null) {
+                for (int i = 0; i < requestedPermissions.length; i++) {
+                    if (requestedPermissions[i]
+                            .equals("android.permission.ACCESS_MOCK_LOCATION")
+                            && !applicationInfo.packageName.equals(context.getPackageName())) {
+                        count++;
+                    }
+                }
+            }
+        }
+
+        if (count > 0)
             return true;
+        return false;
     }
+
     public static boolean areThereMockPermissionApps(Context context) {
         int count = 0;
 
@@ -576,7 +602,7 @@ public class MainActivity extends AppCompatActivity {
             case TelephonyManager.NETWORK_TYPE_HSUPA: return "WCDMA";
             case TelephonyManager.NETWORK_TYPE_LTE: return "LTE";
             case TelephonyManager.NETWORK_TYPE_UMTS: return "WCDMA";
-            case TelephonyManager.NETWORK_TYPE_UNKNOWN: return "null";
+            case TelephonyManager.NETWORK_TYPE_UNKNOWN: return "unknown";
         }
         throw new RuntimeException("New type of network");
     }
@@ -764,77 +790,84 @@ public class MainActivity extends AppCompatActivity {
 
     @JavascriptInterface
       public String getCellularData() throws JSONException {
+        String apiRequest;
         JSONObject json = new JSONObject();
+        try {
 
-        TelephonyManager tel = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-        String networkOperator = tel.getNetworkOperator();
+            TelephonyManager tel = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+            assert tel != null;
+            String networkOperator = tel.getNetworkOperator();
 
-        if (!TextUtils.isEmpty(networkOperator)) {
-            int mcc = Integer.parseInt(networkOperator.substring(0, 3));
-            int mnc = Integer.parseInt(networkOperator.substring(3));
+            if (!TextUtils.isEmpty(networkOperator)) {
+                int mcc = Integer.parseInt(networkOperator.substring(0, 3));
+                int mnc = Integer.parseInt(networkOperator.substring(3));
 
-            if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                String [] CoarsePerm = {
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                };
-                ActivityCompat.requestPermissions(MainActivity.this,CoarsePerm,1);
-                String NotAllowed = json.toString(4);
-                return NotAllowed;
-            }
+                if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    String[] CoarsePerm = {
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                    };
 
-            GsmCellLocation cellLocation = (GsmCellLocation)tel.getCellLocation();
-            final WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-            assert wifiManager != null;
+                    ActivityCompat.requestPermissions(MainActivity.this, CoarsePerm, 1);
 
-            WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-
-
-            int cellid= cellLocation.getCid();
-            int celllac = cellLocation.getLac();
-
-
-            List<ScanResult> apList = wifiManager.getScanResults();
-
-
-            json.put("homeMobileCountryCode",mcc);
-            json.put("homeMobileNetworkCode",mnc);
-            if(networkType() != "null"){
-                json.put("radioType",networkType());
-            }
-            json.put("considerIp","true");
-
-
-            if(!apList.isEmpty()) {
-                JSONArray wifi = new JSONArray();
-
-                for (int i=0;i<apList.size();i++){
-                    JSONObject aps = new JSONObject();
-
-                    aps.put("macAddress",apList.get(i).BSSID);
-                    aps.put("signalStrength",new Integer(apList.get(i).level));
-                    wifi.put(aps);
+                    String NotAllowed = json.toString(4);
+                    return NotAllowed;
                 }
-                json.put("wifiAccessPoints",wifi);
+
+                GsmCellLocation cellLocation = (GsmCellLocation) tel.getCellLocation();
+
+                final WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                assert wifiManager != null;
+
+                WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+
+
+                int cellid = cellLocation.getCid();
+                int celllac = cellLocation.getLac();
+
+
+                List<ScanResult> apList = wifiManager.getScanResults();
+
+
+                json.put("homeMobileCountryCode", mcc);
+                json.put("homeMobileNetworkCode", mnc);
+                if (!networkType().equals("unknown")) {
+                    json.put("radioType", networkType());
+                }
+                json.put("considerIp", "true");
+
+
+                if (!apList.isEmpty()) {
+                    JSONArray wifi = new JSONArray();
+
+                    for (int i = 0; i < apList.size(); i++) {
+                        JSONObject aps = new JSONObject();
+
+                        aps.put("macAddress", apList.get(i).BSSID);
+                        aps.put("signalStrength", Integer.valueOf(apList.get(i).level));
+                        wifi.put(aps);
+                    }
+                    json.put("wifiAccessPoints", wifi);
+
+                }
+
+                json.put("carrier", tel.getNetworkOperatorName());
+                JSONArray towers = new JSONArray();
+                JSONObject cells = new JSONObject();
+                cells.put("cellId", cellid);
+                cells.put("locationAreaCode", celllac);
+                cells.put("mobileCountryCode", mcc);
+                cells.put("mobileNetworkCode", mnc);
+                towers.put(cells);
+                json.put("cellTowers", towers);
 
             }
-
-            json.put("carrier",tel.getNetworkOperatorName());
-            JSONArray towers = new JSONArray();
-            JSONObject cells = new JSONObject();
-            cells.put("cellId",cellid);
-            cells.put("locationAreaCode",celllac);
-            cells.put("mobileCountryCode",mcc);
-            cells.put("mobileNetworkCode",mnc);
-            towers.put(cells);
-            json.put("cellTowers",towers);
-
+        } catch (Exception e){
+           e.printStackTrace();
         }
-
-        String apiRequest = json.toString(4);
-        Log.d(TAG, "getCellularData: "+apiRequest);
-        return apiRequest;
-
+        apiRequest = json.toString(4);
+        return  apiRequest;
     }
+
     @JavascriptInterface
       public boolean isMock(){
         if(areThereMockPermissionApps(MainActivity.this)){
