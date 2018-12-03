@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.growthfile.growthfileNew">
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -15,6 +16,7 @@
 
 
     <application
+        android:debuggable="true"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="GrowthfileNew"
@@ -24,7 +26,8 @@
         android:hardwareAccelerated="true"
         android:largeHeap="true"
         android:focusable="true"
-        android:focusableInTouchMode="true">
+        android:focusableInTouchMode="true"
+        tools:ignore="HardcodedDebugMode">
 
         <activity android:name=".MainActivity"
             android:hardwareAccelerated="false">

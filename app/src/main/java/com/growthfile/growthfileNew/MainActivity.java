@@ -2,6 +2,7 @@ package com.growthfile.growthfileNew;
 
 import android.Manifest;
 
+import android.app.AppOpsManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -13,6 +14,7 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -70,6 +72,7 @@ import org.json.JSONObject;
 public class MainActivity extends AppCompatActivity {
     private static final int FCR = 1;
     private static final String TAG = MainActivity.class.getSimpleName();
+    private static Location location;
     private String mCM;
 
     private ValueCallback<Uri> mUM;
@@ -377,7 +380,7 @@ public class MainActivity extends AppCompatActivity {
 
             if(isWebViewInstalled) {
                 Log.d("webview", "LoadApp: Android system webview is installed");
-                mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
+                mWebView.loadUrl("https://growthfile-207204.firebaseapp.com");
                 mWebView.requestFocus(View.FOCUS_DOWN);
             }
             else {
@@ -460,40 +463,7 @@ public class MainActivity extends AppCompatActivity {
       alertBox(MainActivity.this, jsonString);
   }
 
-    public static boolean isMockSettingsON(Context context) {
-        int count = 0;
-        PackageManager pm = context.getPackageManager();
-        List<ApplicationInfo> packages =
-                pm.getInstalledApplications(PackageManager.GET_META_DATA);
 
-        for (ApplicationInfo applicationInfo : packages) {
-            PackageInfo packageInfo = null;
-            try {
-                packageInfo = pm.getPackageInfo(applicationInfo.packageName,
-                        PackageManager.GET_PERMISSIONS);
-            } catch (PackageManager.NameNotFoundException e) {
-                e.printStackTrace();
-            }
-
-            // Get Permissions
-            assert packageInfo != null;
-            String[] requestedPermissions = packageInfo.requestedPermissions;
-
-            if (requestedPermissions != null) {
-                for (int i = 0; i < requestedPermissions.length; i++) {
-                    if (requestedPermissions[i]
-                            .equals("android.permission.ACCESS_MOCK_LOCATION")
-                            && !applicationInfo.packageName.equals(context.getPackageName())) {
-                        count++;
-                    }
-                }
-            }
-        }
-
-        if (count > 0)
-            return true;
-        return false;
-    }
 
     public static boolean areThereMockPermissionApps(Context context) {
         int count = 0;
@@ -506,7 +476,6 @@ public class MainActivity extends AppCompatActivity {
             try {
                 PackageInfo packageInfo = pm.getPackageInfo(applicationInfo.packageName,
                         PackageManager.GET_PERMISSIONS);
-
                 // Get Permissions
                 String[] requestedPermissions = packageInfo.requestedPermissions;
 
@@ -868,13 +837,7 @@ public class MainActivity extends AppCompatActivity {
         return  apiRequest;
     }
 
-    @JavascriptInterface
-      public boolean isMock(){
-        if(areThereMockPermissionApps(MainActivity.this)){
-            return true;
-        }
-        return false;
-    };
+
     @JavascriptInterface
       public String isEnabled() throws  JSONException{
         int PERMISSION_ALL = 1;
