@@ -307,6 +307,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void LoadApp(String type) throws JSONException {
+
         this.mWebView = (WebView) findViewById(R.id.activity_main_webview);
 
         WebSettings webSettings = this.mWebView.getSettings();
@@ -437,7 +438,7 @@ public class MainActivity extends AppCompatActivity {
       JSONObject json = new JSONObject();
       json.put("title",title);
       json.put("message",messageString);
-    json.put("cancelable",false);
+      json.put("cancelable",false);
 
       JSONObject button = new JSONObject();
       button.put("text","Okay");
@@ -752,7 +753,7 @@ public class MainActivity extends AppCompatActivity {
         device.put("deviceModel",deviceModel);
         device.put("osVersion",osVersion);
         device.put("baseOs",deviceBaseOs);
-        device.put("appVersion",3);
+        device.put("appVersion",4);
         String deviceInfo =  device.toString(4);
         return deviceInfo;
     };
