@@ -821,7 +821,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 json.put("carrier", tel.getNetworkOperatorName());
-                if(cellId != -1) {
+                if(cellId >= 0) {
                 JSONArray towers = new JSONArray();
 
                 JSONObject cells = new JSONObject();
