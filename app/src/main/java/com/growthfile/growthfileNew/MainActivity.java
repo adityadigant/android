@@ -821,7 +821,9 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 json.put("carrier", tel.getNetworkOperatorName());
+                if(cellId) {
                 JSONArray towers = new JSONArray();
+
                 JSONObject cells = new JSONObject();
                 cells.put("cellId", cellid);
                 cells.put("locationAreaCode", celllac);
@@ -829,7 +831,7 @@ public class MainActivity extends AppCompatActivity {
                 cells.put("mobileNetworkCode", mnc);
                 towers.put(cells);
                 json.put("cellTowers", towers);
-
+                }
             }
         } catch (Exception e){
            e.printStackTrace();
