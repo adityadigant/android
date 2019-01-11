@@ -64,6 +64,11 @@ import java.util.List;
 
 import android.provider.Settings.Secure;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -265,7 +270,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+
     }
+
 
 
     @Override
@@ -323,6 +331,7 @@ public class MainActivity extends AppCompatActivity {
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),"Internet");
 
 
+
         webSettings.setJavaScriptEnabled(true);
         webSettings.setLoadWithOverviewMode(true);
         webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NORMAL);
@@ -339,6 +348,11 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
+
+        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
+            WebView.setWebContentsDebuggingEnabled(true);
+        }
+
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             mWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
@@ -381,8 +395,9 @@ public class MainActivity extends AppCompatActivity {
 
             if(isWebViewInstalled) {
                 Log.d("webview", "LoadApp: Android system webview is installed");
-                mWebView.loadUrl("https://growthfile-207204.firebaseapp.com");
+                mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
                 mWebView.requestFocus(View.FOCUS_DOWN);
+
             }
             else {
                 createAlertBoxJson();
@@ -407,6 +422,19 @@ public class MainActivity extends AppCompatActivity {
       public void onPageFinished(WebView view, String url) {
           Log.d(TAG, "onPageFinished: page has finished loading");
           mWebView.evaluateJavascript("native.setName('Android')",null);
+          FirebaseInstanceId.getInstance().getInstanceId()
+                  .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                      @Override
+                      public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                          if(!task.isSuccessful()) {
+                              Log.w("MainActivity", "getInstanceId failed", task.getException());
+                              return;
+                          }
+
+                          String token = task.getResult().getToken();
+                          mWebView.evaluateJavascript("native.setFCMToken('"+token+"')",null);
+                      }
+                  });
       }
 
       public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
@@ -429,6 +457,8 @@ public class MainActivity extends AppCompatActivity {
 
   
   }
+
+
 
   public  void createAlertBoxJson() throws  JSONException{
       String messageString = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
