@@ -10,6 +10,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -109,9 +110,9 @@ public class MainActivity extends AppCompatActivity {
     private boolean background_app = false;
     public AlertDialog appAlert;
     public boolean hasPageFinished = false;
+    public static final String BROADCAST_ACTION = "com.growthfile.growthfileNew";
 
-    private BroadcastReceiver mRegisterationBroadcastReceiver;
-
+    private BroadcastReceiver broadcastReceiver;
     public class NewWebChromeClient extends WebChromeClient {
 
         @Override
@@ -254,7 +255,7 @@ public class MainActivity extends AppCompatActivity {
 
         new CertPin().execute();
 
-
+        registerMyReceiver();
         mContext = getApplicationContext();
         try {
             LoadApp(loadTypeInit);
@@ -277,6 +278,20 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
+    private void registerMyReceiver(){
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BROADCAST_ACTION);
+
+        broadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.d("broadcastReceiver","taken");
+            }
+        };
+        registerReceiver(broadcastReceiver,intentFilter);
+    }
+
 
 
 
@@ -317,7 +332,13 @@ public class MainActivity extends AppCompatActivity {
         swipeToRefresh.getViewTreeObserver().removeOnScrollChangedListener(mOnScrollChangedListener);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
 
+        // make sure to unregister your receiver after finishing of this activity
+        unregisterReceiver(broadcastReceiver);
+    }
 
     public void LoadApp(String type) throws JSONException {
 
@@ -403,19 +424,6 @@ public class MainActivity extends AppCompatActivity {
                 mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
                 mWebView.requestFocus(View.FOCUS_DOWN);
 
-                mRegisterationBroadcastReceiver = new BroadcastReceiver() {
-                    @Override
-                    public void onReceive(Context context, Intent intent) {
-                        boolean foreground = foregrounded();
-
-                        if(!foreground) {
-                            createNotification("Notification","Hello");
-                        };
-
-                        mWebView.evaluateJavascript("runRead("+true+")",null);
-
-                    }
-                };
 
 
             }
@@ -454,8 +462,6 @@ public class MainActivity extends AppCompatActivity {
                      });
 
              }
-//
-//
          }
 
       @Override
