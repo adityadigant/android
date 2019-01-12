@@ -17,7 +17,6 @@ import com.google.firebase.messaging.RemoteMessage;
 import java.util.Map;
 
 public class MyAndroidFirebaseMsgService extends FirebaseMessagingService{
-        private static final String message = "MyAndroidFCMService";
 
     @Override
     public void onNewToken(String token) {
@@ -30,19 +29,14 @@ public class MyAndroidFirebaseMsgService extends FirebaseMessagingService{
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
+    System.out.print(remoteMessage);
+    Log.d("FCM_MESSAGE",remoteMessage.getData().toString());
 
-    Log.e("FCM_MESSAGE",remoteMessage.getData().toString());
-
-    Map<String, String> dataMap = remoteMessage.getData();
-
-
+////    Map<String, String> dataMap = remoteMessage.getData();
+////    System.out.print();
+//    Intent intent = new Intent(remoteMessage.getData().get());
+//    Intent.putExtra();
 
     }
-
-
-
-
-
-
 
 }

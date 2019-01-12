@@ -108,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int CAMERA_ONLY_PERMISSION_CODE = 100;
     private boolean background_app = false;
     public AlertDialog appAlert;
+    public boolean hasPageFinished = false;
 
     private BroadcastReceiver mRegisterationBroadcastReceiver;
 
@@ -167,19 +168,7 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
-        public boolean shouldOverrideUrlLoading(WebView view, String url) {
-            if (url.contains("geo:")) {
-                Intent mapIntent = new Intent("android.intent.action.VIEW", Uri.parse(url));
-                mapIntent.setPackage("com.google.android.apps.maps");
-                if (mapIntent.resolveActivity(MainActivity.this.getPackageManager()) != null) {
-                    MainActivity.this.startActivity(mapIntent);
-                }
-                return true;
-            }
 
-            view.loadUrl(url);
-            return true;
-        }
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -414,6 +403,21 @@ public class MainActivity extends AppCompatActivity {
                 mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
                 mWebView.requestFocus(View.FOCUS_DOWN);
 
+                mRegisterationBroadcastReceiver = new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        boolean foreground = foregrounded();
+
+                        if(!foreground) {
+                            createNotification("Notification","Hello");
+                        };
+
+                        mWebView.evaluateJavascript("runRead("+true+")",null);
+
+                    }
+                };
+
+
             }
             else {
                 createAlertBoxJson();
@@ -427,46 +431,48 @@ public class MainActivity extends AppCompatActivity {
         }
 
      mWebView.setWebViewClient(new WebViewClient() {
+        @Override
+         public void onPageFinished(WebView view,String url){
+             super.onPageFinished(view, url);
+             if(!hasPageFinished) {
+                 Log.d("onPageFinished","true");
+                 hasPageFinished = true;
+                mWebView.evaluateJavascript("native.setName('Android')",null);
+                 FirebaseInstanceId.getInstance().getInstanceId()
+                     .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                         @Override
+                         public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                             if(!task.isSuccessful()) {
+                                 Log.w("MainActivity", "getInstanceId failed", task.getException());
+                                 return;
+                             }
+
+                             String token = task.getResult().getToken();
+                             Log.e("FCMToken",token);
+                             mWebView.evaluateJavascript("native.setFCMToken('"+token+"')",null);
+                         }
+                     });
+
+             }
+//
+//
+         }
 
       @Override
       public boolean shouldOverrideUrlLoading(WebView view, String url) {
+          if (url.contains("geo:")) {
+              Intent mapIntent = new Intent("android.intent.action.VIEW", Uri.parse(url));
+              mapIntent.setPackage("com.google.android.apps.maps");
+              if (mapIntent.resolveActivity(MainActivity.this.getPackageManager()) != null) {
+                  MainActivity.this.startActivity(mapIntent);
+              }
+              return true;
+          }
+
         view.loadUrl(url);
         return true;
       }
 
-      @Override
-      public void onPageFinished(WebView view, String url) {
-          Log.d(TAG, "onPageFinished: page has finished loading");
-          mWebView.evaluateJavascript("native.setName('Android')",null);
-
-          FirebaseInstanceId.getInstance().getInstanceId()
-                  .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                      @Override
-                      public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                          if(!task.isSuccessful()) {
-                              Log.w("MainActivity", "getInstanceId failed", task.getException());
-                              return;
-                          }
-
-                          String token = task.getResult().getToken();
-                          mWebView.evaluateJavascript("native.setFCMToken('"+token+"')",null);
-                      }
-                  });
-
-          mRegisterationBroadcastReceiver = new BroadcastReceiver() {
-              @Override
-              public void onReceive(Context context, Intent intent) {
-                  boolean foreground = foregrounded();
-
-                  if(!foreground) {
-                      createNotification("Notification","Hello");
-                  }
-
-                  mWebView.evaluateJavascript("runRead("+true+")",null);
-
-              }
-          };
-      }
 
       public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
 
@@ -485,7 +491,6 @@ public class MainActivity extends AppCompatActivity {
     });
 
     this.mWebView.setWebChromeClient(new NewWebChromeClient());
-
 
   }
 
