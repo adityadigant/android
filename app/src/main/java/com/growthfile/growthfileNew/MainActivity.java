@@ -2,7 +2,11 @@ package com.growthfile.growthfileNew;
 
 import android.Manifest;
 
+import android.app.ActivityManager;
 import android.app.AppOpsManager;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -16,6 +20,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.location.Location;
 import android.location.LocationManager;
+import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -32,6 +37,7 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -61,6 +67,7 @@ import java.security.cert.CertificateFactory;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import android.provider.Settings.Secure;
 
@@ -73,8 +80,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
+import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE;
+
 
 public class MainActivity extends AppCompatActivity {
+
+
+
     private static final int FCR = 1;
     private static final String TAG = MainActivity.class.getSimpleName();
     private static Location location;
@@ -95,6 +108,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int CAMERA_ONLY_PERMISSION_CODE = 100;
     private boolean background_app = false;
     public AlertDialog appAlert;
+
+    private BroadcastReceiver mRegisterationBroadcastReceiver;
 
     public class NewWebChromeClient extends WebChromeClient {
 
@@ -314,6 +329,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+
     public void LoadApp(String type) throws JSONException {
 
         this.mWebView = (WebView) findViewById(R.id.activity_main_webview);
@@ -422,6 +438,7 @@ public class MainActivity extends AppCompatActivity {
       public void onPageFinished(WebView view, String url) {
           Log.d(TAG, "onPageFinished: page has finished loading");
           mWebView.evaluateJavascript("native.setName('Android')",null);
+
           FirebaseInstanceId.getInstance().getInstanceId()
                   .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
                       @Override
@@ -435,6 +452,20 @@ public class MainActivity extends AppCompatActivity {
                           mWebView.evaluateJavascript("native.setFCMToken('"+token+"')",null);
                       }
                   });
+
+          mRegisterationBroadcastReceiver = new BroadcastReceiver() {
+              @Override
+              public void onReceive(Context context, Intent intent) {
+                  boolean foreground = foregrounded();
+
+                  if(!foreground) {
+                      createNotification("Notification","Hello");
+                  }
+
+                  mWebView.evaluateJavascript("runRead("+true+")",null);
+
+              }
+          };
       }
 
       public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
@@ -455,10 +486,31 @@ public class MainActivity extends AppCompatActivity {
 
     this.mWebView.setWebChromeClient(new NewWebChromeClient());
 
-  
+
   }
 
 
+
+private void createNotification( String s, String messageBody) {
+        Intent intent = new Intent( this , MainActivity. class );
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent resultIntent = PendingIntent.getActivity( this , 0, intent,
+                PendingIntent.FLAG_ONE_SHOT);
+
+        Uri notificationSoundURI = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        NotificationCompat.Builder mNotificationBuilder = new NotificationCompat.Builder( this)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("Growthfile")
+                .setContentText(messageBody)
+                .setAutoCancel( true )
+                .setSound(notificationSoundURI)
+                .setContentIntent(resultIntent);
+
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        notificationManager.notify(0, mNotificationBuilder.build());
+    }
 
   public  void createAlertBoxJson() throws  JSONException{
       String messageString = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
@@ -494,9 +546,7 @@ public class MainActivity extends AppCompatActivity {
       alertBox(MainActivity.this, jsonString);
   }
 
-
-
-    public static boolean areThereMockPermissionApps(Context context) {
+  public static boolean areThereMockPermissionApps(Context context) {
         int count = 0;
 
         PackageManager pm = context.getPackageManager();
@@ -529,7 +579,7 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    public static boolean hasPermissions(Context context, String...permissions) {
+  public static boolean hasPermissions(Context context, String...permissions) {
         if (context != null && permissions != null) {
             for (String permission: permissions) {
                 if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
@@ -540,7 +590,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    public static Certificate getCertificateForRawResource(int resourceId, Context context) {
+  public static Certificate getCertificateForRawResource(int resourceId, Context context) {
         CertificateFactory cf = null;
         Certificate ca = null;
         Resources resources = context.getResources();
@@ -561,14 +611,14 @@ public class MainActivity extends AppCompatActivity {
         return ca;
     }
 
-    public Uri getImageUri(Context inContext, Bitmap inImage) {
+  public Uri getImageUri(Context inContext, Bitmap inImage) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
         String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
         return Uri.parse(path);
     }
 
-    public String getRealPathFromURI(Uri uri) {
+  public String getRealPathFromURI(Uri uri) {
         String path = "";
         if (getContentResolver() != null) {
             Cursor cursor = getContentResolver().query(uri, null, null, null, null);
@@ -660,7 +710,7 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    public void alertBox(@NonNull Context context, @NonNull String dialogData) throws JSONException {
+  public void alertBox(@NonNull Context context, @NonNull String dialogData) throws JSONException {
 
 
 
@@ -707,7 +757,7 @@ public class MainActivity extends AppCompatActivity {
         appAlert.show();
     }
 
-    private boolean gpsEnabled(){
+  private boolean gpsEnabled(){
         LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
 
         assert service != null;
@@ -715,6 +765,12 @@ public class MainActivity extends AppCompatActivity {
         return service.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
+
+   public boolean foregrounded() {
+        ActivityManager.RunningAppProcessInfo appProcessInfo = new ActivityManager.RunningAppProcessInfo();
+        ActivityManager.getMyMemoryState(appProcessInfo);
+        return (appProcessInfo.importance == IMPORTANCE_FOREGROUND || appProcessInfo.importance == IMPORTANCE_VISIBLE);
+   }
 
   public class viewLoadJavaInterface {
     Context mContext;
@@ -910,6 +966,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
   }
+
 
   @Override
   public void onBackPressed() {
