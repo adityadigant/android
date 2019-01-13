@@ -312,10 +312,12 @@ public class MainActivity extends AppCompatActivity {
         if (!hasPermissions(this, PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
         }
+        try {
+            mWebView.evaluateJavascript("runRead("+true+")",null);
 
-        mWebView.evaluateJavascript("runRead("+true+")",null);
-
-
+        } catch (Exception e){
+            e.printStackTrace();
+        }
 
         swipeToRefresh.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
             @Override
