@@ -3,9 +3,7 @@ package com.growthfile.growthfileNew;
 import android.Manifest;
 
 import android.app.ActivityManager;
-import android.app.AppOpsManager;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -17,11 +15,8 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 
 import android.content.res.Resources;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.location.Location;
 import android.location.LocationManager;
-import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -38,7 +33,6 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.NotificationCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -49,7 +43,6 @@ import android.text.TextUtils;
 import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Display;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
@@ -70,7 +63,6 @@ import java.security.cert.CertificateFactory;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import android.provider.Settings.Secure;
 
@@ -291,7 +283,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.d("broadcastReceiver","taken");
-                mWebView.evaluateJavascript("runRead("+true+")",null);
+                String fcmBody;
+                try {
+                    fcmBody = intent.getStringExtra("fcmNotificationData");
+                    mWebView.evaluateJavascript("runRead("+true+","+fcmBody+")",null);
+
+                } catch(Exception e){
+                    mWebView.evaluateJavascript("runRead("+true+")",null);
+                }
             }
         };
         registerReceiver(broadcastReceiver,intentFilter);
@@ -427,9 +426,6 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("webview", "LoadApp: Android system webview is installed");
                 mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
                 mWebView.requestFocus(View.FOCUS_DOWN);
-
-
-
             }
             else {
                 createAlertBoxJson();
@@ -505,26 +501,6 @@ public class MainActivity extends AppCompatActivity {
   }
 
 
-private void createNotification( String s, String messageBody) {
-        Intent intent = new Intent( this , MainActivity. class );
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent resultIntent = PendingIntent.getActivity( this , 0, intent,
-                PendingIntent.FLAG_ONE_SHOT);
-
-        Uri notificationSoundURI = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        NotificationCompat.Builder mNotificationBuilder = new NotificationCompat.Builder( this)
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("Growthfile")
-                .setContentText(messageBody)
-                .setAutoCancel( true )
-                .setSound(notificationSoundURI)
-                .setContentIntent(resultIntent);
-
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-        notificationManager.notify(0, mNotificationBuilder.build());
-    }
 
 
     public  void createAlertBoxJson() throws  JSONException{

@@ -17,6 +17,8 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
+import org.json.JSONObject;
+
 import java.util.Iterator;
 import java.util.Map;
 
@@ -37,10 +39,17 @@ public class MyAndroidFirebaseMsgService extends FirebaseMessagingService{
         super.onMessageReceived(remoteMessage);
         if(remoteMessage == null) return;
         Log.d("fcm","message taken");
-
         Intent broadCastIntent = new Intent();
         broadCastIntent.setAction(MainActivity.BROADCAST_ACTION);
-        broadCastIntent.putExtra("data","abc");
+        if(remoteMessage.getData().size() > 0) {
+
+                Map<String, String> params = remoteMessage.getData();
+                JSONObject object  = new JSONObject(params);
+                Log.e("JSON_OBJECT",object.toString());
+                broadCastIntent.putExtra("fcmNotificationData",object.toString());
+
+        }
+
         sendBroadcast(broadCastIntent);
 
     }
