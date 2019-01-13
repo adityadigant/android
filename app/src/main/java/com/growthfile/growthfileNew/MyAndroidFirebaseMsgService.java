@@ -43,7 +43,6 @@ public class MyAndroidFirebaseMsgService extends FirebaseMessagingService{
         broadCastIntent.putExtra("data","abc");
         sendBroadcast(broadCastIntent);
 
-
     }
 
 }

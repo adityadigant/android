@@ -47,7 +47,9 @@ import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
@@ -91,14 +93,12 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int FCR = 1;
     private static final String TAG = MainActivity.class.getSimpleName();
-    private static Location location;
     private String mCM;
 
     private ValueCallback<Uri> mUM;
     private ValueCallback<Uri[]> mUMA;
     private Bitmap imageBitmap;
-    private static final int profile_photo_code = 999;
-    private final static int FILECHOOSER_RESULTCODE = 1;
+
     private WebView mWebView;
     SwipeRefreshLayout swipeToRefresh;
     private static final String loadTypeInit = "init";
@@ -106,8 +106,8 @@ public class MainActivity extends AppCompatActivity {
     private ViewTreeObserver.OnScrollChangedListener mOnScrollChangedListener;
     private Context mContext;
     private static final int CAMERA_ONLY_REQUEST = 1888;
-    private static final int CAMERA_ONLY_PERMISSION_CODE = 100;
-    private boolean background_app = false;
+
+
     public AlertDialog appAlert;
     public boolean hasPageFinished = false;
     public static final String BROADCAST_ACTION = "com.growthfile.growthfileNew";
@@ -135,6 +135,7 @@ public class MainActivity extends AppCompatActivity {
             if (takePictureIntent.resolveActivity(MainActivity.this.getPackageManager()) != null) {
                 try {
                     photoFile = MainActivity.this.createImageFile();
+
                     takePictureIntent.putExtra("PhotoPath", MainActivity.this.mCM);
                 } catch (IOException ex) {
                 }
@@ -181,15 +182,14 @@ public class MainActivity extends AppCompatActivity {
                     Bundle extras = intent.getExtras();
                     imageBitmap = (Bitmap) extras.get("data");
                     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                    imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+                    imageBitmap.compress(Bitmap.CompressFormat.JPEG, 70, byteArrayOutputStream);
+                    imageBitmap.createScaledBitmap(imageBitmap,deviceWidth()/2,200,true);
+
                     byte[] byteArray = byteArrayOutputStream.toByteArray();
                     String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
                     mWebView.loadUrl("javascript:setFilePath('" + encoded + "')");
-
                 }
                 break;
-
-
             case FCR:
                 if (VERSION.SDK_INT >= 21) {
                     Uri[] results = null;
@@ -232,6 +232,13 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public  int deviceWidth(){
+        DisplayMetrics dm = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(dm);
+        return dm.heightPixels;
+    }
+
+
     //     Create an image file
     private File createImageFile() throws IOException {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
@@ -239,7 +246,6 @@ public class MainActivity extends AppCompatActivity {
         File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         return File.createTempFile(imageFileName, ".jpg", storageDir);
     }
-
 
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
@@ -275,8 +281,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
-
     }
 
     private void registerMyReceiver(){
@@ -287,12 +291,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.d("broadcastReceiver","taken");
+                mWebView.evaluateJavascript("runRead("+true+")",null);
             }
         };
         registerReceiver(broadcastReceiver,intentFilter);
     }
-
-
 
 
     @Override
@@ -310,6 +313,8 @@ public class MainActivity extends AppCompatActivity {
         if (!hasPermissions(this, PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
         }
+
+        mWebView.evaluateJavascript("runRead("+true+")",null);
 
 
 
@@ -355,7 +360,6 @@ public class MainActivity extends AppCompatActivity {
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),"Android");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),"AndroidRefreshing");
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this),"Internet");
-
 
 
         webSettings.setJavaScriptEnabled(true);
@@ -501,7 +505,6 @@ public class MainActivity extends AppCompatActivity {
   }
 
 
-
 private void createNotification( String s, String messageBody) {
         Intent intent = new Intent( this , MainActivity. class );
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -523,7 +526,8 @@ private void createNotification( String s, String messageBody) {
         notificationManager.notify(0, mNotificationBuilder.build());
     }
 
-  public  void createAlertBoxJson() throws  JSONException{
+
+    public  void createAlertBoxJson() throws  JSONException{
       String messageString = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
       String title = "App Incompatibility Issue";
 
@@ -557,38 +561,6 @@ private void createNotification( String s, String messageBody) {
       alertBox(MainActivity.this, jsonString);
   }
 
-  public static boolean areThereMockPermissionApps(Context context) {
-        int count = 0;
-
-        PackageManager pm = context.getPackageManager();
-        List<ApplicationInfo> packages =
-                pm.getInstalledApplications(PackageManager.GET_META_DATA);
-
-        for (ApplicationInfo applicationInfo : packages) {
-            try {
-                PackageInfo packageInfo = pm.getPackageInfo(applicationInfo.packageName,
-                        PackageManager.GET_PERMISSIONS);
-                // Get Permissions
-                String[] requestedPermissions = packageInfo.requestedPermissions;
-
-                if (requestedPermissions != null) {
-                    for (int i = 0; i < requestedPermissions.length; i++) {
-                        if (requestedPermissions[i]
-                                .equals("android.permission.ACCESS_MOCK_LOCATION")
-                                && !applicationInfo.packageName.equals(context.getPackageName())) {
-                            count++;
-                        }
-                    }
-                }
-            } catch (PackageManager.NameNotFoundException e) {
-                Log.e("Got exception " , e.getMessage());
-            }
-        }
-
-        if (count > 0)
-            return true;
-        return false;
-    }
 
   public static boolean hasPermissions(Context context, String...permissions) {
         if (context != null && permissions != null) {
@@ -622,26 +594,6 @@ private void createNotification( String s, String messageBody) {
         return ca;
     }
 
-  public Uri getImageUri(Context inContext, Bitmap inImage) {
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
-        String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
-        return Uri.parse(path);
-    }
-
-  public String getRealPathFromURI(Uri uri) {
-        String path = "";
-        if (getContentResolver() != null) {
-            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
-            if (cursor != null) {
-                cursor.moveToFirst();
-                int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
-                path = cursor.getString(idx);
-                cursor.close();
-            }
-        }
-        return path;
-    }
 
   private String networkType() {
         TelephonyManager teleMan = (TelephonyManager)
