@@ -778,7 +778,7 @@ public class MainActivity extends AppCompatActivity {
         device.put("deviceModel",deviceModel);
         device.put("osVersion",osVersion);
         device.put("baseOs",deviceBaseOs);
-        device.put("appVersion",4);
+        device.put("appVersion",5);
         String deviceInfo =  device.toString(4);
         return deviceInfo;
     };
