@@ -430,7 +430,7 @@ public class MainActivity extends AppCompatActivity {
 
             if(isWebViewInstalled) {
                 Log.d("webview", "LoadApp: Android system webview is installed");
-                mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
+                mWebView.loadUrl("https://growthfile-207204.firebaseapp.com");
                 mWebView.requestFocus(View.FOCUS_DOWN);
             }
             else {
