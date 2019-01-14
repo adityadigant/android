@@ -4,12 +4,14 @@ import android.Manifest;
 
 import android.app.ActivityManager;
 
+import android.arch.lifecycle.LifecycleObserver;
+
+import android.arch.lifecycle.ProcessLifecycleOwner;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -275,6 +277,8 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
+
     private void registerMyReceiver(){
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BROADCAST_ACTION);
@@ -286,10 +290,10 @@ public class MainActivity extends AppCompatActivity {
                 String fcmBody;
                 try {
                     fcmBody = intent.getStringExtra("fcmNotificationData");
-                    mWebView.evaluateJavascript("runRead("+true+","+fcmBody+")",null);
+                    mWebView.evaluateJavascript("runRead("+fcmBody+")",null);
 
                 } catch(Exception e){
-                    mWebView.evaluateJavascript("runRead("+true+")",null);
+                    mWebView.evaluateJavascript("runRead()",null);
                 }
             }
         };
@@ -313,7 +317,7 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
         }
         try {
-            mWebView.evaluateJavascript("runRead("+true+")",null);
+            mWebView.evaluateJavascript("runRead()",null);
 
         } catch (Exception e){
             e.printStackTrace();
@@ -345,6 +349,10 @@ public class MainActivity extends AppCompatActivity {
         // make sure to unregister your receiver after finishing of this activity
         unregisterReceiver(broadcastReceiver);
     }
+
+
+
+
 
     public void LoadApp(String type) throws JSONException {
 
@@ -433,7 +441,7 @@ public class MainActivity extends AppCompatActivity {
         if (type.equals("update")) {
 
             swipeToRefresh.setRefreshing(true);
-            mWebView.evaluateJavascript("javascript:requestCreator('Null','true')",null);
+            mWebView.evaluateJavascript("javascript:requestCreator('Null')",null);
         }
 
      mWebView.setWebViewClient(new WebViewClient() {
@@ -441,23 +449,24 @@ public class MainActivity extends AppCompatActivity {
          public void onPageFinished(WebView view,String url){
              super.onPageFinished(view, url);
              if(!hasPageFinished) {
-                 Log.d("onPageFinished","true");
+                 Log.d("onPageFinished", "true");
                  hasPageFinished = true;
-                mWebView.evaluateJavascript("native.setName('Android')",null);
+                 mWebView.evaluateJavascript("native.setName('Android')", null);
                  FirebaseInstanceId.getInstance().getInstanceId()
-                     .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                         @Override
-                         public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                             if(!task.isSuccessful()) {
-                                 Log.w("MainActivity", "getInstanceId failed", task.getException());
-                                 return;
-                             }
+                         .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                             @Override
+                             public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                                 if (!task.isSuccessful()) {
+                                     Log.w("MainActivity", "getInstanceId failed", task.getException());
+                                     return;
+                                 }
 
-                             String token = task.getResult().getToken();
-                             Log.e("FCMToken",token);
-                             mWebView.evaluateJavascript("native.setFCMToken('"+token+"')",null);
-                         }
-                     });
+                                 String token = task.getResult().getToken();
+                                 Log.e("FCMToken", token);
+                                 mWebView.evaluateJavascript("native.setFCMToken('" + token + "')", null);
+                             }
+                         });
+
 
              }
          }
@@ -476,6 +485,8 @@ public class MainActivity extends AppCompatActivity {
         view.loadUrl(url);
         return true;
       }
+
+
 
 
       public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
