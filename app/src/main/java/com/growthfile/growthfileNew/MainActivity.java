@@ -384,6 +384,7 @@ public class MainActivity extends AppCompatActivity {
             mWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         }
 
+
         if (type.equals("init")) {
 
             if (!isNetworkAvailable()) { // loading offline
