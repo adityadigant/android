@@ -847,14 +847,17 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 json.put("carrier", tel.getNetworkOperatorName());
-                JSONArray towers = new JSONArray();
-                JSONObject cells = new JSONObject();
-                cells.put("cellId", cellid);
-                cells.put("locationAreaCode", celllac);
-                cells.put("mobileCountryCode", mcc);
-                cells.put("mobileNetworkCode", mnc);
-                towers.put(cells);
-                json.put("cellTowers", towers);
+                if(cellid >= 0) {
+                    JSONArray towers = new JSONArray();
+
+                    JSONObject cells = new JSONObject();
+                    cells.put("cellId", cellid);
+                    cells.put("locationAreaCode", celllac);
+                    cells.put("mobileCountryCode", mcc);
+                    cells.put("mobileNetworkCode", mnc);
+                    towers.put(cells);
+                    json.put("cellTowers", towers);
+                }
 
             }
         } catch (Exception e){
