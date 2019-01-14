@@ -4,14 +4,12 @@ import android.Manifest;
 
 import android.app.ActivityManager;
 
-import android.arch.lifecycle.LifecycleObserver;
-
-import android.arch.lifecycle.ProcessLifecycleOwner;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -223,7 +221,6 @@ public class MainActivity extends AppCompatActivity {
                 }
         }
 
-
     }
 
     public  int deviceWidth(){
@@ -345,14 +342,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         // make sure to unregister your receiver after finishing of this activity
         unregisterReceiver(broadcastReceiver);
     }
-
-
-
-
 
     public void LoadApp(String type) throws JSONException {
 
@@ -387,7 +379,6 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
-
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             mWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
@@ -430,7 +421,7 @@ public class MainActivity extends AppCompatActivity {
 
             if(isWebViewInstalled) {
                 Log.d("webview", "LoadApp: Android system webview is installed");
-                mWebView.loadUrl("https://growthfile-207204.firebaseapp.com");
+                mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
                 mWebView.requestFocus(View.FOCUS_DOWN);
             }
             else {
