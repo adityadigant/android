@@ -62,7 +62,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.webkit.JavascriptInterface;
 
 import android.webkit.WebChromeClient;
-import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -94,8 +93,6 @@ import org.json.JSONObject;
 public class MainActivity extends AppCompatActivity{
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private Bitmap imageBitmap;
-
     private WebView mWebView;
     SwipeRefreshLayout swipeToRefresh;
 

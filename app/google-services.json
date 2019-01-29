@@ -1,35 +1,105 @@
 {
   "project_info": {
-    "project_number": "701025551237",
-    "firebase_url": "https://growthfile-207204.firebaseio.com",
-    "project_id": "growthfile-207204",
-    "storage_bucket": "growthfile-207204.appspot.com"
+    "project_number": "1011478688238",
+    "firebase_url": "https://growthfilev2-0.firebaseio.com",
+    "project_id": "growthfilev2-0",
+    "storage_bucket": "growthfilev2-0.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:701025551237:android:8ac4ad7974eeede1",
+        "mobilesdk_app_id": "1:1011478688238:android:8ac4ad7974eeede1",
         "android_client_info": {
           "package_name": "com.growthfile.growthfileNew"
         }
       },
       "oauth_client": [
         {
-          "client_id": "701025551237-t0iu6t2kr07kjmhvqu9jrhdcjk87osur.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.growthfile.growthfileNew",
-            "certificate_hash": "55e861fb2e2ae59b6897b658bfe927b6f1a0abb0"
-          }
-        },
-        {
-          "client_id": "701025551237-p0bbe0csrbrql078knpmljg0md5d1sac.apps.googleusercontent.com",
+          "client_id": "1011478688238-af86n29oifp5b2q7htjvcq9i5paiti8j.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyD9oH8-B4okMVCDjpAsBPvtbUrXcbtC58g"
+          "current_key": "AIzaSyD0tN8jxT_k4bnBAXYKMXHyAmbdQ7gJlco"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1011478688238:android:7772f674e331e0c4",
+        "android_client_info": {
+          "package_name": "com.growthfile.growthfilenew"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1011478688238-af86n29oifp5b2q7htjvcq9i5paiti8j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0tN8jxT_k4bnBAXYKMXHyAmbdQ7gJlco"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1011478688238:android:9c3f94ac4feaac9c",
+        "android_client_info": {
+          "package_name": "growthfilev2.com"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1011478688238-se8utid2cjskad1h0ku3fe5a4hd6f0uk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "growthfilev2.com",
+            "certificate_hash": "1e95195e3163bd031d1a5475b9fd2982f3821db7"
+          }
+        },
+        {
+          "client_id": "1011478688238-59tci309ltgo865jcucndj1hjuvghc9e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "growthfilev2.com",
+            "certificate_hash": "af95ff639bd7897a6d83e524efd586ebf19460c3"
+          }
+        },
+        {
+          "client_id": "1011478688238-af86n29oifp5b2q7htjvcq9i5paiti8j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0tN8jxT_k4bnBAXYKMXHyAmbdQ7gJlco"
         }
       ],
       "services": {
@@ -40,7 +110,7 @@
           "status": 2,
           "other_platform_oauth_client": [
             {
-              "client_id": "701025551237-p0bbe0csrbrql078knpmljg0md5d1sac.apps.googleusercontent.com",
+              "client_id": "1011478688238-af86n29oifp5b2q7htjvcq9i5paiti8j.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
