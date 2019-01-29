@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -134,14 +135,7 @@ public class MainActivity extends AppCompatActivity{
                                 }
                             });
 
-                    String[] LOCATION_PERMISSIONS = {
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                    };
 
-                    if(!hasPermissions(MainActivity.this,LOCATION_PERMISSIONS)) {
-                        ActivityCompat.requestPermissions(MainActivity.this,LOCATION_PERMISSIONS,LOCATION_PERMISSION_CODE);
-                    }
                 }
             }
 
@@ -360,8 +354,17 @@ public class MainActivity extends AppCompatActivity{
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                 startActivityForResult(photoGalleryIntent(), PHOTO_GALLERY_REQUEST);
             }
-
         }
+        else if (requestCode == LOCATION_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                String towerInformation = fullCellularInformation();
+                mWebView.evaluateJavascript("useGeolocationApi('"+towerInformation+"')",null);
+            }
+            else {
+                mWebView.evaluateJavascript("androidLocationPermissionGrant("+false+")",null);
+            }
+        }
+
     }
 
     @Override
@@ -498,6 +501,9 @@ public class MainActivity extends AppCompatActivity{
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
 
+        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
+            WebView.setWebContentsDebuggingEnabled(true);
+        }
         mWebView.setWebChromeClient(new WebChromeClient() {
 
 
@@ -506,7 +512,19 @@ public class MainActivity extends AppCompatActivity{
                 Log.i(TAG, "onGeolocationPermissionsShowPrompt()");
 
                 final boolean remember = false;
-                callback.invoke(origin, true, remember);
+
+                if(VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                    callback.invoke(origin, true, remember);
+                }else {
+                    String[] LOCATION_PERMISSIONS = {
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                    };
+
+                    if(!hasPermissions(MainActivity.this,LOCATION_PERMISSIONS)) {
+                        ActivityCompat.requestPermissions(MainActivity.this,LOCATION_PERMISSIONS,LOCATION_PERMISSION_CODE);
+                    }
+                }
             }
 
 
@@ -764,7 +782,6 @@ public class MainActivity extends AppCompatActivity{
 
         } catch (JSONException e) {
             e.printStackTrace();
-
             return "";
         }
     }
