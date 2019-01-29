@@ -32,8 +32,6 @@ public class MyAndroidFirebaseMsgService extends FirebaseMessagingService{
 
     }
 
-
-
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
@@ -41,13 +39,12 @@ public class MyAndroidFirebaseMsgService extends FirebaseMessagingService{
         Log.d("fcm","message taken");
         Intent broadCastIntent = new Intent();
         broadCastIntent.setAction(MainActivity.BROADCAST_ACTION);
-        if(remoteMessage.getData().size() > 0) {
 
+        if(remoteMessage.getData().size() > 0) {
                 Map<String, String> params = remoteMessage.getData();
                 JSONObject object  = new JSONObject(params);
                 Log.e("JSON_OBJECT",object.toString());
                 broadCastIntent.putExtra("fcmNotificationData",object.toString());
-
         }
 
         sendBroadcast(broadCastIntent);
