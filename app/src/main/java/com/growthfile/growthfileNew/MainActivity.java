@@ -501,9 +501,6 @@ public class MainActivity extends AppCompatActivity{
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
 
-        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
-            WebView.setWebContentsDebuggingEnabled(true);
-        }
         mWebView.setWebChromeClient(new WebChromeClient() {
 
 
@@ -526,7 +523,6 @@ public class MainActivity extends AppCompatActivity{
                     }
                 }
             }
-
 
         });
 
