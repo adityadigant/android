@@ -11,8 +11,6 @@ import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
@@ -48,101 +46,40 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-
 import java.io.*;
-
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
 import android.provider.Settings.Secure;
 import android.widget.Toast;
-
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
 
 public class MainActivity extends AppCompatActivity{
 
-    private static final String TAG = MainActivity.class.getSimpleName();
     private WebView mWebView;
     SwipeRefreshLayout swipeToRefresh;
-
     private ViewTreeObserver.OnScrollChangedListener mOnScrollChangedListener;
     private Context mContext;
+    private BroadcastReceiver broadcastReceiver;
+    public AlertDialog appAlert;
+
     private static final int CAMERA_ONLY_REQUEST = 111;
     private static final int PHOTO_GALLERY_REQUEST = 112;
     private static final int PHOTO_CAMERA_REQUEST = 113;
-    int LOCATION_PERMISSION_CODE = 115;
-    private String pictureImagePath = "";
-    public boolean allowLoadUrl = false;
-    public AlertDialog appAlert;
-    public boolean hasPageFinished = false;
+    private static final int LOCATION_PERMISSION_CODE = 115;
+
     public static final String BROADCAST_ACTION = "com.growthfile.growthfileNew";
-    private BroadcastReceiver broadcastReceiver;
+    private static final String TAG = MainActivity.class.getSimpleName();
+    private String pictureImagePath = "";
 
-    private void setWebViewClient() {
-        mWebView.setWebViewClient(new WebViewClient() {
+    private boolean allowLoadUrl = false;
+    private boolean hasPageFinished = false;
 
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                if (!hasPageFinished) {
-                    Log.d("onPageFinished", "true");
-                    hasPageFinished = true;
-                    mWebView.evaluateJavascript("native.setName('Android')", null);
-                    FirebaseInstanceId.getInstance().getInstanceId()
-                            .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                                @Override
-                                public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                                    if (!task.isSuccessful()) {
-                                        Log.w("MainActivity", "getInstanceId failed", task.getException());
-                                        return;
-                                    }
-
-                                    String token = task.getResult().getToken();
-                                    Log.e("FCMToken", token);
-                                    mWebView.evaluateJavascript("native.setFCMToken('" + token + "')", null);
-                                }
-                            });
-
-
-                }
-            }
-
-            @SuppressWarnings("deprecation")
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (url.contains("geo:")) {
-                    Intent mapIntent = new Intent("android.intent.action.VIEW", Uri.parse(url));
-                    mapIntent.setPackage("com.google.android.apps.maps");
-                    if (mapIntent.resolveActivity(MainActivity.this.getPackageManager()) != null) {
-                        MainActivity.this.startActivity(mapIntent);
-                    }
-                    return true;
-                }
-
-                view.loadUrl(url);
-                return true;
-            }
-
-            @RequiresApi(Build.VERSION_CODES.N)
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                String url = request.getUrl().toString();
-                shouldOverrideUrlLoading(view,url);
-                return true;
-            }
-
-        });
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -189,128 +126,6 @@ public class MainActivity extends AppCompatActivity{
         }
     }
 
-    public String encodeImage(Bitmap bm) {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        bm.compress(Bitmap.CompressFormat.JPEG, 50, byteArrayOutputStream);
-        byte[] byteArray = byteArrayOutputStream.toByteArray();
-        String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
-        Log.d("encoded",encoded);
-        return encoded;
-    }
-
-
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-    }
-
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
-
-        StrictMode.setVmPolicy(builder.build());
-        setContentView(R.layout.activity_main);
-
-        getWindow().setFlags(
-                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
-                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-
-        new CertPin().execute();
-
-        registerMyReceiver();
-        mContext = getApplicationContext();
-
-        if(!checkDeviceOsCompatibility()) {
-            try {
-                showOsUncompatibleDialog();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            return;
-        }
-
-        PackageManager pm = getApplicationContext().getPackageManager();
-        boolean isWebViewInstalled = isAndroidSystemWebViewInstalled("com.google.android.webview", pm);
-
-        if(!isWebViewInstalled) {
-            try {
-                createAlertBoxJson();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            return;
-        }
-
-        if(!allowLoadUrl) {
-            return;
-
-        }
-
-        LoadApp();
-        swipeToRefresh = findViewById(R.id.swipeToRefresh);
-        swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                swipeToRefresh.setRefreshing(true);
-                mWebView.evaluateJavascript("javascript:requestCreator('Null')", null);
-            }
-        });
-
-    }
-
-    private boolean checkDeviceOsCompatibility() {
-        if (VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT) {
-            return false;
-        }
-        return true;
-    }
-
-    private  void showOsUncompatibleDialog() throws JSONException{
-
-
-        JSONObject alert = new JSONObject();
-        alert.put("title", "App Incompatible");
-        alert.put("message", "This App is incompatible with your Android Device. Please upgrade your android version to use Growthfile");
-        alert.put("cancelable", false);
-        JSONObject button = new JSONObject();
-        button.put("text", "");
-        button.put("show", false);
-
-
-        JSONObject clickAction = new JSONObject();
-        JSONObject redirection = new JSONObject();
-
-        redirection.put("text", "");
-        redirection.put("value", false);
-
-        clickAction.put("redirection", redirection);
-
-        button.put("clickAction", clickAction);
-        alert.put("button", button);
-
-        alertBox(MainActivity.this, alert.toString(4));
-
-    }
-
-    private void registerMyReceiver() {
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(BROADCAST_ACTION);
-
-        broadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                Log.d("broadcastReceiver", "taken");
-                String fcmBody;
-                try {
-                    fcmBody = intent.getStringExtra("fcmNotificationData");
-                    mWebView.evaluateJavascript("runRead(" + fcmBody + ")", null);
-                } catch (Exception e) {
-                    mWebView.evaluateJavascript("runRead()", null);
-                }
-            }
-        };
-        registerReceiver(broadcastReceiver, intentFilter);
-    }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
@@ -339,8 +154,8 @@ public class MainActivity extends AppCompatActivity{
         }
         else if (requestCode == LOCATION_PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                    allowLoadUrl = true;
-                    LoadApp();
+                allowLoadUrl = true;
+                LoadApp();
             }
             else {
 
@@ -413,7 +228,188 @@ public class MainActivity extends AppCompatActivity{
         unregisterReceiver(broadcastReceiver);
     }
 
-    public void createProfileIntent() {
+
+
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+
+        StrictMode.setVmPolicy(builder.build());
+        setContentView(R.layout.activity_main);
+
+        getWindow().setFlags(
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+
+        new CertPin().execute();
+
+        registerMyReceiver();
+        mContext = getApplicationContext();
+
+        if(!checkDeviceOsCompatibility()) {
+            try {
+                showOsUncompatibleDialog();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        PackageManager pm = getApplicationContext().getPackageManager();
+        boolean isWebViewInstalled = isAndroidSystemWebViewInstalled("com.google.android.webview", pm);
+
+        if(!isWebViewInstalled) {
+            try {
+                createAlertBoxJson();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        if(!allowLoadUrl) {
+            return;
+
+        }
+
+        LoadApp();
+        swipeToRefresh = findViewById(R.id.swipeToRefresh);
+        swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                swipeToRefresh.setRefreshing(true);
+                mWebView.evaluateJavascript("javascript:requestCreator('Null')", null);
+            }
+        });
+
+    }
+
+
+    private void setWebViewClient() {
+        mWebView.setWebViewClient(new WebViewClient() {
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                if (!hasPageFinished) {
+                    Log.d("onPageFinished", "true");
+                    hasPageFinished = true;
+                    mWebView.evaluateJavascript("native.setName('Android')", null);
+                    FirebaseInstanceId.getInstance().getInstanceId()
+                            .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                                @Override
+                                public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                                    if (!task.isSuccessful()) {
+                                        Log.w("MainActivity", "getInstanceId failed", task.getException());
+                                        return;
+                                    }
+
+                                    String token = task.getResult().getToken();
+                                    Log.e("FCMToken", token);
+                                    mWebView.evaluateJavascript("native.setFCMToken('" + token + "')", null);
+                                }
+                            });
+
+
+                }
+            }
+
+            @SuppressWarnings("deprecation")
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if (url.contains("geo:")) {
+                    Intent mapIntent = new Intent("android.intent.action.VIEW", Uri.parse(url));
+                    mapIntent.setPackage("com.google.android.apps.maps");
+                    if (mapIntent.resolveActivity(MainActivity.this.getPackageManager()) != null) {
+                        MainActivity.this.startActivity(mapIntent);
+                    }
+                    return true;
+                }
+
+                view.loadUrl(url);
+                return true;
+            }
+
+            @RequiresApi(Build.VERSION_CODES.N)
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                String url = request.getUrl().toString();
+                shouldOverrideUrlLoading(view,url);
+                return true;
+            }
+
+        });
+    }
+
+
+    private String encodeImage(Bitmap bm) {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        bm.compress(Bitmap.CompressFormat.JPEG, 50, byteArrayOutputStream);
+        byte[] byteArray = byteArrayOutputStream.toByteArray();
+        String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
+        Log.d("encoded",encoded);
+        return encoded;
+    }
+
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+    }
+
+    private boolean checkDeviceOsCompatibility() {
+        if (VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT) {
+            return false;
+        }
+        return true;
+    }
+
+    private  void showOsUncompatibleDialog() throws JSONException{
+
+
+        JSONObject alert = new JSONObject();
+        alert.put("title", "App Incompatible");
+        alert.put("message", "This App is incompatible with your Android Device. Please upgrade your android version to use Growthfile");
+        alert.put("cancelable", false);
+        JSONObject button = new JSONObject();
+        button.put("text", "");
+        button.put("show", false);
+
+
+        JSONObject clickAction = new JSONObject();
+        JSONObject redirection = new JSONObject();
+
+        redirection.put("text", "");
+        redirection.put("value", false);
+
+        clickAction.put("redirection", redirection);
+
+        button.put("clickAction", clickAction);
+        alert.put("button", button);
+
+        alertBox(MainActivity.this, alert.toString(4));
+
+    }
+
+    private void registerMyReceiver() {
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BROADCAST_ACTION);
+
+        broadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.d("broadcastReceiver", "taken");
+                String fcmBody;
+                try {
+                    fcmBody = intent.getStringExtra("fcmNotificationData");
+                    mWebView.evaluateJavascript("runRead(" + fcmBody + ")", null);
+                } catch (Exception e) {
+                    mWebView.evaluateJavascript("runRead()", null);
+                }
+            }
+        };
+        registerReceiver(broadcastReceiver, intentFilter);
+    }
+
+    private void createProfileIntent() {
         final String[] PERMISSIONS_PHOTO_CAMERA = {
                 Manifest.permission.CAMERA,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -460,7 +456,7 @@ public class MainActivity extends AppCompatActivity{
         builder.create().show();
     }
 
-    public Intent photoCameraIntent() throws  IOException{
+    private Intent photoCameraIntent() throws  IOException{
         Intent takePicture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = timeStamp + ".jpg";
@@ -475,13 +471,13 @@ public class MainActivity extends AppCompatActivity{
 
     }
 
-    public Intent photoGalleryIntent() {
+    private Intent photoGalleryIntent() {
         Intent choosePicture = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         choosePicture.setType("image/*");
         return choosePicture;
     }
 
-    public void LoadApp() {
+    private void LoadApp() {
 
         this.mWebView = findViewById(R.id.activity_main_webview);
 
@@ -517,7 +513,7 @@ public class MainActivity extends AppCompatActivity{
     }
 
 
-    public void createAlertBoxJson() throws JSONException {
+    private void createAlertBoxJson() throws JSONException {
         String messageString = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
         String title = "App Incompatibility Issue";
 
@@ -551,7 +547,7 @@ public class MainActivity extends AppCompatActivity{
     }
 
 
-    public static boolean hasPermissions(Context context, String... permissions) {
+    private static boolean hasPermissions(Context context, String... permissions) {
         if (context != null && permissions != null) {
             for (String permission : permissions) {
                 if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
@@ -602,7 +598,7 @@ public class MainActivity extends AppCompatActivity{
     }
 
 
-    public void alertBox(@NonNull Context context, @NonNull String dialogData) throws JSONException {
+    private void alertBox(@NonNull Context context, @NonNull String dialogData) throws JSONException {
 
         final JSONObject data = new JSONObject(dialogData);
         String title = data.getString("title");
@@ -648,24 +644,21 @@ public class MainActivity extends AppCompatActivity{
         appAlert.show();
     }
 
-    public boolean gpsEnabled() {
+    private boolean gpsEnabled() {
         LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
-
         assert service != null;
         Log.d(TAG, "gpsEnabled: " + service.isProviderEnabled(LocationManager.GPS_PROVIDER));
         return service.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
-
-
-    public void createIntentForCameraOnly(){
+    private void createIntentForCameraOnly(){
         Intent CAMERA_ONLY_INTENT = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (CAMERA_ONLY_INTENT.resolveActivity(getPackageManager()) != null) {
             startActivityForResult(CAMERA_ONLY_INTENT, CAMERA_ONLY_REQUEST);
         }
     }
 
-    public boolean checkLocationPermission(){
+    private boolean checkLocationPermission(){
 
         String[] PERMISSIONS = {
                 Manifest.permission.ACCESS_FINE_LOCATION,
@@ -675,7 +668,7 @@ public class MainActivity extends AppCompatActivity{
         return hasPermissions(MainActivity.this, PERMISSIONS);
     }
 
-    public class viewLoadJavaInterface {
+    private class viewLoadJavaInterface {
         Context mContext;
 
         viewLoadJavaInterface(Context c) {
