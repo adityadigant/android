@@ -563,28 +563,6 @@ public class MainActivity extends AppCompatActivity{
         return false;
     }
 
-
-    public static Certificate getCertificateForRawResource(int resourceId, Context context) {
-        CertificateFactory cf = null;
-        Certificate ca = null;
-        Resources resources = context.getResources();
-        InputStream caInput = resources.openRawResource(resourceId);
-
-        try {
-            cf = CertificateFactory.getInstance("X.509");
-            ca = cf.generateCertificate(caInput);
-        } catch (CertificateException e) {
-        } finally {
-            try {
-                caInput.close();
-            } catch (IOException e) {
-                Log.e(TAG, "exception", e);
-            }
-        }
-
-        return ca;
-    }
-
     private boolean isNetworkAvailable() {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
