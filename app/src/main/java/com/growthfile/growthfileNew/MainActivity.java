@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -22,8 +21,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 
-import android.net.wifi.ScanResult;
-import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Bundle;
@@ -39,21 +36,6 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 
-import android.telephony.CellIdentityCdma;
-import android.telephony.CellIdentityGsm;
-import android.telephony.CellIdentityLte;
-import android.telephony.CellIdentityWcdma;
-import android.telephony.CellInfo;
-import android.telephony.CellInfoCdma;
-import android.telephony.CellInfoGsm;
-import android.telephony.CellInfoLte;
-import android.telephony.CellInfoWcdma;
-import android.telephony.CellSignalStrengthCdma;
-import android.telephony.CellSignalStrengthGsm;
-import android.telephony.CellSignalStrengthLte;
-import android.telephony.CellSignalStrengthWcdma;
-import android.telephony.TelephonyManager;
-
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
@@ -62,12 +44,10 @@ import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.JavascriptInterface;
 
-import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.webkit.GeolocationPermissions;
 
 import java.io.*;
 
@@ -76,7 +56,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 
 import android.provider.Settings.Secure;
 import android.widget.Toast;
@@ -86,7 +65,6 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -104,7 +82,7 @@ public class MainActivity extends AppCompatActivity{
     private static final int PHOTO_CAMERA_REQUEST = 113;
     int LOCATION_PERMISSION_CODE = 115;
     private String pictureImagePath = "";
-
+    public boolean allowLoadUrl = false;
     public AlertDialog appAlert;
     public boolean hasPageFinished = false;
     public static final String BROADCAST_ACTION = "com.growthfile.growthfileNew";
@@ -262,8 +240,12 @@ public class MainActivity extends AppCompatActivity{
             return;
         }
 
-        LoadApp();
+        if(!allowLoadUrl) {
+            return;
 
+        }
+
+        LoadApp();
         swipeToRefresh = findViewById(R.id.swipeToRefresh);
         swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -357,11 +339,11 @@ public class MainActivity extends AppCompatActivity{
         }
         else if (requestCode == LOCATION_PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                String towerInformation = fullCellularInformation();
-                mWebView.evaluateJavascript("useGeolocationApi('"+towerInformation+"')",null);
+                    allowLoadUrl = true;
+                    LoadApp();
             }
             else {
-                mWebView.evaluateJavascript("androidLocationPermissionGrant("+false+")",null);
+
             }
         }
 
@@ -370,29 +352,52 @@ public class MainActivity extends AppCompatActivity{
     @Override
     protected void onStart() {
         super.onStart();
-
-        try {
-            String script = "try { runRead() }catch(e){}";
-            mWebView.evaluateJavascript(script, null);
-        } catch (Exception e) {
-            e.printStackTrace();
+        if(!checkLocationPermission()) {
+            String[] PERMISSIONS = {
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+            };
+            ActivityCompat.requestPermissions(this,PERMISSIONS,LOCATION_PERMISSION_CODE);
         }
-
-        swipeToRefresh.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
-            @Override
-            public void onScrollChanged() {
-
-                if(mWebView.getScrollY() == 0){
-                    swipeToRefresh.setEnabled(true);
-
-                }
-                else {
-                    swipeToRefresh.setEnabled(false);
-                }
+        else {
+            allowLoadUrl = true;
+            try {
+                String script = "try { runRead() }catch(e){}";
+                mWebView.evaluateJavascript(script, null);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        });
+
+            swipeToRefresh.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
+                @Override
+                public void onScrollChanged() {
+
+                    if (mWebView.getScrollY() == 0) {
+                        swipeToRefresh.setEnabled(true);
+
+                    } else {
+                        swipeToRefresh.setEnabled(false);
+                    }
+                }
+            });
+        }
     }
 
+    @Override
+    protected  void onResume(){
+        super.onResume();
+
+        if(!checkLocationPermission()) {
+            String[] PERMISSIONS = {
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+            };
+            ActivityCompat.requestPermissions(this,PERMISSIONS,LOCATION_PERMISSION_CODE);
+        }
+        else {
+            allowLoadUrl = true;
+        }
+    }
 
     @Override
     protected void onStop() {
@@ -501,31 +506,6 @@ public class MainActivity extends AppCompatActivity{
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
 
-        mWebView.setWebChromeClient(new WebChromeClient() {
-
-
-            @Override
-            public void onGeolocationPermissionsShowPrompt(final String origin, final GeolocationPermissions.Callback callback) {
-                Log.i(TAG, "onGeolocationPermissionsShowPrompt()");
-
-                final boolean remember = false;
-
-                if(VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                    callback.invoke(origin, true, remember);
-                }else {
-                    String[] LOCATION_PERMISSIONS = {
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                    };
-
-                    if(!hasPermissions(MainActivity.this,LOCATION_PERMISSIONS)) {
-                        ActivityCompat.requestPermissions(MainActivity.this,LOCATION_PERMISSIONS,LOCATION_PERMISSION_CODE);
-                    }
-                }
-            }
-
-        });
-
         if (!isNetworkAvailable()) { // loading offline
             webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         }
@@ -533,253 +513,7 @@ public class MainActivity extends AppCompatActivity{
         mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
         mWebView.requestFocus(View.FOCUS_DOWN);
         setWebViewClient();
-    }
 
-    public String getMCC(TelephonyManager tm) {
-        String operator = tm.getNetworkOperator();
-        return operator.substring(0, 3);
-    }
-
-    public String getMNC(TelephonyManager tm) {
-        String operator = tm.getNetworkOperator();
-        return operator.substring(3);
-    }
-
-
-    public String getRadioType(TelephonyManager tm) {
-        int networkType = tm.getNetworkType();
-
-        switch (networkType) {
-            case TelephonyManager.NETWORK_TYPE_1xRTT:
-                return "CDMA";
-            case TelephonyManager.NETWORK_TYPE_CDMA:
-                return "CDMA";
-            case TelephonyManager.NETWORK_TYPE_EDGE:
-                return "GSM";
-            case TelephonyManager.NETWORK_TYPE_EHRPD:
-                return "CDMA";
-            case TelephonyManager.NETWORK_TYPE_EVDO_0:
-                return "CDMA";
-            case TelephonyManager.NETWORK_TYPE_EVDO_A:
-                return "CDMA";
-            case TelephonyManager.NETWORK_TYPE_EVDO_B:
-                return "CDMA";
-            case TelephonyManager.NETWORK_TYPE_GPRS:
-                return "GSM";
-            case TelephonyManager.NETWORK_TYPE_HSDPA:
-                return "WCDMA";
-            case TelephonyManager.NETWORK_TYPE_HSPA:
-                return "WCDMA";
-            case TelephonyManager.NETWORK_TYPE_HSPAP:
-                return "WCDMA";
-            case TelephonyManager.NETWORK_TYPE_HSUPA:
-                return "WCDMA";
-            case TelephonyManager.NETWORK_TYPE_LTE:
-                return "LTE";
-            case TelephonyManager.NETWORK_TYPE_UMTS:
-                return "WCDMA";
-            case TelephonyManager.NETWORK_TYPE_UNKNOWN:
-                return "unknown";
-        }
-        throw new RuntimeException("New type of network");
-    }
-
-    public JSONObject createCellTowerObject(int mcc, int mnc, int cid, int lac, int signalStrength) throws JSONException {
-
-        JSONObject information = new JSONObject();
-
-
-        information.put("signalStrength", signalStrength);
-        information.put("cellId", cid);
-        information.put("locationAreaCode", lac);
-        information.put("mobileCountryCode", mcc);
-        information.put("mobileNetworkCode", mnc);
-
-        return information;
-    }
-
-
-    public JSONArray getCelltowerInfo(String networkMcc, List<CellInfo> cellInfoList) throws JSONException {
-        int mcc;
-        int mnc;
-        int lac;
-        int signalStrength;
-        int cid;
-
-        JSONArray array = new JSONArray();
-
-        for (final CellInfo info : cellInfoList) {
-
-            if (info instanceof CellInfoGsm) {
-                final CellSignalStrengthGsm signalStrengthGsm = ((CellInfoGsm) info).getCellSignalStrength();
-                final CellIdentityGsm identityGsm = ((CellInfoGsm) info).getCellIdentity();
-                //signal strength
-
-                cid = identityGsm.getCid();
-                if (cid >= 0) {
-
-
-                    lac = identityGsm.getLac();
-                    signalStrength = signalStrengthGsm.getDbm();
-
-                    if (VERSION.SDK_INT < Build.VERSION_CODES.P) {
-                        System.out.print(identityGsm.getMcc());
-
-                        mcc = identityGsm.getMcc();
-                        mnc = identityGsm.getMnc();
-                    } else {
-                        mcc = Integer.parseInt(identityGsm.getMccString());
-                        mnc = Integer.parseInt(identityGsm.getMncString());
-                    }
-
-                    array.put(createCellTowerObject(mcc, mnc, cid, lac, signalStrength));
-                }
-            }
-
-
-            if (info instanceof CellInfoWcdma) {
-                final CellSignalStrengthWcdma signalStrengthWcdma = ((CellInfoWcdma) info).getCellSignalStrength();
-                final CellIdentityWcdma identityWcdma = ((CellInfoWcdma) info).getCellIdentity();
-
-
-                cid = identityWcdma.getCid();
-                if (cid >= 0) {
-                    lac = identityWcdma.getLac();
-                    signalStrength = signalStrengthWcdma.getDbm();
-
-                    if (VERSION.SDK_INT < Build.VERSION_CODES.P) {
-                        System.out.print(identityWcdma.getMcc());
-                        mcc = identityWcdma.getMcc();
-                        mnc = identityWcdma.getMnc();
-                    } else {
-                        mcc = Integer.parseInt(identityWcdma.getMccString());
-                        mnc = Integer.parseInt(identityWcdma.getMncString());
-                    }
-                    array.put(createCellTowerObject(mcc, mnc, cid, lac, signalStrength));
-                }
-            }
-            if (info instanceof CellInfoLte) {
-                final CellSignalStrengthLte signalStrengthLte = ((CellInfoLte) info).getCellSignalStrength();
-                final CellIdentityLte identityLte = ((CellInfoLte) info).getCellIdentity();
-
-                cid = identityLte.getCi();
-                if (cid >= 0) {
-                    lac = identityLte.getTac();
-                    signalStrength = signalStrengthLte.getDbm();
-
-                    if (VERSION.SDK_INT < Build.VERSION_CODES.P) {
-                        System.out.print(identityLte.getMcc());
-
-                        mcc = identityLte.getMcc();
-                        mnc = identityLte.getMnc();
-                    } else {
-                        mcc = Integer.parseInt(identityLte.getMccString());
-                        mnc = Integer.parseInt(identityLte.getMncString());
-                    }
-                    array.put(createCellTowerObject(mcc, mnc, cid, lac, signalStrength));
-                }
-            }
-
-            if (info instanceof CellInfoCdma) {
-                final CellSignalStrengthCdma signalStrengthCdma = ((CellInfoCdma) info).getCellSignalStrength();
-                final CellIdentityCdma identityCdma = ((CellInfoCdma) info).getCellIdentity();
-
-                cid = identityCdma.getBasestationId();
-                if (cid >= 0) {
-                    lac = identityCdma.getNetworkId();
-                    signalStrength = signalStrengthCdma.getDbm();
-                    mnc = identityCdma.getSystemId();
-                    mcc = Integer.parseInt(networkMcc);
-                    array.put(createCellTowerObject(mcc, mnc, cid, lac, signalStrength));
-                }
-            }
-        }
-        return array;
-    }
-
-
-    /**
-     * Get nearby wifi access points
-     **/
-
-    public JSONArray getNearbyWifiAccessPoints(List<ScanResult> wifiList) throws JSONException {
-
-        JSONArray array = new JSONArray();
-
-
-        for (int i = 0; i < wifiList.size(); i++) {
-            JSONObject aps = new JSONObject();
-            aps.put("macAddress", wifiList.get(i).BSSID);
-            aps.put("signalStrength", wifiList.get(i).level);
-            array.put(aps);
-        }
-        return array;
-
-    }
-
-
-    public String fullCellularInformation() {
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION )!= PackageManager.PERMISSION_GRANTED ) {
-            return "";
-        }
-
-        try {
-            TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-            JSONObject json = new JSONObject();
-            String mcc;
-            String mnc;
-            String carrier;
-
-
-            if (!tm.getNetworkOperator().isEmpty()) {
-
-                mcc = getMCC(tm);
-                mnc = getMNC(tm);
-
-                json.put("homeMobileCountryCode", mcc);
-                json.put("homeMobileNetworkCode", mnc);
-
-
-                List<CellInfo> cellInfoList = tm.getAllCellInfo();
-
-                if (cellInfoList != null) {
-
-                    json.put("cellTowers", getCelltowerInfo(mcc, cellInfoList));
-                }
-
-            }
-
-            //set radio type
-            String radioType = getRadioType(tm);
-
-            if (!radioType.equals("unknown")) {
-                json.put("radioType", getRadioType(tm));
-            }
-
-            //set carrier
-            carrier = tm.getNetworkOperatorName();
-
-            if (carrier != null && !carrier.isEmpty()) {
-                json.put("carrier", carrier);
-            }
-
-            // set wifi access points
-            WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-            List<ScanResult> wifiList = wifiManager.getScanResults();
-
-            if (!wifiList.isEmpty()) {
-                json.put("wifiAccessPoints", getNearbyWifiAccessPoints(wifiList));
-            }
-
-            json.put("considerIp", "true");
-
-            return json.toString(4);
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return "";
-        }
     }
 
 
@@ -828,6 +562,7 @@ public class MainActivity extends AppCompatActivity{
         }
         return false;
     }
+
 
     public static Certificate getCertificateForRawResource(int resourceId, Context context) {
         CertificateFactory cf = null;
@@ -952,6 +687,16 @@ public class MainActivity extends AppCompatActivity{
         }
     }
 
+    public boolean checkLocationPermission(){
+
+        String[] PERMISSIONS = {
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+        };
+
+        return hasPermissions(MainActivity.this, PERMISSIONS);
+    }
+
     public class viewLoadJavaInterface {
         Context mContext;
 
@@ -977,7 +722,8 @@ public class MainActivity extends AppCompatActivity{
 
         @JavascriptInterface
         public String getCellularData(){
-            return fullCellularInformation();
+            CellularInformation mCellularInformation = new CellularInformation(MainActivity.this);
+            return mCellularInformation.fullCellularInformation();
         }
 
         @JavascriptInterface
@@ -1068,13 +814,7 @@ public class MainActivity extends AppCompatActivity{
 
         @JavascriptInterface
         public boolean isLocationPermissionGranted() {
-
-            String[] PERMISSIONS = {
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-            };
-
-            return hasPermissions(MainActivity.this, PERMISSIONS);
+            return checkLocationPermission();
         }
 
         @JavascriptInterface
