@@ -41,8 +41,10 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -62,6 +64,8 @@ import com.google.firebase.iid.InstanceIdResult;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import okhttp3.internal.Version;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -83,6 +87,9 @@ public class MainActivity extends AppCompatActivity {
     private String pictureImagePath = "";
 
     private boolean hasPageFinished = false;
+
+
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -157,11 +164,12 @@ public class MainActivity extends AppCompatActivity {
         } else if (requestCode == LOCATION_PERMISSION_CODE) {
             if (grantResults.length > 0) {
                 if (grantResults[0] != PackageManager.PERMISSION_GRANTED || grantResults[1] != PackageManager.PERMISSION_GRANTED) {
-                    final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_Material_Light_Dialog_Alert);
-                    builder.setTitle("Permission Error");
-                    builder.setMessage("You have Not allowed Growthfile to use location permission. Grant Growthfile Location Permission, to use it");
-                    builder.setCancelable(false);
-                    builder.show();
+
+                    String title = "Location Permission";
+                    String message = "You have Not allowed Growthfile to use location permission. Grant Growthfile Location Permission, to continue";
+                    boolean cancelable = false;
+
+                    showPermissionNotAllowedDialog(title,message,cancelable);
                 } else {
                     LoadApp();
                 }
@@ -214,6 +222,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        mWebView = null;
         // make sure to unregister your receiver after finishing of this activity
         unregisterReceiver(broadcastReceiver);
     }
@@ -274,7 +283,14 @@ public class MainActivity extends AppCompatActivity {
         };
 
         if (!checkLocationPermission()) {
-            ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, LOCATION_PERMISSION_CODE);
+            if(VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, LOCATION_PERMISSION_CODE);
+            }
+            else {
+                String title = "Location Permission Not Granted";
+                String message = "You have Not allowed Growthfile to use location permission. Grant Growthfile Location Permission, to continue";
+                showPermissionNotAllowedDialog(title,message,false);
+            }
         } else {
             LoadApp();
         }
@@ -334,6 +350,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
         });
+
     }
 
     private String encodeImage(Bitmap bm) {
@@ -426,8 +443,18 @@ public class MainActivity extends AppCompatActivity {
                         switch (which) {
                             case 0:
 
+
+
                                 if (!hasPermissions(MainActivity.this, PERMISSIONS_PHOTO_CAMERA)) {
-                                    ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_PHOTO_CAMERA, PHOTO_CAMERA_REQUEST);
+
+                                  if(VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                      ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_PHOTO_CAMERA, PHOTO_CAMERA_REQUEST);
+                                  }
+                                  else {
+                                      String title ="Storage and Camera Permission";
+                                      String message = "Allow Storage and Camera Permission to get Picture";
+                                      showPermissionNotAllowedDialog(title,message,true);
+                                  }
                                 } else {
                                     try {
                                         startActivityForResult(photoCameraIntent(), PHOTO_CAMERA_REQUEST);
@@ -439,7 +466,14 @@ public class MainActivity extends AppCompatActivity {
                                 break;
                             case 1:
                                 if (!hasPermissions(MainActivity.this, PERMISSIONS_PHOTO_GALLERY)) {
-                                    ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_PHOTO_GALLERY, PHOTO_GALLERY_REQUEST);
+                                    if(VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                        ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_PHOTO_GALLERY, PHOTO_GALLERY_REQUEST);
+                                    }
+                                    else {
+                                        String title ="Storage and Camera Permission";
+                                        String message = "Allow Storage and Camera Permission to get Picture";
+                                        showPermissionNotAllowedDialog(title,message,true);
+                                    }
                                 } else {
                                     startActivityForResult(photoGalleryIntent(), PHOTO_GALLERY_REQUEST);
                                 }
@@ -496,10 +530,20 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
 
+        mWebView.setWebChromeClient(new WebChromeClient(){
+            @Override
+            public void onGeolocationPermissionsShowPrompt(final String origin,final GeolocationPermissions.Callback callback){
+                if(origin.equals("https://growthfile-testing.firebaseapp.com/")) {
+                    callback.invoke(origin, true, false);
+                }
+            }
+        });
+
         if (!isNetworkAvailable()) { // loading offline
             webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         }
-       
+
+
         mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
         mWebView.requestFocus(View.FOCUS_DOWN);
         setWebViewClient();
@@ -537,6 +581,14 @@ public class MainActivity extends AppCompatActivity {
         String jsonString = json.toString(4);
 
         alertBox(MainActivity.this, jsonString);
+    }
+
+    private void showPermissionNotAllowedDialog(String title,String message,boolean cancelable){
+        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_Material_Light_Dialog_Alert);
+        builder.setTitle(title);
+        builder.setMessage(message);
+        builder.setCancelable(cancelable);
+        builder.show();
     }
 
     private static boolean hasPermissions(Context context, String... permissions) {
@@ -717,16 +769,25 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
 
         public void startCamera() {
-            if (VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 
-                String[] PERMISSIONS_CAMERA = {
-                        Manifest.permission.CAMERA,
-                        Manifest.permission.READ_EXTERNAL_STORAGE,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE
-                };
+
+            String[] PERMISSIONS_CAMERA = {
+                    Manifest.permission.CAMERA,
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+            };
 
                 if (!hasPermissions(MainActivity.this, PERMISSIONS_CAMERA)) {
-                    ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_CAMERA, CAMERA_ONLY_REQUEST);
+                    if (VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_CAMERA, CAMERA_ONLY_REQUEST);
+                    }
+
+                    else {
+                        String title ="Storage and Camera Permission";
+                        String message = "Allow Storage and Camera Permission to get Picture";
+                        showPermissionNotAllowedDialog(title,message,true);
+                    }
+
                 } else {
                     try {
                         startActivityForResult(photoCameraIntent(), CAMERA_ONLY_REQUEST);
@@ -735,13 +796,6 @@ public class MainActivity extends AppCompatActivity {
                         createIntentForCameraOnly();
                     }
                 }
-            } else {
-                try {
-                    startActivityForResult(photoCameraIntent(), CAMERA_ONLY_REQUEST);
-                } catch (IOException e) {
-                    createIntentForCameraOnly();
-                }
-            }
         }
 
         @JavascriptInterface
