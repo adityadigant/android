@@ -99,7 +99,7 @@ public class CellularInformation {
     }
 
 
-    private JSONArray getCelltowerInfo(String networkMcc, List<CellInfo> cellInfoList) throws JSONException {
+    private JSONArray getCelltowerInfo(int networkMcc, List<CellInfo> cellInfoList) throws JSONException {
         int mcc;
         int mnc;
         int lac;
@@ -189,18 +189,13 @@ public class CellularInformation {
                     lac = identityCdma.getNetworkId();
                     signalStrength = signalStrengthCdma.getDbm();
                     mnc = identityCdma.getSystemId();
-                    mcc = Integer.parseInt(networkMcc);
+                    mcc = networkMcc;
                     array.put(createCellTowerObject(mcc, mnc, cid, lac, signalStrength));
                 }
             }
         }
         return array;
     }
-
-
-    /**
-     * Get nearby wifi access points
-     **/
 
     private JSONArray getNearbyWifiAccessPoints(List<ScanResult> wifiList) throws JSONException {
 
@@ -227,23 +222,18 @@ public class CellularInformation {
         try {
             TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
             JSONObject json = new JSONObject();
-            String mcc;
-            String mnc;
+            int mcc;
+            int mnc;
             String carrier;
 
             if (!tm.getNetworkOperator().isEmpty()) {
-
-                mcc = getMCC(tm);
-                mnc = getMNC(tm);
+                mcc = Integer.parseInt(getMCC(tm));
+                mnc = Integer.parseInt(getMNC(tm));
 
                 json.put("homeMobileCountryCode", mcc);
                 json.put("homeMobileNetworkCode", mnc);
-
-
                 List<CellInfo> cellInfoList = tm.getAllCellInfo();
-
                 if (cellInfoList != null) {
-
                     json.put("cellTowers", getCelltowerInfo(mcc, cellInfoList));
                 }
             }

@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -126,7 +127,6 @@ public class MainActivity extends AppCompatActivity {
                 if (resultCode == RESULT_OK) {
                     File imgFile = new File(pictureImagePath);
                     if (imgFile.exists()) {
-                        Toast.makeText(MainActivity.this, "picture path is not null", Toast.LENGTH_LONG).show();
                         Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
 
                         mWebView.loadUrl("javascript:readUploadedFile('" + encodeImage(myBitmap) + "')");
@@ -140,6 +140,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
+
         if (requestCode == CAMERA_ONLY_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED && grantResults[2] == PackageManager.PERMISSION_GRANTED) {
                 try {
@@ -181,8 +182,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         Log.d("onStart","started");
-
-
     }
 
     @Override
@@ -196,20 +195,16 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
-
         swipeToRefresh.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
             @Override
             public void onScrollChanged() {
-
                 if (mWebView.getScrollY() == 0) {
                     swipeToRefresh.setEnabled(true);
-
                 } else {
                     swipeToRefresh.setEnabled(false);
                 }
             }
         });
-
     }
 
     @Override
@@ -244,7 +239,15 @@ public class MainActivity extends AppCompatActivity {
 
         registerMyReceiver();
         mContext = getApplicationContext();
+        swipeToRefresh = findViewById(R.id.swipeToRefresh);
+        swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                swipeToRefresh.setRefreshing(true);
+                mWebView.evaluateJavascript("javascript:requestCreator('Null')", null);
+            }
 
+        });
         if (!checkDeviceOsCompatibility()) {
             try {
                 showOsUncompatibleDialog();
@@ -267,16 +270,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-        swipeToRefresh = findViewById(R.id.swipeToRefresh);
-        swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                swipeToRefresh.setRefreshing(true);
-                mWebView.evaluateJavascript("javascript:requestCreator('Null')", null);
-            }
-
-        });
-
         String[] PERMISSIONS = {
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -295,19 +288,20 @@ public class MainActivity extends AppCompatActivity {
             LoadApp();
         }
 
+
+
     }
 
 
     private void setWebViewClient() {
         mWebView.setWebViewClient(new WebViewClient() {
-
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 if (!hasPageFinished) {
                     Log.d("onPageFinished", "true");
+                    mWebView.evaluateJavascript("native.setName('Android')",null);
                     hasPageFinished = true;
-                    mWebView.evaluateJavascript("native.setName('Android')", null);
                     FirebaseInstanceId.getInstance().getInstanceId()
                             .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
                                 @Override
@@ -542,7 +536,9 @@ public class MainActivity extends AppCompatActivity {
         if (!isNetworkAvailable()) { // loading offline
             webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         }
-
+        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
+            WebView.setWebContentsDebuggingEnabled(true);
+        }
 
         mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
         mWebView.requestFocus(View.FOCUS_DOWN);
@@ -688,10 +684,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean gpsEnabled() {
+
         LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
         assert service != null;
         Log.d(TAG, "gpsEnabled: " + service.isProviderEnabled(LocationManager.GPS_PROVIDER));
         return service.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
     }
 
     private void createIntentForCameraOnly() {
@@ -732,6 +730,15 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             dialog.show();
+        }
+
+        @JavascriptInterface
+        public void updateApp(String dialogData) {
+            try {
+                alertBox(MainActivity.this,dialogData);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
 
         @JavascriptInterface
