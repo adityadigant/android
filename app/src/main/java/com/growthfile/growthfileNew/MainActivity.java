@@ -288,8 +288,6 @@ public class MainActivity extends AppCompatActivity {
             LoadApp();
         }
 
-
-
     }
 
 
@@ -527,7 +525,7 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setWebChromeClient(new WebChromeClient(){
             @Override
             public void onGeolocationPermissionsShowPrompt(final String origin,final GeolocationPermissions.Callback callback){
-                if(origin.equals("https://growthfile-testing.firebaseapp.com/")) {
+                if(origin.equals("https://growthfile-207204.firebaseapp.com/")) {
                     callback.invoke(origin, true, false);
                 }
             }
@@ -536,30 +534,22 @@ public class MainActivity extends AppCompatActivity {
         if (!isNetworkAvailable()) { // loading offline
             webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         }
-        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
-            WebView.setWebContentsDebuggingEnabled(true);
-        }
 
-        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
+        mWebView.loadUrl("https://growthfile-207204.firebaseapp.com");
         mWebView.requestFocus(View.FOCUS_DOWN);
         setWebViewClient();
-
     }
 
     private void createAlertBoxJson() throws JSONException {
         String messageString = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
         String title = "App Incompatibility Issue";
-
         JSONObject json = new JSONObject();
         json.put("title", title);
         json.put("message", messageString);
         json.put("cancelable", false);
-
         JSONObject button = new JSONObject();
         button.put("text", "Okay");
         button.put("show", true);
-
-
         JSONObject clickAction = new JSONObject();
         JSONObject redirection = new JSONObject();
 
@@ -788,7 +778,6 @@ public class MainActivity extends AppCompatActivity {
                     if (VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_CAMERA, CAMERA_ONLY_REQUEST);
                     }
-
                     else {
                         String title ="Storage and Camera Permission";
                         String message = "Allow Storage and Camera Permission to get Picture";
@@ -828,7 +817,7 @@ public class MainActivity extends AppCompatActivity {
             device.put("deviceModel", deviceModel);
             device.put("osVersion", osVersion);
             device.put("baseOs", deviceBaseOs);
-            device.put("appVersion", 5);
+            device.put("appVersion", 7);
             String deviceInfo = device.toString(4);
             return deviceInfo;
         }
