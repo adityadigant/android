@@ -77,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
     private Context mContext;
     private BroadcastReceiver broadcastReceiver;
     public AlertDialog appAlert;
+    public AlertDialog airplaneDialog = null;
 
     private static final int CAMERA_ONLY_REQUEST = 111;
     private static final int PHOTO_GALLERY_REQUEST = 112;
@@ -395,18 +396,38 @@ public class MainActivity extends AppCompatActivity {
     private void registerMyReceiver() {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BROADCAST_ACTION);
+        intentFilter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
 
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.d("broadcastReceiver", "taken");
-                String fcmBody;
-                try {
-                    fcmBody = intent.getStringExtra("fcmNotificationData");
-                    mWebView.evaluateJavascript("runRead(" + fcmBody + ")", null);
-                } catch (Exception e) {
-                    mWebView.evaluateJavascript("runRead()", null);
+                if(intent.getAction().equals(BROADCAST_ACTION)) {
+                    String fcmBody;
+                    try {
+                        fcmBody = intent.getStringExtra("fcmNotificationData");
+                        mWebView.evaluateJavascript("runRead(" + fcmBody + ")", null);
+                    } catch (Exception e) {
+                        mWebView.evaluateJavascript("runRead()", null);
+                    }
                 }
+                if(intent.getAction().equals(Intent.ACTION_AIRPLANE_MODE_CHANGED)) {
+                    boolean isOn = isAirplaneModeOn(context);
+                    if(isOn){
+                        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                        builder.setMessage("Please turn off airplane mode");
+                        builder.setCancelable(false);
+                        airplaneDialog = builder.create();
+                        airplaneDialog.show();
+                    }
+                    else {
+                        if(airplaneDialog != null) {
+                            airplaneDialog.hide();
+                        }
+                    }
+
+                }
+
             }
         };
         registerReceiver(broadcastReceiver, intentFilter);
@@ -671,6 +692,10 @@ public class MainActivity extends AppCompatActivity {
         builder.setIcon(android.R.drawable.ic_dialog_alert);
         appAlert = builder.create();
         appAlert.show();
+    }
+
+    public static boolean isAirplaneModeOn(Context context) {
+        return Settings.System.getInt(context.getContentResolver(),Settings.Global.AIRPLANE_MODE_ON,0) != 0;
     }
 
     private boolean gpsEnabled() {
