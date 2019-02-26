@@ -46,6 +46,7 @@ import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -89,10 +90,7 @@ public class MainActivity extends AppCompatActivity {
     private String pictureImagePath = "";
 
     private boolean hasPageFinished = false;
-
-
-
-
+    private boolean nocacheLoadUrl = false;
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
@@ -183,6 +181,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         Log.d("onStart","started");
+
     }
 
     @Override
@@ -196,6 +195,7 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
+
         swipeToRefresh.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
             @Override
             public void onScrollChanged() {
@@ -239,6 +239,7 @@ public class MainActivity extends AppCompatActivity {
         new CertPin().execute();
 
         registerMyReceiver();
+
         mContext = getApplicationContext();
         swipeToRefresh = findViewById(R.id.swipeToRefresh);
         swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -297,6 +298,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                if(nocacheLoadUrl) return;
+
                 if (!hasPageFinished) {
                     Log.d("onPageFinished", "true");
                     mWebView.evaluateJavascript("native.setName('Android')",null);
@@ -309,7 +312,6 @@ public class MainActivity extends AppCompatActivity {
                                         Log.w("MainActivity", "getInstanceId failed", task.getException());
                                         return;
                                     }
-
                                     String token = task.getResult().getToken();
                                     Log.e("FCMToken", token);
                                     mWebView.evaluateJavascript("native.setFCMToken('" + token + "')", null);
@@ -334,12 +336,46 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
 
+
+
             @RequiresApi(Build.VERSION_CODES.N)
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
                 shouldOverrideUrlLoading(view, url);
                 return true;
+            }
+
+            @Override
+            public void onReceivedError(WebView webView, int errorCode,String description,String failingUrl){
+
+                if(errorCode == -2) {
+                    nocacheLoadUrl = true;
+                    webView.loadUrl("file:///android_asset/nocache.html");
+
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this,android.R.style.Theme_Material_Dialog_Alert);
+                    builder.setTitle("No Internet Connection");
+                    builder.setMessage("Check your mobile data or Wi-Fi Connection");
+                    builder.setCancelable(false);
+
+                    builder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+//
+                            if(isNetworkAvailable()){
+                                dialog.dismiss();
+                                nocacheLoadUrl = false;
+                                LoadApp();
+                            }
+                            else {
+                                builder.setTitle("Try Again");
+                                builder.show();
+                            }
+                        }
+                    });
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                }
             }
 
         });
@@ -405,7 +441,7 @@ public class MainActivity extends AppCompatActivity {
                 if(intent.getAction().equals(BROADCAST_ACTION)) {
                     String fcmBody;
                     try {
-                        fcmBody = intent.getStringExtra("fcmNotificationData");
+                        fcmBody = intent.getStringExtra("fcmNotifioncationData");
                         mWebView.evaluateJavascript("runRead(" + fcmBody + ")", null);
                     } catch (Exception e) {
                         mWebView.evaluateJavascript("runRead()", null);
@@ -546,7 +582,7 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setWebChromeClient(new WebChromeClient(){
             @Override
             public void onGeolocationPermissionsShowPrompt(final String origin,final GeolocationPermissions.Callback callback){
-                if(origin.equals("https://growthfile-207204.firebaseapp.com/")) {
+                if(origin.equals("https://growthfile-testing.firebaseapp.com/")) {
                     callback.invoke(origin, true, false);
                 }
             }
@@ -556,7 +592,7 @@ public class MainActivity extends AppCompatActivity {
             webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         }
 
-        mWebView.loadUrl("https://growthfile-207204.firebaseapp.com");
+        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
         mWebView.requestFocus(View.FOCUS_DOWN);
         setWebViewClient();
     }
