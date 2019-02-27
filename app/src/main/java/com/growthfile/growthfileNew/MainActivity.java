@@ -3,13 +3,11 @@ package com.growthfile.growthfileNew;
 import android.Manifest;
 
 
-import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -26,7 +24,6 @@ import android.os.Build.VERSION;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.StrictMode;
 import android.provider.MediaStore;
 
@@ -48,7 +45,6 @@ import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 
 import android.webkit.WebChromeClient;
-import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -61,7 +57,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import android.provider.Settings.Secure;
-import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -70,8 +65,6 @@ import com.google.firebase.iid.InstanceIdResult;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import okhttp3.internal.Version;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -97,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean nocacheLoadUrl = false;
 
     Handler locationHandler = new Handler();
+    Timer locationTimer = new Timer();
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
@@ -740,22 +734,27 @@ public class MainActivity extends AppCompatActivity {
         return Settings.System.getInt(context.getContentResolver(),Settings.Global.AIRPLANE_MODE_ON,0) != 0;
     }
 
-    public void startTimer(String key) {
+    public void startTimer(Boolean run) {
 
-     Timer timer = new Timer();
         TimerTask doAsyncLocationTask = new TimerTask() {
             @Override
             public void run() {
                 locationHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                     CellularInformation runner = new CellularInformation(MainActivity.this);
-                     runner.execute(key);
+                        fetchCellularInAsync runner = new fetchCellularInAsync(MainActivity.this,mWebView);
+                        runner.execute();
                     }
                 });
             }
         };
-        timer.schedule(doAsyncLocationTask,0,5000);
+        if(run) {
+            locationTimer.schedule(doAsyncLocationTask,0,5000);
+        }
+        else {
+            locationTimer.cancel();
+            locationTimer = null;
+        }
     }
 
     private boolean gpsEnabled() {
@@ -792,8 +791,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @JavascriptInterface
-        public void startLocationService(String key){
-            startTimer(key);
+        public void startLocationService(Boolean run){
+            startTimer(run);
         }
 
         @JavascriptInterface

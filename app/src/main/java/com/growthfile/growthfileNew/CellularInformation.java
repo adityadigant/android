@@ -23,6 +23,9 @@ import android.telephony.CellSignalStrengthLte;
 import android.telephony.CellSignalStrengthWcdma;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.webkit.WebView;
+
+import com.google.android.gms.common.internal.Constants;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -35,63 +38,18 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class CellularInformation extends AsyncTask<String ,Void,String> {
+public class CellularInformation{
     private Context context;
+
 
     public CellularInformation(Context context){
         this.context = context;
-    }
-
-    @Override
-    protected  void onPreExecute(){
-
-    };
-
-    @Override
-    protected String doInBackground(String... params) {
-        String data =  fullCellularInformation(context);
-        String urlRaw = "https://www.googleapis.com/geolocation/v1/geolocate?key="+params[0];
-        URL url = null;
-        
-
-        try {
-             url  = new URL(urlRaw);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-
-        if(url != null) {
-
-            try {
-                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-                httpURLConnection.setRequestMethod("POST");
-                httpURLConnection.setRequestProperty("Content-Type","application/json");
-
-                httpURLConnection.setDoOutput(true);
-
-                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(httpURLConnection.getOutputStream()));
-                writer.write(data);
-                writer.close();
-                httpURLConnection.connect();
-
-                Log.e("Response http",httpURLConnection.getResponseMessage() + "");
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        }
-    }
-
-    @Override
-    protected void onPostExecute(String s) {
-        super.onPostExecute(s);
 
     }
-
-
     private String getMCC(TelephonyManager tm) {
         String operator = tm.getNetworkOperator();
         return operator.substring(0, 3);
@@ -198,9 +156,11 @@ public class CellularInformation extends AsyncTask<String ,Void,String> {
                 final CellSignalStrengthWcdma signalStrengthWcdma = ((CellInfoWcdma) info).getCellSignalStrength();
                 final CellIdentityWcdma identityWcdma = ((CellInfoWcdma) info).getCellIdentity();
 
-
                 cid = identityWcdma.getCid();
-                if (cid >= 0) {
+                int length = String.valueOf(cid).length();
+
+                if (cid >= 0 && length==8) {
+
                     lac = identityWcdma.getLac();
                     signalStrength = signalStrengthWcdma.getDbm();
 
@@ -214,6 +174,7 @@ public class CellularInformation extends AsyncTask<String ,Void,String> {
                     }
                     array.put(createCellTowerObject(mcc, mnc, cid, lac, signalStrength));
                 }
+
             }
             if (info instanceof CellInfoLte) {
                 final CellSignalStrengthLte signalStrengthLte = ((CellInfoLte) info).getCellSignalStrength();
@@ -254,6 +215,8 @@ public class CellularInformation extends AsyncTask<String ,Void,String> {
         return array;
     }
 
+
+
     private JSONArray getNearbyWifiAccessPoints(List<ScanResult> wifiList) throws JSONException {
 
         JSONArray array = new JSONArray();
@@ -270,13 +233,14 @@ public class CellularInformation extends AsyncTask<String ,Void,String> {
     }
 
 
-    public String fullCellularInformation(Context context) {
+    public String fullCellularInformation() {
 
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(context,Manifest.permission.ACCESS_FINE_LOCATION )!= PackageManager.PERMISSION_GRANTED ) {
             return "";
         }
-
+        List<CellInfo> cellInfoList = null;
         try {
+
             TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
             JSONObject json = new JSONObject();
             int mcc;
@@ -289,7 +253,8 @@ public class CellularInformation extends AsyncTask<String ,Void,String> {
 
                 json.put("homeMobileCountryCode", mcc);
                 json.put("homeMobileNetworkCode", mnc);
-                List<CellInfo> cellInfoList = tm.getAllCellInfo();
+                cellInfoList = tm.getAllCellInfo();
+                tm.getNeighboringCellInfo();
                 if (cellInfoList != null) {
                     json.put("cellTowers", getCelltowerInfo(mcc, cellInfoList));
                 }
@@ -316,8 +281,13 @@ public class CellularInformation extends AsyncTask<String ,Void,String> {
             if (!wifiList.isEmpty()) {
                 json.put("wifiAccessPoints", getNearbyWifiAccessPoints(wifiList));
             }
+            if(wifiList.isEmpty() && cellInfoList == null ) {
+                json.put("considerIp", "true");
+            }
+            else {
+                json.put("considerIp", "false");
+            }
 
-            json.put("considerIp", "true");
             return json.toString(4);
 
         } catch (JSONException e) {
