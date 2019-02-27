@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="AndroidLogFilters">
+    <option name="TOOL_WINDOW_CUSTOM_FILTER" value="gully" />
     <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="Show only selected application" />
   </component>
   <component name="CMakeSettings">
@@ -25,11 +26,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="MainActivity.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="MainActivity.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="293">
-              <caret line="372" column="29" selection-start-line="372" selection-start-column="29" selection-end-line="372" selection-end-column="29" />
+            <state relative-caret-position="206">
+              <caret line="795" column="22" selection-start-line="795" selection-start-column="12" selection-end-line="795" selection-end-column="22" />
               <folding>
                 <element signature="e#13651#13899#0" expanded="true" />
                 <element signature="e#13898#13899#0" expanded="true" />
@@ -39,8 +40,27 @@
                 <element signature="e#20791#20792#0" expanded="true" />
                 <element signature="e#28394#29027#0" expanded="true" />
                 <element signature="e#29026#29027#0" expanded="true" />
+                <element signature="e#29280#29565#0" expanded="true" />
+                <element signature="e#29368#29549#0" expanded="true" />
+                <element signature="e#29548#29549#0" expanded="true" />
+                <element signature="e#29564#29565#0" expanded="true" />
+                <element signature="e#30137#30138#0" expanded="true" />
+                <element signature="e#30170#30171#0" expanded="true" />
                 <element signature="e#30805#31013#0" expanded="true" />
                 <element signature="e#31012#31013#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="CellularInformation.java" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/CellularInformation.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="104">
+              <caret line="56" column="8" selection-start-line="56" selection-start-column="8" selection-end-line="56" selection-end-column="8" />
+              <folding>
+                <element signature="e#1168#1169#0" expanded="true" />
+                <element signature="e#1206#1207#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -77,16 +97,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>tes</find>
-      <find>fcm</find>
-      <find>onCreate</find>
-      <find>onStart</find>
-      <find>on</find>
-      <find>onreceove</find>
-      <find>setWe</find>
-      <find>setWebViewClient</find>
-      <find>airplane</find>
-      <find>testing</find>
       <find>alertDia</find>
       <find>airplaneDialog</find>
       <find>dialog</find>
@@ -107,6 +117,16 @@
       <find>LoadApp</find>
       <find>View.In</find>
       <find>nocacheLoadUrl</find>
+      <find>androidInter</find>
+      <find>javascriptInter</find>
+      <find>locationHandler</find>
+      <find>oncreate</find>
+      <find>handler</find>
+      <find>wifi</find>
+      <find>CellularInformation</find>
+      <find>context</find>
+      <find>fullCellularInformation</find>
+      <find>startTimer</find>
     </findStrings>
   </component>
   <component name="GradleLocalSettings">
@@ -124,6 +144,7 @@
         <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MyAndroidFirebaseMsgService.java" />
         <option value="$PROJECT_DIR$/src/main/assets/nocache.html" />
         <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/CellularInformation.java" />
       </list>
     </option>
   </component>
@@ -169,6 +190,44 @@
               <item name="src" type="462c0819:PsiDirectoryNode" />
               <item name="main" type="462c0819:PsiDirectoryNode" />
               <item name="assets" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="app" type="b2602c69:ProjectViewProjectNode" />
+              <item name="android" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
+              <item name="app" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="app" type="b2602c69:ProjectViewProjectNode" />
+              <item name="android" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
+              <item name="app" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+              <item name="com" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="app" type="b2602c69:ProjectViewProjectNode" />
+              <item name="android" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
+              <item name="app" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+              <item name="com" type="462c0819:PsiDirectoryNode" />
+              <item name="growthfile" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="app" type="b2602c69:ProjectViewProjectNode" />
+              <item name="android" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
+              <item name="app" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+              <item name="com" type="462c0819:PsiDirectoryNode" />
+              <item name="growthfile" type="462c0819:PsiDirectoryNode" />
+              <item name="growthfileNew" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="app" type="b2602c69:ProjectViewProjectNode" />
@@ -352,7 +411,7 @@
       <window_info anchor="bottom" id="Run" order="2" />
       <window_info anchor="bottom" id="Version Control" show_stripe_button="false" />
       <window_info anchor="bottom" id="Terminal" sideWeight="0.49785408" weight="0.32965517" />
-      <window_info anchor="bottom" id="Logcat" sideWeight="0.49785408" weight="0.49931034" />
+      <window_info active="true" anchor="bottom" id="Logcat" sideWeight="0.49785408" visible="true" weight="0.2662069" />
       <window_info id="Captures" order="2" weight="0.25" />
       <window_info id="Capture Tool" />
       <window_info id="Designer" />
@@ -361,7 +420,7 @@
       <window_info anchor="right" id="Gradle" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="right" id="Theme Preview" />
-      <window_info active="true" anchor="bottom" id="Debug" order="3" sideWeight="0.49713877" visible="true" weight="0.38344827" />
+      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.49713877" weight="0.38344827" />
       <window_info id="Favorites" side_tool="true" />
       <window_info anchor="right" id="Device File Explorer" side_tool="true" />
       <window_info anchor="bottom" id="Find" order="1" />
@@ -394,13 +453,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>444</line>
+          <line>450</line>
           <properties />
           <option name="timeStamp" value="9" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>446</line>
+          <line>452</line>
           <properties />
           <option name="timeStamp" value="10" />
         </line-breakpoint>
@@ -409,12 +468,6 @@
           <line>42</line>
           <properties />
           <option name="timeStamp" value="11" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>302</line>
-          <properties />
-          <option name="timeStamp" value="36" />
         </line-breakpoint>
       </breakpoints>
       <option name="time" value="37" />
@@ -425,13 +478,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="341">
           <caret line="67" column="25" selection-start-line="67" selection-start-column="25" selection-end-line="67" selection-end-column="25" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/CellularInformation.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="220">
-          <caret line="217" lean-forward="true" selection-start-line="217" selection-end-line="217" />
         </state>
       </provider>
     </entry>
@@ -472,8 +518,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="293">
-          <caret line="372" column="29" selection-start-line="372" selection-start-column="29" selection-end-line="372" selection-end-column="29" />
+        <state relative-caret-position="206">
+          <caret line="795" column="22" selection-start-line="795" selection-start-column="12" selection-end-line="795" selection-end-column="22" />
           <folding>
             <element signature="e#13651#13899#0" expanded="true" />
             <element signature="e#13898#13899#0" expanded="true" />
@@ -483,8 +529,25 @@
             <element signature="e#20791#20792#0" expanded="true" />
             <element signature="e#28394#29027#0" expanded="true" />
             <element signature="e#29026#29027#0" expanded="true" />
+            <element signature="e#29280#29565#0" expanded="true" />
+            <element signature="e#29368#29549#0" expanded="true" />
+            <element signature="e#29548#29549#0" expanded="true" />
+            <element signature="e#29564#29565#0" expanded="true" />
+            <element signature="e#30137#30138#0" expanded="true" />
+            <element signature="e#30170#30171#0" expanded="true" />
             <element signature="e#30805#31013#0" expanded="true" />
             <element signature="e#31012#31013#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/CellularInformation.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="104">
+          <caret line="56" column="8" selection-start-line="56" selection-start-column="8" selection-end-line="56" selection-end-column="8" />
+          <folding>
+            <element signature="e#1168#1169#0" expanded="true" />
+            <element signature="e#1206#1207#0" expanded="true" />
           </folding>
         </state>
       </provider>

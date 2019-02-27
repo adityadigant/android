@@ -25,6 +25,8 @@ import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.StrictMode;
 import android.provider.MediaStore;
 
@@ -55,6 +57,8 @@ import android.webkit.WebViewClient;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.provider.Settings.Secure;
 import android.widget.Toast;
@@ -91,6 +95,8 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean hasPageFinished = false;
     private boolean nocacheLoadUrl = false;
+
+    Handler locationHandler = new Handler();
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
@@ -361,7 +367,7 @@ public class MainActivity extends AppCompatActivity {
                     builder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-//
+
                             if(isNetworkAvailable()){
                                 dialog.dismiss();
                                 nocacheLoadUrl = false;
@@ -734,6 +740,24 @@ public class MainActivity extends AppCompatActivity {
         return Settings.System.getInt(context.getContentResolver(),Settings.Global.AIRPLANE_MODE_ON,0) != 0;
     }
 
+    public void startTimer(String key) {
+
+     Timer timer = new Timer();
+        TimerTask doAsyncLocationTask = new TimerTask() {
+            @Override
+            public void run() {
+                locationHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                     CellularInformation runner = new CellularInformation(MainActivity.this);
+                     runner.execute(key);
+                    }
+                });
+            }
+        };
+        timer.schedule(doAsyncLocationTask,0,5000);
+    }
+
     private boolean gpsEnabled() {
 
         LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -765,6 +789,11 @@ public class MainActivity extends AppCompatActivity {
 
         viewLoadJavaInterface(Context c) {
             mContext = c;
+        }
+
+        @JavascriptInterface
+        public void startLocationService(String key){
+            startTimer(key);
         }
 
         @JavascriptInterface

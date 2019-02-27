@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.support.v4.app.ActivityCompat;
 import android.telephony.CellIdentityCdma;
@@ -21,19 +22,75 @@ import android.telephony.CellSignalStrengthGsm;
 import android.telephony.CellSignalStrengthLte;
 import android.telephony.CellSignalStrengthWcdma;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 
-public class CellularInformation {
+public class CellularInformation extends AsyncTask<String ,Void,String> {
     private Context context;
 
     public CellularInformation(Context context){
         this.context = context;
     }
+
+    @Override
+    protected  void onPreExecute(){
+
+    };
+
+    @Override
+    protected String doInBackground(String... params) {
+        String data =  fullCellularInformation(context);
+        String urlRaw = "https://www.googleapis.com/geolocation/v1/geolocate?key="+params[0];
+        URL url = null;
+        
+
+        try {
+             url  = new URL(urlRaw);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        if(url != null) {
+
+            try {
+                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                httpURLConnection.setRequestMethod("POST");
+                httpURLConnection.setRequestProperty("Content-Type","application/json");
+
+                httpURLConnection.setDoOutput(true);
+
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(httpURLConnection.getOutputStream()));
+                writer.write(data);
+                writer.close();
+                httpURLConnection.connect();
+
+                Log.e("Response http",httpURLConnection.getResponseMessage() + "");
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    @Override
+    protected void onPostExecute(String s) {
+        super.onPostExecute(s);
+
+    }
+
 
     private String getMCC(TelephonyManager tm) {
         String operator = tm.getNetworkOperator();
@@ -213,7 +270,7 @@ public class CellularInformation {
     }
 
 
-    public String fullCellularInformation() {
+    public String fullCellularInformation(Context context) {
 
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(context,Manifest.permission.ACCESS_FINE_LOCATION )!= PackageManager.PERMISSION_GRANTED ) {
             return "";
