@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -591,6 +592,10 @@ public class MainActivity extends AppCompatActivity {
         if (!isNetworkAvailable()) { // loading offline
             webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         }
+        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
+            WebView.setWebContentsDebuggingEnabled(true);
+        }
+
 
         mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
         mWebView.requestFocus(View.FOCUS_DOWN);
