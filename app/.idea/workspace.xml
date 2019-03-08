@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="AndroidLogFilters">
-    <option name="TOOL_WINDOW_CUSTOM_FILTER" value="response" />
     <option name="TOOL_WINDOW_LOG_LEVEL" value="verbose" />
     <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="Show only selected application" />
   </component>
@@ -27,16 +26,15 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="MainActivity.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="MainActivity.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="291">
-              <caret line="755" column="32" lean-forward="true" selection-start-line="755" selection-start-column="32" selection-end-line="755" selection-end-column="32" />
+            <state relative-caret-position="154">
+              <caret line="799" selection-start-line="799" selection-end-line="799" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="e#30903#30904#0" expanded="true" />
                 <element signature="e#30939#30940#0" expanded="true" />
-                <element signature="e#31024#31025#0" expanded="true" />
                 <element signature="e#31063#31064#0" expanded="true" />
               </folding>
             </state>
@@ -58,11 +56,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="fetchCellularInAsync.java" pinned="false" current-in-tab="false">
+      <file leaf-file-name="fetchCellularInAsync.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/fetchCellularInAsync.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="372">
-              <caret line="35" selection-start-line="35" selection-end-line="35" />
+            <state relative-caret-position="409">
+              <caret line="32" column="48" selection-start-line="32" selection-start-column="48" selection-end-line="32" selection-end-column="48" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -126,10 +124,10 @@
         <option value="$PROJECT_DIR$/local.properties" />
         <option value="$PROJECT_DIR$/google-services.json" />
         <option value="$PROJECT_DIR$/src/main/assets/nocache.html" />
-        <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/fetchCellularInAsync.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MyAndroidFirebaseMsgService.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/CellularInformation.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/fetchCellularInAsync.java" />
       </list>
     </option>
   </component>
@@ -403,8 +401,8 @@
       <window_info anchor="bottom" id="Event Log" order="8" sideWeight="0.50214595" side_tool="true" weight="0.49931034" />
       <window_info anchor="bottom" id="Run" order="2" />
       <window_info anchor="bottom" id="Version Control" order="8" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Terminal" order="8" sideWeight="0.49785408" weight="0.32848486" />
-      <window_info anchor="bottom" id="Logcat" order="8" sideWeight="0.49785408" weight="0.49931034" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="8" sideWeight="0.49785408" visible="true" weight="0.32848486" />
+      <window_info anchor="bottom" id="Logcat" order="8" sideWeight="0.49785408" weight="0.49818182" />
       <window_info id="Captures" order="2" weight="0.25" />
       <window_info id="Capture Tool" order="4" />
       <window_info id="Designer" order="4" />
@@ -415,7 +413,7 @@
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="right" id="Device File Explorer" order="4" side_tool="true" />
       <window_info anchor="right" id="Theme Preview" order="4" />
-      <window_info active="true" anchor="bottom" id="Debug" order="3" sideWeight="0.49713877" visible="true" weight="0.3830303" />
+      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.49713877" weight="0.3830303" />
       <window_info id="Favorites" order="4" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info id="Build Variants" order="4" side_tool="true" />
@@ -498,20 +496,8 @@
           <properties />
           <option name="timeStamp" value="10" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/fetchCellularInAsync.java</url>
-          <line>32</line>
-          <properties />
-          <option name="timeStamp" value="57" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>799</line>
-          <properties />
-          <option name="timeStamp" value="58" />
-        </line-breakpoint>
       </breakpoints>
-      <option name="time" value="59" />
+      <option name="time" value="60" />
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
@@ -682,7 +668,6 @@
             <element signature="imports" expanded="true" />
             <element signature="e#30903#30904#0" expanded="true" />
             <element signature="e#30939#30940#0" expanded="true" />
-            <element signature="e#31024#31025#0" expanded="true" />
             <element signature="e#31063#31064#0" expanded="true" />
           </folding>
         </state>
@@ -738,7 +723,6 @@
             <element signature="imports" expanded="true" />
             <element signature="e#30903#30904#0" expanded="true" />
             <element signature="e#30939#30940#0" expanded="true" />
-            <element signature="e#31024#31025#0" expanded="true" />
             <element signature="e#31063#31064#0" expanded="true" />
           </folding>
         </state>
@@ -804,7 +788,6 @@
             <element signature="imports" expanded="true" />
             <element signature="e#30903#30904#0" expanded="true" />
             <element signature="e#30939#30940#0" expanded="true" />
-            <element signature="e#31024#31025#0" expanded="true" />
             <element signature="e#31063#31064#0" expanded="true" />
           </folding>
         </state>
@@ -890,26 +873,25 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/fetchCellularInAsync.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="372">
-          <caret line="35" selection-start-line="35" selection-end-line="35" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="291">
-          <caret line="755" column="32" lean-forward="true" selection-start-line="755" selection-start-column="32" selection-end-line="755" selection-end-column="32" />
+        <state relative-caret-position="154">
+          <caret line="799" selection-start-line="799" selection-end-line="799" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="e#30903#30904#0" expanded="true" />
             <element signature="e#30939#30940#0" expanded="true" />
-            <element signature="e#31024#31025#0" expanded="true" />
             <element signature="e#31063#31064#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/fetchCellularInAsync.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="409">
+          <caret line="32" column="48" selection-start-line="32" selection-start-column="48" selection-end-line="32" selection-end-column="48" />
+          <folding>
+            <element signature="imports" expanded="true" />
           </folding>
         </state>
       </provider>

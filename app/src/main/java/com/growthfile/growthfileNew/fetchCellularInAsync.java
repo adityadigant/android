@@ -30,6 +30,6 @@ public class fetchCellularInAsync extends AsyncTask<Void,Void,String> {
     protected void onPostExecute(String response) {
         super.onPostExecute(response);
         Log.d("response",response);
-        webView.loadUrl("javascript:manageLocation('"+response+"')");
+        webView.loadUrl("javascript:initLocation('"+response+"')");
     }
 }
