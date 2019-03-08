@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.support.v4.app.ActivityCompat;
 import android.telephony.CellIdentityCdma;
@@ -22,44 +21,28 @@ import android.telephony.CellSignalStrengthGsm;
 import android.telephony.CellSignalStrengthLte;
 import android.telephony.CellSignalStrengthWcdma;
 import android.telephony.TelephonyManager;
-import android.util.Log;
-import android.webkit.WebView;
-
-import com.google.android.gms.common.internal.Constants;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CellularInformation{
     private Context context;
 
-
     public CellularInformation(Context context){
         this.context = context;
-
     }
+
     private String getMCC(TelephonyManager tm) {
         String operator = tm.getNetworkOperator();
         return operator.substring(0, 3);
-    }
+    };
+
 
     private String getMNC(TelephonyManager tm) {
         String operator = tm.getNetworkOperator();
         return operator.substring(3);
     }
-
 
     private String getRadioType(TelephonyManager tm) {
         int networkType = tm.getNetworkType();

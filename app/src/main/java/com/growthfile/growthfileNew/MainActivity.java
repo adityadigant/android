@@ -739,7 +739,7 @@ public class MainActivity extends AppCompatActivity {
         return Settings.System.getInt(context.getContentResolver(),Settings.Global.AIRPLANE_MODE_ON,0) != 0;
     }
 
-    public void startTimer(Boolean run) {
+    public void startTimer(String run) {
 
         TimerTask doAsyncLocationTask = new TimerTask() {
             @Override
@@ -753,7 +753,7 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         };
-        if(run) {
+        if(run.equals("true")) {
             locationTimer.schedule(doAsyncLocationTask,0,5000);
         }
         else {
@@ -796,7 +796,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @JavascriptInterface
-        public void startLocationService(Boolean run){
+        public void startLocationService(String run){
             startTimer(run);
         }
 
