@@ -98,6 +98,7 @@ public class CellularInformation{
 
 
     private JSONArray getCelltowerInfo(int networkMcc, List<CellInfo> cellInfoList) throws JSONException {
+
         int mcc;
         int mnc;
         int lac;
@@ -129,8 +130,9 @@ public class CellularInformation{
                         mcc = Integer.parseInt(identityGsm.getMccString());
                         mnc = Integer.parseInt(identityGsm.getMncString());
                     }
-
                     array.put(createCellTowerObject(mcc, mnc, cid, lac, signalStrength));
+
+
                 }
             }
 
@@ -216,13 +218,14 @@ public class CellularInformation{
     }
 
 
-    public String fullCellularInformation() {
-
+    public String fullCellularInformation() throws JSONException {
+        MainActivity mainActivity;
+        mainActivity = new MainActivity();
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(context,Manifest.permission.ACCESS_FINE_LOCATION )!= PackageManager.PERMISSION_GRANTED ) {
             return "";
         }
         List<CellInfo> cellInfoList = null;
-        try {
+
 
             TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
             JSONObject json = new JSONObject();
@@ -239,7 +242,12 @@ public class CellularInformation{
                 cellInfoList = tm.getAllCellInfo();
 
                 if (cellInfoList != null) {
-                    json.put("cellTowers", getCelltowerInfo(mcc, cellInfoList));
+                    try {
+                        json.put("cellTowers", getCelltowerInfo(mcc, cellInfoList));
+                    }catch (JSONException e){
+                        mainActivity.androidException(e);
+                    }
+
                 }
             }
 
@@ -262,21 +270,23 @@ public class CellularInformation{
             List<ScanResult> wifiList = wifiManager.getScanResults();
 
             if (!wifiList.isEmpty()) {
-                json.put("wifiAccessPoints", getNearbyWifiAccessPoints(wifiList));
+                try {
+                    json.put("wifiAccessPoints", getNearbyWifiAccessPoints(wifiList));
+                }catch (JSONException e){
+                    mainActivity.androidException(e);
+                }
+
             }
             if(wifiList.isEmpty() && cellInfoList == null ) {
                 json.put("considerIp", "true");
             }
+
             else {
                 json.put("considerIp", "false");
             }
 
             return json.toString(4);
 
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return "";
-        }
     }
 
 }

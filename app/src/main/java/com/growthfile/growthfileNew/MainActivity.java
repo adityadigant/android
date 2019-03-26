@@ -14,7 +14,8 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-
+import java.io.StringWriter;
+import java.io.PrintWriter;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -90,8 +91,124 @@ public class MainActivity extends AppCompatActivity {
     private boolean hasPageFinished = false;
     private boolean nocacheLoadUrl = false;
 
-    Handler locationHandler = new Handler();
-    Timer locationTimer = new Timer();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        mWebView = (WebView) findViewById(R.id.activity_main_webview);
+        mContext = getApplicationContext();
+
+        WebSettings webSettings = this.mWebView.getSettings();
+        mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "AndroidInterface");
+
+        webSettings.setJavaScriptEnabled(true);
+        webSettings.setLoadWithOverviewMode(true);
+        webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NORMAL);
+        webSettings.setDomStorageEnabled(true);
+
+        webSettings.setAllowFileAccess(true);
+        webSettings.setGeolocationEnabled(true);
+
+        webSettings.setDatabaseEnabled(true);
+        webSettings.setUseWideViewPort(true);
+        webSettings.setAppCachePath(getApplicationContext().getCacheDir().getAbsolutePath());
+        webSettings.setAppCacheEnabled(true);
+        webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
+        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
+        mWebView.setScrollbarFadingEnabled(true);
+        mWebView.requestFocus(View.FOCUS_DOWN);
+        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+
+        StrictMode.setVmPolicy(builder.build());
+        setContentView(R.layout.activity_main);
+
+        getWindow().setFlags(
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+        new CertPin().execute();
+
+        if (!isNetworkAvailable()) { // loading offline
+            webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        }
+
+        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
+            WebView.setWebContentsDebuggingEnabled(true);
+        }
+
+
+
+        if (!checkDeviceOsCompatibility()) {
+            try {
+                showOsUncompatibleDialog();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        PackageManager pm = getApplicationContext().getPackageManager();
+        boolean isWebViewInstalled = isAndroidSystemWebViewInstalled("com.google.android.webview", pm);
+
+        if (!isWebViewInstalled) {
+            try {
+                createAlertBoxJson();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+
+
+        String[] PERMISSIONS = {
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+        };
+
+        if (!checkLocationPermission()) {
+            if(VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, LOCATION_PERMISSION_CODE);
+            }
+            else {
+                String title = "Location Permission Not Granted";
+                String message = "You have Not allowed Growthfile to use location permission. Grant Growthfile Location Permission, to continue";
+                showPermissionNotAllowedDialog(title,message,false);
+            }
+        } else {
+            mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
+            mWebView.setWebChromeClient(new WebChromeClient(){
+                @Override
+                public void onGeolocationPermissionsShowPrompt(final String origin,final GeolocationPermissions.Callback callback){
+                    callback.invoke(origin, true, false);
+                }
+            });
+            setWebViewClient();
+            swipeToRefresh = findViewById(R.id.swipeToRefresh);
+            swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+                @Override
+                public void onRefresh() {
+
+                    runRead();
+                }
+
+            });
+            swipeToRefresh.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
+                @Override
+                public void onScrollChanged() {
+                    if (mWebView.getScrollY() == 0) {
+                        swipeToRefresh.setEnabled(true);
+                    } else {
+                        swipeToRefresh.setEnabled(false);
+                    }
+                }
+            });
+
+//            LoadApp();
+        }
+    }
+
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
@@ -183,6 +300,7 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         Log.d("onStart","started");
 
+
     }
 
     @Override
@@ -222,79 +340,15 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(broadcastReceiver);
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Log.d("onCreate","started");
-        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
-
-        StrictMode.setVmPolicy(builder.build());
-        setContentView(R.layout.activity_main);
-
-        getWindow().setFlags(
-                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
-                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-
-        new CertPin().execute();
-
-
-
-        mContext = getApplicationContext();
-
-        if (!checkDeviceOsCompatibility()) {
-            try {
-                showOsUncompatibleDialog();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            return;
-        }
-
-        PackageManager pm = getApplicationContext().getPackageManager();
-        boolean isWebViewInstalled = isAndroidSystemWebViewInstalled("com.google.android.webview", pm);
-
-        if (!isWebViewInstalled) {
-            try {
-                createAlertBoxJson();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            return;
-        }
-
-
-        String[] PERMISSIONS = {
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-        };
-
-        if (!checkLocationPermission()) {
-            if(VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, LOCATION_PERMISSION_CODE);
-            }
-            else {
-                String title = "Location Permission Not Granted";
-                String message = "You have Not allowed Growthfile to use location permission. Grant Growthfile Location Permission, to continue";
-                showPermissionNotAllowedDialog(title,message,false);
-            }
-        } else {
-            LoadApp();
-
-
-        }
-    }
-
-
     public void runRead(){
 
-        mWebView.evaluateJavascript("javascript:requestCreator('Null')", null);
+        this.mWebView.evaluateJavascript("javascript:requestCreator('Null')", null);
 
         new Handler().postDelayed(new Runnable() {
             @Override public void run() {
                 if (swipeToRefresh.isRefreshing()) {
                     swipeToRefresh.setRefreshing(false);
                 }
-
             }
         }, 2000);
     }
@@ -350,6 +404,8 @@ public class MainActivity extends AppCompatActivity {
                                     mWebView.evaluateJavascript("native.setFCMToken('" + token + "')", null);
                                 }
                             });
+
+
                     if (getIntent().getExtras() != null) {
                         JSONObject fcmBody =  new JSONObject();
 
@@ -362,6 +418,7 @@ public class MainActivity extends AppCompatActivity {
                                 e.printStackTrace();
                             }
                         }
+
 
                         try {
                             Log.d("fcmBody",fcmBody.toString(4));
@@ -501,6 +558,7 @@ public class MainActivity extends AppCompatActivity {
                         fcmBody = intent.getStringExtra("fcmNotificationData");
                         mWebView.evaluateJavascript("runRead(" + fcmBody + ")", null);
                     } catch (Exception e) {
+                        androidException(e);
                         mWebView.evaluateJavascript("runRead()", null);
                     }
                 };
@@ -622,11 +680,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void LoadApp() {
 
-        this.mWebView = findViewById(R.id.activity_main_webview);
 
+        this.mWebView = findViewById(R.id.activity_main_webview);
         WebSettings webSettings = this.mWebView.getSettings();
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "AndroidInterface");
-
 
         webSettings.setJavaScriptEnabled(true);
         webSettings.setLoadWithOverviewMode(true);
@@ -645,25 +702,6 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
 
-        swipeToRefresh = findViewById(R.id.swipeToRefresh);
-        swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-
-                runRead();
-            }
-
-        });
-        swipeToRefresh.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
-            @Override
-            public void onScrollChanged() {
-                if (mWebView.getScrollY() == 0) {
-                    swipeToRefresh.setEnabled(true);
-                } else {
-                    swipeToRefresh.setEnabled(false);
-                }
-            }
-        });
 
         mWebView.setWebChromeClient(new WebChromeClient(){
             @Override
@@ -685,7 +723,14 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public static void divide(int a, int b)
+            throws ArithmeticException
+    {
 
+        int c = a / b;
+
+        System.out.println("Result:" + c);
+    }
     private void createAlertBoxJson() throws JSONException {
         String messageString = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
         String title = "App Incompatibility Issue";
@@ -849,6 +894,20 @@ public class MainActivity extends AppCompatActivity {
         return hasPermissions(MainActivity.this, PERMISSIONS);
     }
 
+    public void androidException(final Exception e) {
+
+        final StringWriter sw = new StringWriter();
+        final PrintWriter pw = new PrintWriter(sw, true);
+        e.printStackTrace(pw);
+        final String stack = sw.getBuffer().toString().replaceAll("\n", "");
+        Log.d("stack",stack);
+        if(mWebView != null) {
+            mWebView.loadUrl("javascript:jniException('"+e.getMessage()+"','"+stack+"')");
+
+        }
+    }
+
+
     private class viewLoadJavaInterface {
         Context mContext;
 
@@ -883,8 +942,20 @@ public class MainActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public String getCellularData() {
-            CellularInformation mCellularInformation = new CellularInformation(MainActivity.this);
-            return mCellularInformation.fullCellularInformation();
+
+                CellularInformation mCellularInformation = new CellularInformation(MainActivity.this);
+                try {
+                    return mCellularInformation.fullCellularInformation();
+                } catch (final JSONException e){
+                    mWebView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        androidException(e);
+                    }
+                });
+                    return "";
+                }
+
         }
 
         @JavascriptInterface
@@ -934,8 +1005,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         @JavascriptInterface
-        public String getDeviceId() throws JSONException {
-            JSONObject device = new JSONObject();
+        public String getDeviceId() throws Exception{
+
 
             String androidId = Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
             String deviceBrand = Build.MANUFACTURER;
@@ -943,15 +1014,30 @@ public class MainActivity extends AppCompatActivity {
             String osVersion = VERSION.RELEASE;
             String deviceBaseOs = "android";
 
-            device.put("id", androidId);
-            device.put("deviceBrand", deviceBrand);
-            device.put("deviceModel", deviceModel);
-            device.put("osVersion", osVersion);
+            JSONObject device = new JSONObject();
             device.put("baseOs", deviceBaseOs);
             device.put("appVersion", 7);
-            String deviceInfo = device.toString(4);
-            return deviceInfo;
-        }
+            try {
+
+                device.put("id", androidId);
+                device.put("deviceBrand", deviceBrand);
+                device.put("deviceModel", deviceModel);
+                device.put("osVersion", osVersion);
+                device.put("radioVersion",Build.getRadioVersion());
+
+                String deviceInfo = device.toString(4);
+                return deviceInfo;
+
+            } catch (final JSONException e) {
+                mWebView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        androidException(e);
+                    }
+                });
+                return device.toString(4);
+            }
+        };
 
         @JavascriptInterface
         public boolean isLocationPermissionGranted() {
@@ -979,11 +1065,13 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+        if(mWebView != null) {
 
-        if (mWebView.canGoBack()) {
-            mWebView.goBack(); // emulates back history
-        } else {
-            super.onBackPressed();
+            if (mWebView.canGoBack()) {
+                mWebView.goBack(); // emulates back history
+            } else {
+                super.onBackPressed();
+            }
         }
     }
 
