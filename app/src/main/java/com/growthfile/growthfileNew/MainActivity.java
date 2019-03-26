@@ -282,8 +282,21 @@ public class MainActivity extends AppCompatActivity {
 
 
         }
+    }
 
 
+    public void runRead(){
+
+        mWebView.evaluateJavascript("javascript:requestCreator('Null')", null);
+
+        new Handler().postDelayed(new Runnable() {
+            @Override public void run() {
+                if (swipeToRefresh.isRefreshing()) {
+                    swipeToRefresh.setRefreshing(false);
+                }
+
+            }
+        }, 2000);
     }
 
     public void showLocationModeChangeDialog() {
@@ -636,8 +649,8 @@ public class MainActivity extends AppCompatActivity {
         swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                swipeToRefresh.setRefreshing(true);
-                mWebView.evaluateJavascript("javascript:requestCreator('Null')", null);
+
+                runRead();
             }
 
         });
@@ -671,6 +684,7 @@ public class MainActivity extends AppCompatActivity {
         setWebViewClient();
 
     }
+
 
     private void createAlertBoxJson() throws JSONException {
         String messageString = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
@@ -880,19 +894,6 @@ public class MainActivity extends AppCompatActivity {
             return networkInfo != null && networkInfo.isConnected();
         }
 
-        @JavascriptInterface
-        public void startConversation(final String view) {
-            runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    if (view.equals("conversation") || view.equals("selector")) {
-                        Log.d(TAG, "run: yes");
-                        swipeToRefresh.setEnabled(false);
-                    }
-                }
-            });
-        }
 
         @JavascriptInterface
         public void openImagePicker() {

@@ -39,16 +39,20 @@
       <file leaf-file-name="MainActivity.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="68">
-              <caret line="932" column="6" selection-start-line="932" selection-start-column="6" selection-end-line="932" selection-end-column="6" />
+            <state relative-caret-position="311">
+              <caret line="298" column="12" selection-start-line="298" selection-start-column="12" selection-end-line="298" selection-end-column="12" />
               <folding>
                 <element signature="imports" expanded="true" />
-                <element signature="e#10679#10985#0" expanded="true" />
-                <element signature="e#10984#10985#0" expanded="true" />
-                <element signature="e#25064#25402#0" expanded="true" />
-                <element signature="e#25401#25402#0" expanded="true" />
-                <element signature="e#37318#37515#0" expanded="true" />
-                <element signature="e#37514#37515#0" expanded="true" />
+                <element signature="e#10101#10236#0" expanded="true" />
+                <element signature="e#10235#10236#0" expanded="true" />
+                <element signature="e#10978#11284#0" expanded="true" />
+                <element signature="e#11283#11284#0" expanded="true" />
+                <element signature="e#25369#25504#0" expanded="true" />
+                <element signature="e#25503#25504#0" expanded="true" />
+                <element signature="e#25601#25939#0" expanded="true" />
+                <element signature="e#25938#25939#0" expanded="true" />
+                <element signature="e#37541#37739#0" expanded="true" />
+                <element signature="e#37738#37739#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -77,15 +81,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>broadcastre</find>
-      <find>PROVIDERS_CHANGED_ACTION</find>
-      <find>broadcas</find>
-      <find>networkPro</find>
-      <find>onResimse</find>
-      <find>showLocat</find>
-      <find>onPause</find>
-      <find>onDes</find>
-      <find>onResim</find>
       <find>providers</find>
       <find>register</find>
       <find>unregister</find>
@@ -101,12 +96,21 @@
       <find>getStrin</find>
       <find>testing</find>
       <find>fcmBody</find>
-      <find>runRead</find>
       <find>registerMyReceiver</find>
       <find>fcm</find>
       <find>fcmNotificationData</find>
       <find>stopRefreshing</find>
       <find>swipeToRefresh</find>
+      <find>stopR</find>
+      <find>deviceId</find>
+      <find>@Over</find>
+      <find>swipeRe</find>
+      <find>onR</find>
+      <find>onRefresh</find>
+      <find>runRead</find>
+      <find>runRead()</find>
+      <find>startConver</find>
+      <find>runRead(</find>
     </findStrings>
   </component>
   <component name="GenerateSignedApkSettings">
@@ -2682,7 +2686,7 @@
       <window_info anchor="bottom" id="Event Log" order="8" sideWeight="0.50214595" side_tool="true" weight="0.49931034" />
       <window_info anchor="bottom" id="Run" order="2" />
       <window_info anchor="bottom" id="Version Control" order="8" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Terminal" order="8" sideWeight="0.49785408" weight="0.32965517" />
+      <window_info anchor="bottom" id="Terminal" order="8" sideWeight="0.49785408" weight="0.3292011" />
       <window_info active="true" anchor="bottom" id="Logcat" order="8" sideWeight="0.49785408" visible="true" weight="0.40082645" />
       <window_info id="Captures" order="2" weight="0.25" />
       <window_info id="Capture Tool" order="4" />
@@ -2746,36 +2750,36 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>513</line>
+          <line>526</line>
           <properties />
           <option name="timeStamp" value="158" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>354</line>
+          <line>367</line>
           <properties />
           <option name="timeStamp" value="202" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>353</line>
+          <line>366</line>
           <properties />
           <option name="timeStamp" value="203" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>966</line>
+          <line>967</line>
           <properties />
           <option name="timeStamp" value="205" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>972</line>
+          <line>973</line>
           <properties />
           <option name="timeStamp" value="206" />
         </line-breakpoint>
       </breakpoints>
-      <option name="time" value="207" />
+      <option name="time" value="208" />
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
@@ -2905,12 +2909,16 @@
           <caret line="217" lean-forward="true" selection-start-line="217" selection-end-line="217" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#10679#10985#0" expanded="true" />
-            <element signature="e#10984#10985#0" expanded="true" />
-            <element signature="e#25064#25402#0" expanded="true" />
-            <element signature="e#25401#25402#0" expanded="true" />
-            <element signature="e#37318#37515#0" expanded="true" />
-            <element signature="e#37514#37515#0" expanded="true" />
+            <element signature="e#10101#10236#0" expanded="true" />
+            <element signature="e#10235#10236#0" expanded="true" />
+            <element signature="e#10978#11284#0" expanded="true" />
+            <element signature="e#11283#11284#0" expanded="true" />
+            <element signature="e#25369#25504#0" expanded="true" />
+            <element signature="e#25503#25504#0" expanded="true" />
+            <element signature="e#25601#25939#0" expanded="true" />
+            <element signature="e#25938#25939#0" expanded="true" />
+            <element signature="e#37541#37739#0" expanded="true" />
+            <element signature="e#37738#37739#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -2963,12 +2971,16 @@
           <caret line="795" column="22" selection-start-line="795" selection-start-column="12" selection-end-line="795" selection-end-column="22" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#10679#10985#0" expanded="true" />
-            <element signature="e#10984#10985#0" expanded="true" />
-            <element signature="e#25064#25402#0" expanded="true" />
-            <element signature="e#25401#25402#0" expanded="true" />
-            <element signature="e#37318#37515#0" expanded="true" />
-            <element signature="e#37514#37515#0" expanded="true" />
+            <element signature="e#10101#10236#0" expanded="true" />
+            <element signature="e#10235#10236#0" expanded="true" />
+            <element signature="e#10978#11284#0" expanded="true" />
+            <element signature="e#11283#11284#0" expanded="true" />
+            <element signature="e#25369#25504#0" expanded="true" />
+            <element signature="e#25503#25504#0" expanded="true" />
+            <element signature="e#25601#25939#0" expanded="true" />
+            <element signature="e#25938#25939#0" expanded="true" />
+            <element signature="e#37541#37739#0" expanded="true" />
+            <element signature="e#37738#37739#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -3028,12 +3040,16 @@
           <caret line="611" column="50" lean-forward="true" selection-start-line="611" selection-start-column="50" selection-end-line="611" selection-end-column="50" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#10679#10985#0" expanded="true" />
-            <element signature="e#10984#10985#0" expanded="true" />
-            <element signature="e#25064#25402#0" expanded="true" />
-            <element signature="e#25401#25402#0" expanded="true" />
-            <element signature="e#37318#37515#0" expanded="true" />
-            <element signature="e#37514#37515#0" expanded="true" />
+            <element signature="e#10101#10236#0" expanded="true" />
+            <element signature="e#10235#10236#0" expanded="true" />
+            <element signature="e#10978#11284#0" expanded="true" />
+            <element signature="e#11283#11284#0" expanded="true" />
+            <element signature="e#25369#25504#0" expanded="true" />
+            <element signature="e#25503#25504#0" expanded="true" />
+            <element signature="e#25601#25939#0" expanded="true" />
+            <element signature="e#25938#25939#0" expanded="true" />
+            <element signature="e#37541#37739#0" expanded="true" />
+            <element signature="e#37738#37739#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -3136,16 +3152,20 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="68">
-          <caret line="932" column="6" selection-start-line="932" selection-start-column="6" selection-end-line="932" selection-end-column="6" />
+        <state relative-caret-position="311">
+          <caret line="298" column="12" selection-start-line="298" selection-start-column="12" selection-end-line="298" selection-end-column="12" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#10679#10985#0" expanded="true" />
-            <element signature="e#10984#10985#0" expanded="true" />
-            <element signature="e#25064#25402#0" expanded="true" />
-            <element signature="e#25401#25402#0" expanded="true" />
-            <element signature="e#37318#37515#0" expanded="true" />
-            <element signature="e#37514#37515#0" expanded="true" />
+            <element signature="e#10101#10236#0" expanded="true" />
+            <element signature="e#10235#10236#0" expanded="true" />
+            <element signature="e#10978#11284#0" expanded="true" />
+            <element signature="e#11283#11284#0" expanded="true" />
+            <element signature="e#25369#25504#0" expanded="true" />
+            <element signature="e#25503#25504#0" expanded="true" />
+            <element signature="e#25601#25939#0" expanded="true" />
+            <element signature="e#25938#25939#0" expanded="true" />
+            <element signature="e#37541#37739#0" expanded="true" />
+            <element signature="e#37738#37739#0" expanded="true" />
           </folding>
         </state>
       </provider>
