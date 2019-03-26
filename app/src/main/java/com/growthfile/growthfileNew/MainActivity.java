@@ -14,8 +14,10 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+
 import java.io.StringWriter;
 import java.io.PrintWriter;
+
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -95,30 +97,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        mWebView = (WebView) findViewById(R.id.activity_main_webview);
-        mContext = getApplicationContext();
-
-        WebSettings webSettings = this.mWebView.getSettings();
-        mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "AndroidInterface");
-
-        webSettings.setJavaScriptEnabled(true);
-        webSettings.setLoadWithOverviewMode(true);
-        webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NORMAL);
-        webSettings.setDomStorageEnabled(true);
-
-        webSettings.setAllowFileAccess(true);
-        webSettings.setGeolocationEnabled(true);
-
-        webSettings.setDatabaseEnabled(true);
-        webSettings.setUseWideViewPort(true);
-        webSettings.setAppCachePath(getApplicationContext().getCacheDir().getAbsolutePath());
-        webSettings.setAppCacheEnabled(true);
-        webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
-        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
-        mWebView.setScrollbarFadingEnabled(true);
-        mWebView.requestFocus(View.FOCUS_DOWN);
+        Log.d("onCreate", "started");
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
 
         StrictMode.setVmPolicy(builder.build());
@@ -127,17 +106,31 @@ public class MainActivity extends AppCompatActivity {
         getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+
         new CertPin().execute();
 
-        if (!isNetworkAvailable()) { // loading offline
-            webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
-        }
-
-        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
-            WebView.setWebContentsDebuggingEnabled(true);
-        }
 
 
+        mContext = getApplicationContext();
+        swipeToRefresh = findViewById(R.id.swipeToRefresh);
+        swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+
+                runRead();
+            }
+
+        });
+        swipeToRefresh.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
+            @Override
+            public void onScrollChanged() {
+                if (mWebView.getScrollY() == 0) {
+                    swipeToRefresh.setEnabled(true);
+                } else {
+                    swipeToRefresh.setEnabled(false);
+                }
+            }
+        });
 
         if (!checkDeviceOsCompatibility()) {
             try {
@@ -167,44 +160,15 @@ public class MainActivity extends AppCompatActivity {
         };
 
         if (!checkLocationPermission()) {
-            if(VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, LOCATION_PERMISSION_CODE);
-            }
-            else {
+            } else {
                 String title = "Location Permission Not Granted";
                 String message = "You have Not allowed Growthfile to use location permission. Grant Growthfile Location Permission, to continue";
-                showPermissionNotAllowedDialog(title,message,false);
+                showPermissionNotAllowedDialog(title, message, false);
             }
         } else {
-            mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
-            mWebView.setWebChromeClient(new WebChromeClient(){
-                @Override
-                public void onGeolocationPermissionsShowPrompt(final String origin,final GeolocationPermissions.Callback callback){
-                    callback.invoke(origin, true, false);
-                }
-            });
-            setWebViewClient();
-            swipeToRefresh = findViewById(R.id.swipeToRefresh);
-            swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-                @Override
-                public void onRefresh() {
-
-                    runRead();
-                }
-
-            });
-            swipeToRefresh.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
-                @Override
-                public void onScrollChanged() {
-                    if (mWebView.getScrollY() == 0) {
-                        swipeToRefresh.setEnabled(true);
-                    } else {
-                        swipeToRefresh.setEnabled(false);
-                    }
-                }
-            });
-
-//            LoadApp();
+            LoadApp();
         }
     }
 
@@ -287,7 +251,7 @@ public class MainActivity extends AppCompatActivity {
                     String message = "You have Not allowed Growthfile to use location permission. Grant Growthfile Location Permission, to continue";
                     boolean cancelable = false;
 
-                    showPermissionNotAllowedDialog(title,message,cancelable);
+                    showPermissionNotAllowedDialog(title, message, cancelable);
                 } else {
                     LoadApp();
                 }
@@ -298,7 +262,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        Log.d("onStart","started");
+        Log.d("onStart", "started");
 
 
     }
@@ -308,8 +272,9 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         registerMyReceiver();
 
-        Log.d("onReumse","resume");
-        if(checkLocationPermission()) {
+
+        Log.d("onReumse", "resume");
+        if (checkLocationPermission()) {
             try {
                 String script = "try { runRead() }catch(e){}";
                 mWebView.evaluateJavascript(script, null);
@@ -318,34 +283,38 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        if(!networkProviderEnabled()) {
+        if (!networkProviderEnabled()) {
             showLocationModeChangeDialog();
         }
-
 
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+
+    }
+    @Override
+    protected void  onDestroy(){
+        super.onDestroy();
         swipeToRefresh.getViewTreeObserver().removeOnScrollChangedListener(mOnScrollChangedListener);
     }
-
 
     @Override
     protected void onPause() {
         super.onPause();
-        mWebView = null;
+
         // make sure to unregister your receiver after finishing of this activity
         unregisterReceiver(broadcastReceiver);
     }
 
-    public void runRead(){
+    public void runRead() {
 
         this.mWebView.evaluateJavascript("javascript:requestCreator('Null')", null);
 
         new Handler().postDelayed(new Runnable() {
-            @Override public void run() {
+            @Override
+            public void run() {
                 if (swipeToRefresh.isRefreshing()) {
                     swipeToRefresh.setRefreshing(false);
                 }
@@ -354,12 +323,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void showLocationModeChangeDialog() {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this,R.style.Theme_AppCompat_Dialog_Alert);
-        if(VERSION.SDK_INT >= Build.VERSION_CODES.P){
+        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, R.style.Theme_AppCompat_Dialog_Alert);
+        if (VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             builder.setTitle("Location Service Not Enabled");
             builder.setMessage("Growthfile requires Location Access. Click go to settings, To enable Location Services");
-        }
-        else {
+        } else {
             builder.setTitle("Location Mode Not Set");
             builder.setMessage("Growthfile requires Location Access. Click go to settings, to set location mode to high accuracy.");
         }
@@ -374,10 +342,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         AlertDialog dialog = builder.create();
-        Log.d("isShowing","value "+ dialog.isShowing());
-            dialog.dismiss();
-            dialog.cancel();
-            dialog.show();
+        Log.d("isShowing", "value " + dialog.isShowing());
+        dialog.dismiss();
+        dialog.cancel();
+        dialog.show();
     }
 
     private void setWebViewClient() {
@@ -385,11 +353,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                if(nocacheLoadUrl) return;
+                if (nocacheLoadUrl) return;
 
                 if (!hasPageFinished) {
                     Log.d("onPageFinished", "true");
-                    mWebView.evaluateJavascript("native.setName('Android')",null);
+                    mWebView.evaluateJavascript("native.setName('Android')", null);
                     hasPageFinished = true;
                     FirebaseInstanceId.getInstance().getInstanceId()
                             .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
@@ -407,13 +375,13 @@ public class MainActivity extends AppCompatActivity {
 
 
                     if (getIntent().getExtras() != null) {
-                        JSONObject fcmBody =  new JSONObject();
+                        JSONObject fcmBody = new JSONObject();
 
                         for (String key : getIntent().getExtras().keySet()) {
                             Object value = getIntent().getExtras().get(key);
 
                             try {
-                                fcmBody.put(key,value);
+                                fcmBody.put(key, value);
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
@@ -421,11 +389,11 @@ public class MainActivity extends AppCompatActivity {
 
 
                         try {
-                            Log.d("fcmBody",fcmBody.toString(4));
-                            mWebView.evaluateJavascript("runRead(" + fcmBody.toString(4) + ")",null);
+                            Log.d("fcmBody", fcmBody.toString(4));
+                            mWebView.evaluateJavascript("runRead(" + fcmBody.toString(4) + ")", null);
 
                         } catch (JSONException e) {
-                            e.printStackTrace();
+                           androidException(e);
                         }
                     }
                 }
@@ -448,7 +416,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
 
-
             @RequiresApi(Build.VERSION_CODES.N)
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -458,13 +425,13 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onReceivedError(WebView webView, int errorCode,String description,String failingUrl){
+            public void onReceivedError(WebView webView, int errorCode, String description, String failingUrl) {
 
-                if(errorCode == -2) {
+                if (errorCode == -2) {
                     nocacheLoadUrl = true;
                     webView.loadUrl("file:///android_asset/nocache.html");
 
-                    final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this,android.R.style.Theme_Material_Dialog_Alert);
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_Material_Dialog_Alert);
                     builder.setTitle("No Internet Connection");
                     builder.setMessage("Check your mobile data or Wi-Fi Connection");
                     builder.setCancelable(false);
@@ -473,12 +440,11 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
 
-                            if(isNetworkAvailable()){
+                            if (isNetworkAvailable()) {
                                 dialog.dismiss();
                                 nocacheLoadUrl = false;
                                 LoadApp();
-                            }
-                            else {
+                            } else {
                                 builder.setTitle("Try Again");
                                 builder.show();
                             }
@@ -552,7 +518,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.d("broadcastReceiver", "taken");
-                if(intent.getAction().equals(BROADCAST_ACTION)) {
+                if (intent.getAction().equals(BROADCAST_ACTION)) {
                     String fcmBody;
                     try {
                         fcmBody = intent.getStringExtra("fcmNotificationData");
@@ -561,28 +527,28 @@ public class MainActivity extends AppCompatActivity {
                         androidException(e);
                         mWebView.evaluateJavascript("runRead()", null);
                     }
-                };
+                }
 
-                if(intent.getAction().equals(Intent.ACTION_AIRPLANE_MODE_CHANGED)) {
+
+                if (intent.getAction().equals(Intent.ACTION_AIRPLANE_MODE_CHANGED)) {
                     boolean isOn = isAirplaneModeOn(context);
-                    if(isOn){
+                    if (isOn) {
                         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                         builder.setMessage("Please turn off airplane mode");
                         builder.setCancelable(false);
                         airplaneDialog = builder.create();
                         airplaneDialog.show();
-                    }
-                    else {
-                        if(airplaneDialog != null) {
+                    } else {
+                        if (airplaneDialog != null) {
                             airplaneDialog.hide();
                         }
                     }
 
                 }
-                if(intent.getAction().equals(LocationManager.PROVIDERS_CHANGED_ACTION)) {
+                if (intent.getAction().equals(LocationManager.PROVIDERS_CHANGED_ACTION)) {
                     boolean networkProviderAvailable = networkProviderEnabled();
 
-                    if(!networkProviderAvailable) {
+                    if (!networkProviderAvailable) {
                         showLocationModeChangeDialog();
                     }
 
@@ -590,7 +556,7 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         registerReceiver(broadcastReceiver, intentFilter);
-        registerReceiver(broadcastReceiver,providerChangeIntent);
+        registerReceiver(broadcastReceiver, providerChangeIntent);
     }
 
     private void createProfileIntent() {
@@ -617,35 +583,33 @@ public class MainActivity extends AppCompatActivity {
                             case 0:
 
 
-
                                 if (!hasPermissions(MainActivity.this, PERMISSIONS_PHOTO_CAMERA)) {
 
-                                  if(VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                      ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_PHOTO_CAMERA, PHOTO_CAMERA_REQUEST);
-                                  }
-                                  else {
-                                      String title ="Storage and Camera Permission";
-                                      String message = "Allow Storage and Camera Permission to get Picture";
-                                      showPermissionNotAllowedDialog(title,message,true);
-                                  }
+                                    if (VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                        ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_PHOTO_CAMERA, PHOTO_CAMERA_REQUEST);
+                                    } else {
+                                        String title = "Storage and Camera Permission";
+                                        String message = "Allow Storage and Camera Permission to get Picture";
+                                        showPermissionNotAllowedDialog(title, message, true);
+                                    }
                                 } else {
                                     try {
                                         startActivityForResult(photoCameraIntent(), PHOTO_CAMERA_REQUEST);
                                     } catch (IOException e) {
-                                        e.printStackTrace();
+
+                                        androidException(e);
                                     }
                                 }
 
                                 break;
                             case 1:
                                 if (!hasPermissions(MainActivity.this, PERMISSIONS_PHOTO_GALLERY)) {
-                                    if(VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                    if (VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                         ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_PHOTO_GALLERY, PHOTO_GALLERY_REQUEST);
-                                    }
-                                    else {
-                                        String title ="Storage and Camera Permission";
+                                    } else {
+                                        String title = "Storage and Camera Permission";
                                         String message = "Allow Storage and Camera Permission to get Picture";
-                                        showPermissionNotAllowedDialog(title,message,true);
+                                        showPermissionNotAllowedDialog(title, message, true);
                                     }
                                 } else {
                                     startActivityForResult(photoGalleryIntent(), PHOTO_GALLERY_REQUEST);
@@ -703,9 +667,9 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollbarFadingEnabled(true);
 
 
-        mWebView.setWebChromeClient(new WebChromeClient(){
+        mWebView.setWebChromeClient(new WebChromeClient() {
             @Override
-            public void onGeolocationPermissionsShowPrompt(final String origin,final GeolocationPermissions.Callback callback){
+            public void onGeolocationPermissionsShowPrompt(final String origin, final GeolocationPermissions.Callback callback) {
                 callback.invoke(origin, true, false);
             }
         });
@@ -724,13 +688,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public static void divide(int a, int b)
-            throws ArithmeticException
-    {
+            throws ArithmeticException {
 
         int c = a / b;
 
         System.out.println("Result:" + c);
     }
+
     private void createAlertBoxJson() throws JSONException {
         String messageString = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
         String title = "App Incompatibility Issue";
@@ -760,7 +724,7 @@ public class MainActivity extends AppCompatActivity {
         alertBox(MainActivity.this, jsonString);
     }
 
-    private void showPermissionNotAllowedDialog(String title,String message,boolean cancelable){
+    private void showPermissionNotAllowedDialog(String title, String message, boolean cancelable) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_Material_Light_Dialog_Alert);
         builder.setTitle(title);
         builder.setMessage(message);
@@ -863,17 +827,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public static boolean isAirplaneModeOn(Context context) {
-        return Settings.System.getInt(context.getContentResolver(),Settings.Global.AIRPLANE_MODE_ON,0) != 0;
+        return Settings.System.getInt(context.getContentResolver(), Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
     }
 
     private boolean networkProviderEnabled() {
 
         LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
         assert service != null;
-        if(VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        if (VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             return service.isLocationEnabled();
         }
-        return  service.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        return service.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
     }
 
@@ -900,11 +864,10 @@ public class MainActivity extends AppCompatActivity {
         final PrintWriter pw = new PrintWriter(sw, true);
         e.printStackTrace(pw);
         final String stack = sw.getBuffer().toString().replaceAll("\n", "");
-        Log.d("stack",stack);
-        if(mWebView != null) {
-            mWebView.loadUrl("javascript:jniException('"+e.getMessage()+"','"+stack+"')");
-
-        }
+        Log.d("stack", stack);
+            if(mWebView != null ){
+                mWebView.loadUrl("javascript:jniException('" + e.getMessage() + "','" + stack + "')");
+            }
     }
 
 
@@ -934,27 +897,32 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void updateApp(String dialogData) {
             try {
-                alertBox(MainActivity.this,dialogData);
-            } catch (JSONException e) {
-                e.printStackTrace();
+                alertBox(MainActivity.this, dialogData);
+            } catch (final JSONException e) {
+                mWebView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        androidException(e);
+                    }
+                });
             }
         }
 
         @JavascriptInterface
         public String getCellularData() {
 
-                CellularInformation mCellularInformation = new CellularInformation(MainActivity.this);
-                try {
-                    return mCellularInformation.fullCellularInformation();
-                } catch (final JSONException e){
-                    mWebView.post(new Runnable() {
+            CellularInformation mCellularInformation = new CellularInformation(MainActivity.this);
+            try {
+                return mCellularInformation.fullCellularInformation();
+            } catch (final JSONException e) {
+                mWebView.post(new Runnable() {
                     @Override
                     public void run() {
                         androidException(e);
                     }
                 });
-                    return "";
-                }
+                return "";
+            }
 
         }
 
@@ -982,30 +950,33 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
             };
 
-                if (!hasPermissions(MainActivity.this, PERMISSIONS_CAMERA)) {
-                    if (VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_CAMERA, CAMERA_ONLY_REQUEST);
-                    }
-                    else {
-                        String title ="Storage and Camera Permission";
-                        String message = "Allow Storage and Camera Permission to get Picture";
-                        showPermissionNotAllowedDialog(title,message,true);
-                    }
-
+            if (!hasPermissions(MainActivity.this, PERMISSIONS_CAMERA)) {
+                if (VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_CAMERA, CAMERA_ONLY_REQUEST);
                 } else {
-                    try {
-                        startActivityForResult(photoCameraIntent(), CAMERA_ONLY_REQUEST);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        createIntentForCameraOnly();
-                    }
+                    String title = "Storage and Camera Permission";
+                    String message = "Allow Storage and Camera Permission to get Picture";
+                    showPermissionNotAllowedDialog(title, message, true);
                 }
+
+            } else {
+                try {
+                    startActivityForResult(photoCameraIntent(), CAMERA_ONLY_REQUEST);
+                } catch (final IOException e) {
+                    mWebView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            androidException(e);
+                        }
+                    });
+                    createIntentForCameraOnly();
+                }
+            }
         }
 
 
-
         @JavascriptInterface
-        public String getDeviceId() throws Exception{
+        public String getDeviceId() throws Exception {
 
 
             String androidId = Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
@@ -1023,7 +994,7 @@ public class MainActivity extends AppCompatActivity {
                 device.put("deviceBrand", deviceBrand);
                 device.put("deviceModel", deviceModel);
                 device.put("osVersion", osVersion);
-                device.put("radioVersion",Build.getRadioVersion());
+                device.put("radioVersion", Build.getRadioVersion());
 
                 String deviceInfo = device.toString(4);
                 return deviceInfo;
@@ -1037,7 +1008,9 @@ public class MainActivity extends AppCompatActivity {
                 });
                 return device.toString(4);
             }
-        };
+        }
+
+        ;
 
         @JavascriptInterface
         public boolean isLocationPermissionGranted() {
@@ -1055,24 +1028,27 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                 });
-            }catch(Exception e) {
-                e.printStackTrace();
-                Log.d("exception ", e.getMessage());
-
+            } catch (final Exception e) {
+                mWebView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        androidException(e);
+                    }
+                });
             }
         }
     }
 
     @Override
     public void onBackPressed() {
-        if(mWebView != null) {
 
-            if (mWebView.canGoBack()) {
-                mWebView.goBack(); // emulates back history
-            } else {
-                super.onBackPressed();
-            }
+
+        if (mWebView.canGoBack()) {
+            mWebView.goBack(); // emulates back history
+        } else {
+            super.onBackPressed();
         }
+
     }
 
 }
