@@ -188,6 +188,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        registerMyReceiver();
+
+        Log.d("onReumse","resume");
         if(checkLocationPermission()) {
             try {
                 String script = "try { runRead() }catch(e){}";
@@ -197,16 +200,11 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        swipeToRefresh.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
-            @Override
-            public void onScrollChanged() {
-                if (mWebView.getScrollY() == 0) {
-                    swipeToRefresh.setEnabled(true);
-                } else {
-                    swipeToRefresh.setEnabled(false);
-                }
-            }
-        });
+        if(!networkProviderEnabled()) {
+            showLocationModeChangeDialog();
+        }
+
+
     }
 
     @Override
@@ -217,8 +215,8 @@ public class MainActivity extends AppCompatActivity {
 
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    protected void onPause() {
+        super.onPause();
         mWebView = null;
         // make sure to unregister your receiver after finishing of this activity
         unregisterReceiver(broadcastReceiver);
@@ -239,18 +237,10 @@ public class MainActivity extends AppCompatActivity {
 
         new CertPin().execute();
 
-        registerMyReceiver();
+
 
         mContext = getApplicationContext();
-        swipeToRefresh = findViewById(R.id.swipeToRefresh);
-        swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                swipeToRefresh.setRefreshing(true);
-                mWebView.evaluateJavascript("javascript:requestCreator('Null')", null);
-            }
 
-        });
         if (!checkDeviceOsCompatibility()) {
             try {
                 showOsUncompatibleDialog();
@@ -289,10 +279,39 @@ public class MainActivity extends AppCompatActivity {
             }
         } else {
             LoadApp();
+
+
         }
+
 
     }
 
+    public void showLocationModeChangeDialog() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this,R.style.Theme_AppCompat_Dialog_Alert);
+        if(VERSION.SDK_INT >= Build.VERSION_CODES.P){
+            builder.setTitle("Location Service Not Enabled");
+            builder.setMessage("Growthfile requires Location Access. Click go to settings, To enable Location Services");
+        }
+        else {
+            builder.setTitle("Location Mode Not Set");
+            builder.setMessage("Growthfile requires Location Access. Click go to settings, to set location mode to high accuracy.");
+        }
+
+        builder.setCancelable(false);
+        builder.setPositiveButton("Go To Settings", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                dialog.dismiss();
+                dialog.cancel();
+            }
+        });
+        AlertDialog dialog = builder.create();
+        Log.d("isShowing","value "+ dialog.isShowing());
+            dialog.dismiss();
+            dialog.cancel();
+            dialog.show();
+    }
 
     private void setWebViewClient() {
         mWebView.setWebViewClient(new WebViewClient() {
@@ -318,6 +337,27 @@ public class MainActivity extends AppCompatActivity {
                                     mWebView.evaluateJavascript("native.setFCMToken('" + token + "')", null);
                                 }
                             });
+                    if (getIntent().getExtras() != null) {
+                        JSONObject fcmBody =  new JSONObject();
+
+                        for (String key : getIntent().getExtras().keySet()) {
+                            Object value = getIntent().getExtras().get(key);
+
+                            try {
+                                fcmBody.put(key,value);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        try {
+                            Log.d("fcmBody",fcmBody.toString(4));
+                            mWebView.evaluateJavascript("runRead(" + fcmBody.toString(4) + ")",null);
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             }
 
@@ -434,6 +474,9 @@ public class MainActivity extends AppCompatActivity {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BROADCAST_ACTION);
         intentFilter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+        IntentFilter providerChangeIntent = new IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION);
+
+        providerChangeIntent.addAction(Intent.ACTION_PROVIDER_CHANGED);
 
         broadcastReceiver = new BroadcastReceiver() {
             @Override
@@ -442,12 +485,13 @@ public class MainActivity extends AppCompatActivity {
                 if(intent.getAction().equals(BROADCAST_ACTION)) {
                     String fcmBody;
                     try {
-                        fcmBody = intent.getStringExtra("fcmNotifioncationData");
+                        fcmBody = intent.getStringExtra("fcmNotificationData");
                         mWebView.evaluateJavascript("runRead(" + fcmBody + ")", null);
                     } catch (Exception e) {
                         mWebView.evaluateJavascript("runRead()", null);
                     }
-                }
+                };
+
                 if(intent.getAction().equals(Intent.ACTION_AIRPLANE_MODE_CHANGED)) {
                     boolean isOn = isAirplaneModeOn(context);
                     if(isOn){
@@ -464,10 +508,18 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                 }
+                if(intent.getAction().equals(LocationManager.PROVIDERS_CHANGED_ACTION)) {
+                    boolean networkProviderAvailable = networkProviderEnabled();
 
+                    if(!networkProviderAvailable) {
+                        showLocationModeChangeDialog();
+                    }
+
+                }
             }
         };
         registerReceiver(broadcastReceiver, intentFilter);
+        registerReceiver(broadcastReceiver,providerChangeIntent);
     }
 
     private void createProfileIntent() {
@@ -580,26 +632,44 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
 
+        swipeToRefresh = findViewById(R.id.swipeToRefresh);
+        swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                swipeToRefresh.setRefreshing(true);
+                mWebView.evaluateJavascript("javascript:requestCreator('Null')", null);
+            }
+
+        });
+        swipeToRefresh.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
+            @Override
+            public void onScrollChanged() {
+                if (mWebView.getScrollY() == 0) {
+                    swipeToRefresh.setEnabled(true);
+                } else {
+                    swipeToRefresh.setEnabled(false);
+                }
+            }
+        });
+
         mWebView.setWebChromeClient(new WebChromeClient(){
             @Override
             public void onGeolocationPermissionsShowPrompt(final String origin,final GeolocationPermissions.Callback callback){
-                if(origin.equals("https://growthfile-testing.firebaseapp.com/")) {
-                    callback.invoke(origin, true, false);
-                }
+                callback.invoke(origin, true, false);
             }
         });
 
         if (!isNetworkAvailable()) { // loading offline
             webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         }
+
         if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
             WebView.setWebContentsDebuggingEnabled(true);
         }
-
-
         mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
         mWebView.requestFocus(View.FOCUS_DOWN);
         setWebViewClient();
+
     }
 
     private void createAlertBoxJson() throws JSONException {
@@ -677,11 +747,9 @@ public class MainActivity extends AppCompatActivity {
             } catch (PackageManager.NameNotFoundException e) {
                 return false;
             }
-
         } else {
             return true;
         }
-
 
     }
 
@@ -739,35 +807,14 @@ public class MainActivity extends AppCompatActivity {
         return Settings.System.getInt(context.getContentResolver(),Settings.Global.AIRPLANE_MODE_ON,0) != 0;
     }
 
-    public void startTimer(String run) {
-
-        TimerTask doAsyncLocationTask = new TimerTask() {
-            @Override
-            public void run() {
-                locationHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        fetchCellularInAsync runner = new fetchCellularInAsync(MainActivity.this,mWebView);
-                        runner.execute();
-                    }
-                });
-            }
-        };
-        if(run.equals("true")) {
-            locationTimer.schedule(doAsyncLocationTask,0,5000);
-        }
-        else {
-            locationTimer.cancel();
-            locationTimer = null;
-        }
-    }
-
-    private boolean gpsEnabled() {
+    private boolean networkProviderEnabled() {
 
         LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
         assert service != null;
-        Log.d(TAG, "gpsEnabled: " + service.isProviderEnabled(LocationManager.GPS_PROVIDER));
-        return service.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        if(VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            return service.isLocationEnabled();
+        }
+        return  service.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
     }
 
@@ -793,11 +840,6 @@ public class MainActivity extends AppCompatActivity {
 
         viewLoadJavaInterface(Context c) {
             mContext = c;
-        }
-
-        @JavascriptInterface
-        public void startLocationService(String run){
-            startTimer(run);
         }
 
         @JavascriptInterface
@@ -888,13 +930,7 @@ public class MainActivity extends AppCompatActivity {
                 }
         }
 
-        @JavascriptInterface
-        public void startKeyboard() {
-            InputMethodManager inputMethodManager = (InputMethodManager)
-                    getSystemService(Context.INPUT_METHOD_SERVICE);
-            inputMethodManager.showSoftInput(findViewById(R.id.activity_main_webview),
-                    InputMethodManager.SHOW_FORCED);
-        }
+
 
         @JavascriptInterface
         public String getDeviceId() throws JSONException {
@@ -921,23 +957,22 @@ public class MainActivity extends AppCompatActivity {
             return checkLocationPermission();
         }
 
-        @JavascriptInterface
-        public boolean isGpsEnabled() {
-            return gpsEnabled();
-        }
-
 
         @JavascriptInterface
         public void stopRefreshing(final boolean stopRefreshing) {
-            Log.d(TAG, "stopRefreshing: " + stopRefreshing);
-            Log.d(TAG, "stopRefreshing: " + MainActivity.this.swipeToRefresh.canChildScrollUp());
-            runOnUiThread(new Runnable() {
+            try {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        swipeToRefresh.setRefreshing(!stopRefreshing);
 
-                @Override
-                public void run() {
-                    swipeToRefresh.setRefreshing(!stopRefreshing);
-                }
-            });
+                    }
+                });
+            }catch(Exception e) {
+                e.printStackTrace();
+                Log.d("exception ", e.getMessage());
+
+            }
         }
     }
 
