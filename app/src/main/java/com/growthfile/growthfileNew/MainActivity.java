@@ -109,8 +109,6 @@ public class MainActivity extends AppCompatActivity {
 
         new CertPin().execute();
 
-
-
         mContext = getApplicationContext();
         swipeToRefresh = findViewById(R.id.swipeToRefresh);
         swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -263,8 +261,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         Log.d("onStart", "started");
-
-
     }
 
     @Override
@@ -385,6 +381,11 @@ public class MainActivity extends AppCompatActivity {
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
+                        }
+                        try {
+                            fcmBody.put("notification",true);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
 
 
@@ -522,7 +523,9 @@ public class MainActivity extends AppCompatActivity {
                     String fcmBody;
                     try {
                         fcmBody = intent.getStringExtra("fcmNotificationData");
+
                         mWebView.evaluateJavascript("runRead(" + fcmBody + ")", null);
+
                     } catch (Exception e) {
                         androidException(e);
                         mWebView.evaluateJavascript("runRead()", null);
@@ -557,6 +560,10 @@ public class MainActivity extends AppCompatActivity {
         };
         registerReceiver(broadcastReceiver, intentFilter);
         registerReceiver(broadcastReceiver, providerChangeIntent);
+    }
+
+    private  Integer divide() throws ArithmeticException {
+        return 2/0;
     }
 
     private void createProfileIntent() {
@@ -678,22 +685,13 @@ public class MainActivity extends AppCompatActivity {
             webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         }
 
-        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
-            WebView.setWebContentsDebuggingEnabled(true);
-        }
-        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
+
+        mWebView.loadUrl("https://growthfile-207204.firebaseapp.com");
         mWebView.requestFocus(View.FOCUS_DOWN);
         setWebViewClient();
 
     }
 
-    public static void divide(int a, int b)
-            throws ArithmeticException {
-
-        int c = a / b;
-
-        System.out.println("Result:" + c);
-    }
 
     private void createAlertBoxJson() throws JSONException {
         String messageString = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
@@ -865,9 +863,14 @@ public class MainActivity extends AppCompatActivity {
         e.printStackTrace(pw);
         final String stack = sw.getBuffer().toString().replaceAll("\n", "");
         Log.d("stack", stack);
-            if(mWebView != null ){
-                mWebView.loadUrl("javascript:jniException('" + e.getMessage() + "','" + stack + "')");
-            }
+
+                try {
+                    mWebView.loadUrl("javascript:jniException('" + e.getMessage() + "','" + stack + "')");
+                }catch (Exception webViewEx){
+                    webViewEx.printStackTrace();
+                }
+
+
     }
 
 
@@ -877,7 +880,14 @@ public class MainActivity extends AppCompatActivity {
         viewLoadJavaInterface(Context c) {
             mContext = c;
         }
-
+        @JavascriptInterface
+        public void openGooglePlayStore(String appId) {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appId)));
+            } catch (android.content.ActivityNotFoundException noPs) {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appId)));
+            }
+        }
         @JavascriptInterface
         public void showDialog(String title, String body) {
             final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -987,7 +997,7 @@ public class MainActivity extends AppCompatActivity {
 
             JSONObject device = new JSONObject();
             device.put("baseOs", deviceBaseOs);
-            device.put("appVersion", 7);
+            device.put("appVersion", 8);
             try {
 
                 device.put("id", androidId);
