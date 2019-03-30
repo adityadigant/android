@@ -997,7 +997,7 @@ public class MainActivity extends AppCompatActivity {
 
             JSONObject device = new JSONObject();
             device.put("baseOs", deviceBaseOs);
-            device.put("appVersion", 8);
+            device.put("appVersion", 9);
             try {
 
                 device.put("id", androidId);

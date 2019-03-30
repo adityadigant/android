@@ -241,7 +241,7 @@ public class CellularInformation{
                 json.put("homeMobileCountryCode", mcc);
                 json.put("homeMobileNetworkCode", mnc);
                 cellInfoList = tm.getAllCellInfo();
-
+                
                 if (cellInfoList != null) {
                     try {
                         json.put("cellTowers", getCelltowerInfo(mcc, cellInfoList));

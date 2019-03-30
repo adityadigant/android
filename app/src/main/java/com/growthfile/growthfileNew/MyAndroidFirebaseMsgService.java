@@ -29,13 +29,10 @@ public class MyAndroidFirebaseMsgService extends FirebaseMessagingService{
 
         if(remoteMessage.getData().size() > 0) {
                 Map<String, String> params = remoteMessage.getData();
-
                 JSONObject object  = new JSONObject(params);
                 Log.e("JSON_OBJECT",object.toString());
                 broadCastIntent.putExtra("fcmNotificationData",object.toString());
-        }
-
-
+        };
         sendBroadcast(broadCastIntent);
 
     }
