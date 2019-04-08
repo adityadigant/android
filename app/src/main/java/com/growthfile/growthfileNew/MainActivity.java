@@ -959,12 +959,12 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        // device Info //
         @JavascriptInterface
-        public String getDeviceId() {
+        public String getId() {
             return Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
         }
 
-        // device Info //
         @JavascriptInterface
         public String getDeviceBrand(){
             return Build.MANUFACTURER;
@@ -1001,7 +1001,6 @@ public class MainActivity extends AppCompatActivity {
         public String getRadioVersion(){
             return Build.getRadioVersion();
         }
-
 
         @JavascriptInterface
         public boolean isLocationPermissionGranted() {
