@@ -35,6 +35,7 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.pm.PackageInfoCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -684,9 +685,11 @@ public class MainActivity extends AppCompatActivity {
         if (!isNetworkAvailable()) { // loading offline
             webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            WebView.setWebContentsDebuggingEnabled(true);
+        }
 
-
-        mWebView.loadUrl("https://growthfile-207204.firebaseapp.com");
+        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
         mWebView.requestFocus(View.FOCUS_DOWN);
         setWebViewClient();
 
@@ -880,49 +883,21 @@ public class MainActivity extends AppCompatActivity {
         viewLoadJavaInterface(Context c) {
             mContext = c;
         }
+
         @JavascriptInterface
-        public void openGooglePlayStore(String appId) {
+            public void openGooglePlayStore(String appId) {
             try {
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appId)));
             } catch (android.content.ActivityNotFoundException noPs) {
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appId)));
             }
         }
-        @JavascriptInterface
-        public void showDialog(String title, String body) {
-            final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-            builder.setTitle(title);
-            builder.setMessage(body);
-            builder.setCancelable(true);
-            AlertDialog dialog = builder.create();
-            builder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                }
-            });
-            dialog.show();
-        }
-
-        @JavascriptInterface
-        public void updateApp(String dialogData) {
-            try {
-                alertBox(MainActivity.this, dialogData);
-            } catch (final JSONException e) {
-                mWebView.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        androidException(e);
-                    }
-                });
-            }
-        }
 
         @JavascriptInterface
         public String getCellularData() {
 
-            CellularInformation mCellularInformation = new CellularInformation(MainActivity.this);
             try {
+                CellularInformation mCellularInformation = new CellularInformation(MainActivity.this);
                 return mCellularInformation.fullCellularInformation();
             } catch (final JSONException e) {
                 mWebView.post(new Runnable() {
@@ -984,69 +959,55 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-
         @JavascriptInterface
-        public String getDeviceId() throws Exception {
-
-
-            String androidId = Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-            String deviceBrand = Build.MANUFACTURER;
-            String deviceModel = Build.MODEL;
-            String osVersion = VERSION.RELEASE;
-            String deviceBaseOs = "android";
-
-            JSONObject device = new JSONObject();
-            device.put("baseOs", deviceBaseOs);
-            device.put("appVersion", 9);
-            try {
-
-                device.put("id", androidId);
-                device.put("deviceBrand", deviceBrand);
-                device.put("deviceModel", deviceModel);
-                device.put("osVersion", osVersion);
-                device.put("radioVersion", Build.getRadioVersion());
-
-                String deviceInfo = device.toString(4);
-                return deviceInfo;
-
-            } catch (final JSONException e) {
-                mWebView.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        androidException(e);
-                    }
-                });
-                return device.toString(4);
-            }
+        public String getDeviceId() {
+            return Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
         }
 
-        ;
+        // device Info //
+        @JavascriptInterface
+        public String getDeviceBrand(){
+            return Build.MANUFACTURER;
+        }
+        @JavascriptInterface
+        public  String getDeviceModel(){
+            return Build.MODEL;
+
+        }
+        @JavascriptInterface
+        public  Integer getAppVersion(){
+            try {
+                PackageInfo packageInfo = MainActivity.this.getPackageManager().getPackageInfo(MainActivity.this.getPackageName(),0);
+                if(VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    return (int) PackageInfoCompat.getLongVersionCode(packageInfo);
+
+                }
+                return packageInfo.versionCode;
+
+            }catch (PackageManager.NameNotFoundException e) {
+                return 10;
+            }
+        }
+        @JavascriptInterface
+        public String getOsVersion(){
+            return  VERSION.RELEASE;
+        }
+        @JavascriptInterface
+        public String getBaseOs(){
+            return "android";
+        }
+
+        @JavascriptInterface
+        public String getRadioVersion(){
+            return Build.getRadioVersion();
+        }
+
 
         @JavascriptInterface
         public boolean isLocationPermissionGranted() {
             return checkLocationPermission();
         }
 
-
-        @JavascriptInterface
-        public void stopRefreshing(final boolean stopRefreshing) {
-            try {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        swipeToRefresh.setRefreshing(!stopRefreshing);
-
-                    }
-                });
-            } catch (final Exception e) {
-                mWebView.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        androidException(e);
-                    }
-                });
-            }
-        }
     }
 
     @Override
