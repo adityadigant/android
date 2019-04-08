@@ -959,6 +959,43 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        // for older version
+        @JavascriptInterface
+        public String getDeviceId() throws Exception {
+
+
+            String androidId = Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+            String deviceBrand = Build.MANUFACTURER;
+            String deviceModel = Build.MODEL;
+            String osVersion = VERSION.RELEASE;
+            String deviceBaseOs = "android";
+
+            JSONObject device = new JSONObject();
+            device.put("baseOs", deviceBaseOs);
+            device.put("appVersion", 9);
+            try {
+
+                device.put("id", androidId);
+                device.put("deviceBrand", deviceBrand);
+                device.put("deviceModel", deviceModel);
+                device.put("osVersion", osVersion);
+                device.put("radioVersion", Build.getRadioVersion());
+
+                String deviceInfo = device.toString(4);
+                return deviceInfo;
+
+            } catch (final JSONException e) {
+                mWebView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        androidException(e);
+                    }
+                });
+                return device.toString(4);
+            }
+        }
+
+        ;
         // device Info //
         @JavascriptInterface
         public String getId() {

@@ -48,10 +48,14 @@
       <file leaf-file-name="MainActivity.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="115">
-              <caret line="966" lean-forward="true" selection-start-line="966" selection-end-line="966" />
+            <state relative-caret-position="164">
+              <caret line="887" column="43" selection-start-line="887" selection-start-column="24" selection-end-line="887" selection-end-column="43" />
               <folding>
-                <element signature="e#37394#37935#0" />
+                <element signature="e#37976#38147#0" expanded="true" />
+                <element signature="e#38146#38147#0" expanded="true" />
+                <element signature="e#36972#37147#0" />
+                <element signature="e#37275#37379#0" />
+                <element signature="e#37388#37929#0" />
               </folding>
             </state>
           </provider>
@@ -86,7 +90,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>LoadApp</find>
       <find>stopRefreshing</find>
       <find>cellular</find>
       <find>DEVICEiD</find>
@@ -116,6 +119,7 @@
       <find>getMNC</find>
       <find>device</find>
       <find>deviceId</find>
+      <find>OPENgO</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -3121,10 +3125,14 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="115">
-          <caret line="966" lean-forward="true" selection-start-line="966" selection-end-line="966" />
+        <state relative-caret-position="164">
+          <caret line="887" column="43" selection-start-line="887" selection-start-column="24" selection-end-line="887" selection-end-column="43" />
           <folding>
-            <element signature="e#37394#37935#0" />
+            <element signature="e#37976#38147#0" expanded="true" />
+            <element signature="e#38146#38147#0" expanded="true" />
+            <element signature="e#36972#37147#0" />
+            <element signature="e#37275#37379#0" />
+            <element signature="e#37388#37929#0" />
           </folding>
         </state>
       </provider>
