@@ -33,18 +33,18 @@ public class CellularInformation{
         this.context = context;
     }
 
-    private String getMCC(TelephonyManager tm) {
+    public String getMCC(TelephonyManager tm) {
         String operator = tm.getNetworkOperator();
         return operator.substring(0, 3);
     };
 
 
-    private String getMNC(TelephonyManager tm) {
+    public String getMNC(TelephonyManager tm) {
         String operator = tm.getNetworkOperator();
         return operator.substring(3);
     }
 
-    private String getRadioType(TelephonyManager tm) {
+    public String getRadioType(TelephonyManager tm) {
         int networkType = tm.getNetworkType();
 
         switch (networkType) {
@@ -205,8 +205,6 @@ public class CellularInformation{
     private JSONArray getNearbyWifiAccessPoints(List<ScanResult> wifiList) throws JSONException {
 
         JSONArray array = new JSONArray();
-
-
         for (int i = 0; i < wifiList.size(); i++) {
             JSONObject aps = new JSONObject();
             aps.put("macAddress", wifiList.get(i).BSSID);

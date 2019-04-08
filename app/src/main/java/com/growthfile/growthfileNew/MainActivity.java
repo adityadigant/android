@@ -23,6 +23,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 
+import android.net.wifi.ScanResult;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Bundle;
@@ -40,6 +42,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 
+import android.telephony.TelephonyManager;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
@@ -56,8 +59,12 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -67,7 +74,13 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.annotations.Expose;
+import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -285,8 +298,9 @@ public class MainActivity extends AppCompatActivity {
         super.onStop();
 
     }
+
     @Override
-    protected void  onDestroy(){
+    protected void onDestroy() {
         super.onDestroy();
         swipeToRefresh.getViewTreeObserver().removeOnScrollChangedListener(mOnScrollChangedListener);
     }
@@ -378,7 +392,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         }
                         try {
-                            fcmBody.put("notification",true);
+                            fcmBody.put("notification", true);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -389,7 +403,7 @@ public class MainActivity extends AppCompatActivity {
                             mWebView.evaluateJavascript("runRead(" + fcmBody.toString(4) + ")", null);
 
                         } catch (JSONException e) {
-                           androidException(e);
+                            androidException(e);
                         }
                     }
                 }
@@ -676,7 +690,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void webviewInstallDialog()  {
+    private void webviewInstallDialog() {
         String message = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
         String title = "App Incompatibility Issue";
         final String pckgName = "com.google.android.webview";
@@ -756,7 +770,6 @@ public class MainActivity extends AppCompatActivity {
         return VERSION.SDK_INT < Build.VERSION_CODES.N && VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
     }
 
-
     public static boolean isAirplaneModeOn(Context context) {
         return Settings.System.getInt(context.getContentResolver(), Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
     }
@@ -797,15 +810,88 @@ public class MainActivity extends AppCompatActivity {
         final String stack = sw.getBuffer().toString().replaceAll("\n", "");
         Log.d("stack", stack);
 
-                try {
-                    mWebView.loadUrl("javascript:jniException('" + e.getMessage() + "','" + stack + "')");
-                }catch (Exception webViewEx){
-                    webViewEx.printStackTrace();
-                }
-
-
+        try {
+            mWebView.loadUrl("javascript:jniException('" + e.getMessage() + "','" + stack + "')");
+        } catch (Exception webViewEx) {
+            webViewEx.printStackTrace();
+        }
     }
 
+    public String getMCC(TelephonyManager tm) {
+        String operator = tm.getNetworkOperator();
+        return operator.substring(0, 3);
+    }
+
+    ;
+
+
+    public String getMNC(TelephonyManager tm) {
+        String operator = tm.getNetworkOperator();
+        return operator.substring(3);
+    }
+
+    public String getRadioName(TelephonyManager tm) {
+        int networkType = tm.getNetworkType();
+
+        switch (networkType) {
+            case TelephonyManager.NETWORK_TYPE_1xRTT:
+                return "CDMA";
+            case TelephonyManager.NETWORK_TYPE_CDMA:
+                return "CDMA";
+            case TelephonyManager.NETWORK_TYPE_EDGE:
+                return "GSM";
+            case TelephonyManager.NETWORK_TYPE_EHRPD:
+                return "CDMA";
+            case TelephonyManager.NETWORK_TYPE_EVDO_0:
+                return "CDMA";
+            case TelephonyManager.NETWORK_TYPE_EVDO_A:
+                return "CDMA";
+            case TelephonyManager.NETWORK_TYPE_EVDO_B:
+                return "CDMA";
+            case TelephonyManager.NETWORK_TYPE_GPRS:
+                return "GSM";
+            case TelephonyManager.NETWORK_TYPE_HSDPA:
+                return "WCDMA";
+            case TelephonyManager.NETWORK_TYPE_HSPA:
+                return "WCDMA";
+            case TelephonyManager.NETWORK_TYPE_HSPAP:
+                return "WCDMA";
+            case TelephonyManager.NETWORK_TYPE_HSUPA:
+                return "WCDMA";
+            case TelephonyManager.NETWORK_TYPE_LTE:
+                return "LTE";
+            case TelephonyManager.NETWORK_TYPE_UMTS:
+                return "WCDMA";
+            case TelephonyManager.NETWORK_TYPE_UNKNOWN:
+                return "unknown";
+        }
+        throw new RuntimeException("New type of network");
+    }
+
+
+    public String scanNearbyWifi(List<ScanResult> wifiList)  {
+
+       ArrayList<String> list= new ArrayList<String>();
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < wifiList.size(); i++) {
+           sb.append(convertToJSON(wifiList,i));
+           sb.append(",");
+        }
+
+        list.add(sb.toString());
+        JSONArray jsonArray = new JSONArray(list);
+
+        return jsonArray.toString();
+    }
+    public static String convertToJSON(List<ScanResult> wifiList,Integer i) {
+        return new StringBuilder()
+                .append("{")
+                .append("\"macAddress\":").append(i)
+                .append("}")
+                .toString();
+
+    }
 
     private class viewLoadJavaInterface {
         Context mContext;
@@ -815,7 +901,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @JavascriptInterface
-            public void openGooglePlayStore(String appId) {
+        public void openGooglePlayStore(String appId) {
             try {
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appId)));
             } catch (android.content.ActivityNotFoundException noPs) {
@@ -926,6 +1012,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         ;
+
         // device Info //
         @JavascriptInterface
         public String getId() {
@@ -933,39 +1020,44 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @JavascriptInterface
-        public String getDeviceBrand(){
+        public String getDeviceBrand() {
             return Build.MANUFACTURER;
         }
+
         @JavascriptInterface
-        public  String getDeviceModel(){
+        public String getDeviceModel() {
             return Build.MODEL;
 
         }
+
         @JavascriptInterface
-        public  Integer getAppVersion(){
+        public String getAppVersion() {
             try {
-                PackageInfo packageInfo = MainActivity.this.getPackageManager().getPackageInfo(MainActivity.this.getPackageName(),0);
-                if(VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    return (int) PackageInfoCompat.getLongVersionCode(packageInfo);
 
+                PackageInfo packageInfo = MainActivity.this.getPackageManager().getPackageInfo(MainActivity.this.getPackageName(), 0);
+
+                if (VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    return Long.toString((int) packageInfo.getLongVersionCode());
                 }
-                return packageInfo.versionCode;
+                return Integer.toString(packageInfo.versionCode);
 
-            }catch (PackageManager.NameNotFoundException e) {
-                return 10;
+            } catch (PackageManager.NameNotFoundException e) {
+                return "10";
             }
         }
+
         @JavascriptInterface
-        public String getOsVersion(){
-            return  VERSION.RELEASE;
+        public String getOsVersion() {
+            return VERSION.RELEASE;
         }
+
         @JavascriptInterface
-        public String getBaseOs(){
+        public String getBaseOs() {
             return "android";
         }
 
         @JavascriptInterface
-        public String getRadioVersion(){
+        public String getRadioVersion() {
             return Build.getRadioVersion();
         }
 
@@ -974,7 +1066,65 @@ public class MainActivity extends AppCompatActivity {
             return checkLocationPermission();
         }
 
-    }
+        // Cellular Interfaces
+        @JavascriptInterface
+        public String getMobileCountryCode() {
+
+
+            TelephonyManager tm = (TelephonyManager) MainActivity.this.getSystemService(Context.TELEPHONY_SERVICE);
+            if (!tm.getNetworkOperator().isEmpty()) {
+                return getMCC(tm);
+            }
+            return "";
+
+        }
+
+        ;
+
+        @JavascriptInterface
+        public String getMobileNetworkCode() {
+
+            TelephonyManager tm = (TelephonyManager) MainActivity.this.getSystemService(Context.TELEPHONY_SERVICE);
+            if (!tm.getNetworkOperator().isEmpty()) {
+                return getMNC(tm);
+            }
+            return "";
+
+        }
+
+        ;
+
+        @JavascriptInterface
+        public String getRadioType() {
+
+            TelephonyManager tm = (TelephonyManager) MainActivity.this.getSystemService(Context.TELEPHONY_SERVICE);
+            return getRadioName(tm);
+        }
+
+        ;
+
+        @JavascriptInterface
+        public String getCarrier() {
+            TelephonyManager tm = (TelephonyManager) MainActivity.this.getSystemService(Context.TELEPHONY_SERVICE);
+
+            String carrier = tm.getNetworkOperatorName();
+            if (carrier != null && !carrier.isEmpty()) {
+                return carrier;
+            }
+            return "";
+        }
+
+        @JavascriptInterface
+        public String getWifiAccessPoints() {
+            WifiManager wifiManager = (WifiManager) MainActivity.this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            List<ScanResult> wifiList = wifiManager.getScanResults();
+//            if (!wifiList.isEmpty()) {
+                return scanNearbyWifi(wifiList);
+//                Log.d("wifi", scanNearbyWifi(wifiList));
+//            }
+//            return ;
+        }
+}
 
     @Override
     public void onBackPressed() {
