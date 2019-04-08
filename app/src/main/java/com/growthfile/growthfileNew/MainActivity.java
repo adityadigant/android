@@ -132,11 +132,9 @@ public class MainActivity extends AppCompatActivity {
         });
 
         if (!checkDeviceOsCompatibility()) {
-            try {
-                showOsUncompatibleDialog();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+
+            showOsUncompatibleDialog();
+
             return;
         }
 
@@ -144,11 +142,7 @@ public class MainActivity extends AppCompatActivity {
         boolean isWebViewInstalled = isAndroidSystemWebViewInstalled("com.google.android.webview", pm);
 
         if (!isWebViewInstalled) {
-            try {
-                createAlertBoxJson();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+            webviewInstallDialog();
             return;
         }
 
@@ -481,30 +475,19 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    private void showOsUncompatibleDialog() throws JSONException {
+    private void showOsUncompatibleDialog() {
 
+        String message = "This App is incompatible with your Android Device. Please upgrade your android version to use Growthfile";
+        String title = "App Incompatible";
 
-        JSONObject alert = new JSONObject();
-        alert.put("title", "App Incompatible");
-        alert.put("message", "This App is incompatible with your Android Device. Please upgrade your android version to use Growthfile");
-        alert.put("cancelable", false);
-        JSONObject button = new JSONObject();
-        button.put("text", "");
-        button.put("show", false);
+        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, R.style.Theme_AppCompat_Dialog_Alert);
+        builder.setTitle(title);
+        builder.setMessage(message);
+        builder.setCancelable(false);
 
+        AlertDialog dialog = builder.create();
 
-        JSONObject clickAction = new JSONObject();
-        JSONObject redirection = new JSONObject();
-
-        redirection.put("text", "");
-        redirection.put("value", false);
-
-        clickAction.put("redirection", redirection);
-
-        button.put("clickAction", clickAction);
-        alert.put("button", button);
-
-        alertBox(MainActivity.this, alert.toString(4));
+        dialog.show();
 
     }
 
@@ -563,9 +546,6 @@ public class MainActivity extends AppCompatActivity {
         registerReceiver(broadcastReceiver, providerChangeIntent);
     }
 
-    private  Integer divide() throws ArithmeticException {
-        return 2/0;
-    }
 
     private void createProfileIntent() {
         final String[] PERMISSIONS_PHOTO_CAMERA = {
@@ -696,33 +676,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void createAlertBoxJson() throws JSONException {
-        String messageString = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
+    private void webviewInstallDialog()  {
+        String message = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
         String title = "App Incompatibility Issue";
-        JSONObject json = new JSONObject();
-        json.put("title", title);
-        json.put("message", messageString);
-        json.put("cancelable", false);
-        JSONObject button = new JSONObject();
-        button.put("text", "Okay");
-        button.put("show", true);
-        JSONObject clickAction = new JSONObject();
-        JSONObject redirection = new JSONObject();
+        final String pckgName = "com.google.android.webview";
 
+        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, R.style.Theme_AppCompat_Dialog_Alert);
+        builder.setTitle(title);
+        builder.setMessage(message);
+        builder.setCancelable(false);
+        builder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pckgName)));
+                } catch (android.content.ActivityNotFoundException noPs) {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + pckgName)));
+                }
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
 
-        redirection.put("text", "com.google.android.webview");
-        redirection.put("value", true);
-
-
-        clickAction.put("redirection", redirection);
-
-
-        button.put("clickAction", clickAction);
-
-        json.put("button", button);
-        String jsonString = json.toString(4);
-
-        alertBox(MainActivity.this, jsonString);
     }
 
     private void showPermissionNotAllowedDialog(String title, String message, boolean cancelable) {
@@ -781,51 +756,6 @@ public class MainActivity extends AppCompatActivity {
         return VERSION.SDK_INT < Build.VERSION_CODES.N && VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
     }
 
-    private void alertBox(@NonNull Context context, @NonNull String dialogData) throws JSONException {
-
-        final JSONObject data = new JSONObject(dialogData);
-        String title = data.getString("title");
-        String message = data.getString("message");
-
-        boolean cancelable = data.getBoolean("cancelable");
-
-        boolean showButton = data.getJSONObject("button").getBoolean("show");
-
-        Log.d(TAG, "alertBox: started");
-
-
-        final AlertDialog.Builder builder = new AlertDialog.Builder(context, android.R.style.Theme_Material_Dialog_Alert);
-
-        builder.setTitle(title);
-        builder.setMessage(message);
-        builder.setCancelable(cancelable);
-
-        if (showButton) {
-            final boolean allowRedirection = data.getJSONObject("button").getJSONObject("clickAction").getJSONObject("redirection").getBoolean("value");
-            final String redirectionText = data.getJSONObject("button").getJSONObject("clickAction").getJSONObject("redirection").getString("text");
-            String buttonText = data.getJSONObject("button").getString("text");
-
-            Log.d(TAG, "alertBox: cancelable false");
-
-            builder.setPositiveButton(buttonText, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-
-                    if (allowRedirection) {
-
-                        try {
-                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + redirectionText)));
-                        } catch (android.content.ActivityNotFoundException noPs) {
-                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + redirectionText)));
-                        }
-                    }
-                }
-            });
-        }
-
-        builder.setIcon(android.R.drawable.ic_dialog_alert);
-        appAlert = builder.create();
-        appAlert.show();
-    }
 
     public static boolean isAirplaneModeOn(Context context) {
         return Settings.System.getInt(context.getContentResolver(), Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
