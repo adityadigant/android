@@ -42,7 +42,24 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 
+import android.telephony.CellIdentityCdma;
+import android.telephony.CellIdentityGsm;
+import android.telephony.CellIdentityLte;
+import android.telephony.CellIdentityWcdma;
+import android.telephony.CellInfo;
+import android.telephony.CellInfoCdma;
+import android.telephony.CellInfoGsm;
+import android.telephony.CellInfoLte;
+import android.telephony.CellInfoWcdma;
+import android.telephony.CellLocation;
+import android.telephony.CellSignalStrengthCdma;
+import android.telephony.CellSignalStrengthGsm;
+import android.telephony.CellSignalStrengthLte;
+import android.telephony.CellSignalStrengthWcdma;
+import android.telephony.NeighboringCellInfo;
 import android.telephony.TelephonyManager;
+import android.telephony.cdma.CdmaCellLocation;
+import android.telephony.gsm.GsmCellLocation;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
@@ -803,7 +820,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void androidException(final Exception e) {
-
+        Log.d("exception log",e.getMessage());
         final StringWriter sw = new StringWriter();
         final PrintWriter pw = new PrintWriter(sw, true);
         e.printStackTrace(pw);
@@ -818,14 +835,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public String getMCC(TelephonyManager tm) {
+        if(tm == null) return "";
+        if (tm.getNetworkOperator().isEmpty()) {
+            return "";
+        }
         String operator = tm.getNetworkOperator();
         return operator.substring(0, 3);
-    }
-
-    ;
+    };
 
 
     public String getMNC(TelephonyManager tm) {
+        if(tm == null) return "";
+        if (tm.getNetworkOperator().isEmpty()) {
+            return "";
+        }
         String operator = tm.getNetworkOperator();
         return operator.substring(3);
     }
@@ -868,30 +891,140 @@ public class MainActivity extends AppCompatActivity {
         throw new RuntimeException("New type of network");
     }
 
+    public String converToJSON(List<ScanResult> wifiList,Integer i){
+        return new StringBuilder("{")
+                .append("\"macAddress\":").append(wifiList.get(i).BSSID).append(",")
+                .append("\"signalStrength\":").append(wifiList.get(i).level)
+                .append("}").toString();
+    }
 
-    public String scanNearbyWifi(List<ScanResult> wifiList)  {
-
-       ArrayList<String> list= new ArrayList<String>();
+    public String scanNearbyWifi(List<ScanResult> wifiList) {
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < wifiList.size(); i++) {
-           sb.append(convertToJSON(wifiList,i));
-           sb.append(",");
+            String bssid = wifiList.get(i).BSSID;
+            Integer ss = wifiList.get(i).level;
+            if(ss != null && !bssid.equals("")) {
+                sb.append("macAddress=").append("'").append(wifiList.get(i).BSSID).append("'").append("&signalStrength=").append("'")
+                        .append(wifiList.get(i).level).append("'");
+                sb.append("&");
+            }
         }
-
-        list.add(sb.toString());
-        JSONArray jsonArray = new JSONArray(list);
-
-        return jsonArray.toString();
+        return sb.toString();
     }
-    public static String convertToJSON(List<ScanResult> wifiList,Integer i) {
-        return new StringBuilder()
-                .append("{")
-                .append("\"macAddress\":").append(i)
-                .append("}")
-                .toString();
 
+    public String getAllCelltowerInfo(List<CellInfo> cellInfoList)  {
+        int mcc = 0;
+        int mnc =0;
+        int lac = 0;
+        int signalStrength = 0;
+        int cid = 0;
+        StringBuilder sb = new StringBuilder();
+
+
+        for (final CellInfo info : cellInfoList) {
+            JSONObject jsonObject = new JSONObject();
+            if (info instanceof CellInfoGsm) {
+                final CellSignalStrengthGsm signalStrengthGsm = ((CellInfoGsm) info).getCellSignalStrength();
+                final CellIdentityGsm identityGsm = ((CellInfoGsm) info).getCellIdentity();
+
+                cid = identityGsm.getCid();
+                lac = identityGsm.getLac();
+                if (cid >= 0) {
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                        System.out.print(identityGsm.getMcc());
+
+                        mcc = identityGsm.getMcc();
+                        mnc = identityGsm.getMnc();
+                    } else {
+                        mcc = Integer.parseInt(identityGsm.getMccString());
+                        mnc = Integer.parseInt(identityGsm.getMncString());
+                    }
+                    signalStrength = signalStrengthGsm.getDbm();
+
+                }
+            }
+
+
+            if (info instanceof CellInfoWcdma) {
+                final CellSignalStrengthWcdma signalStrengthWcdma = ((CellInfoWcdma) info).getCellSignalStrength();
+                final CellIdentityWcdma identityWcdma = ((CellInfoWcdma) info).getCellIdentity();
+
+                cid = identityWcdma.getCid();
+
+
+                if (cid >= 0) {
+
+                    lac = identityWcdma.getLac();
+                    signalStrength = signalStrengthWcdma.getDbm();
+
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                        System.out.print(identityWcdma.getMcc());
+                        mcc = identityWcdma.getMcc();
+                        mnc = identityWcdma.getMnc();
+                    } else {
+                        mcc = Integer.parseInt(identityWcdma.getMccString());
+                        mnc = Integer.parseInt(identityWcdma.getMncString());
+                    }
+
+                }
+
+            }
+            if (info instanceof CellInfoLte) {
+                final CellSignalStrengthLte signalStrengthLte = ((CellInfoLte) info).getCellSignalStrength();
+                final CellIdentityLte identityLte = ((CellInfoLte) info).getCellIdentity();
+
+                cid = identityLte.getCi();
+                if (cid >= 0) {
+                    lac = identityLte.getTac();
+                    signalStrength = signalStrengthLte.getDbm();
+
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                        System.out.print(identityLte.getMcc());
+                        mcc = identityLte.getMcc();
+                        mnc = identityLte.getMnc();
+
+                    } else {
+                        mcc = Integer.parseInt(identityLte.getMccString());
+                        mnc = Integer.parseInt(identityLte.getMncString());
+                    }
+
+                }
+            }
+
+            if (info instanceof CellInfoCdma) {
+                final CellSignalStrengthCdma signalStrengthCdma = ((CellInfoCdma) info).getCellSignalStrength();
+                final CellIdentityCdma identityCdma = ((CellInfoCdma) info).getCellIdentity();
+
+                cid = identityCdma.getBasestationId();
+                if (cid >= 0) {
+                    lac = identityCdma.getNetworkId();
+                    signalStrength = signalStrengthCdma.getDbm();
+                    mnc = identityCdma.getSystemId();
+                    TelephonyManager tm = (TelephonyManager) MainActivity.this.getSystemService(Context.TELEPHONY_SERVICE);
+                    mcc = Integer.parseInt(getMCC(tm));
+                }
+            }
+
+            if(mcc != Integer.MAX_VALUE && mnc != Integer.MAX_VALUE  && cid != Integer.MAX_VALUE) {
+                sb.append("homeMobileCountryCode=").append(mcc).append("&homeMobileNetworkCode=").append(mnc).append("&cellId=").append(cid).append("&locationAreaCode=").append(lac).append("&signalStrength=").append(signalStrength);
+                sb.append("&");
+            }
+        }
+        return sb.toString();
     }
+
+    public String getNeighbouringCellInfo(List<NeighboringCellInfo> neighboringCellInfoList,String mcc,String mnc){
+        StringBuilder sb = new StringBuilder();
+        if(mcc.equals("") || mnc.equals("")) return "";
+        for (final NeighboringCellInfo info : neighboringCellInfoList) {
+                sb.append("locationAreaCode=").append(info.getLac()).append("homeMobileCountryCode=").append(mcc).append("homeMobileNetworkCode=").append(mnc)
+                        .append("cellId=").append(info.getCid());
+                sb.append("&");
+            }
+        return sb.toString();
+    }
+
 
     private class viewLoadJavaInterface {
         Context mContext;
@@ -1072,10 +1205,8 @@ public class MainActivity extends AppCompatActivity {
 
 
             TelephonyManager tm = (TelephonyManager) MainActivity.this.getSystemService(Context.TELEPHONY_SERVICE);
-            if (!tm.getNetworkOperator().isEmpty()) {
+
                 return getMCC(tm);
-            }
-            return "";
 
         }
 
@@ -1085,10 +1216,9 @@ public class MainActivity extends AppCompatActivity {
         public String getMobileNetworkCode() {
 
             TelephonyManager tm = (TelephonyManager) MainActivity.this.getSystemService(Context.TELEPHONY_SERVICE);
-            if (!tm.getNetworkOperator().isEmpty()) {
-                return getMNC(tm);
-            }
-            return "";
+
+            return getMNC(tm);
+
 
         }
 
@@ -1117,12 +1247,33 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public String getWifiAccessPoints() {
             WifiManager wifiManager = (WifiManager) MainActivity.this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            if(wifiManager == null) return "";
             List<ScanResult> wifiList = wifiManager.getScanResults();
-//            if (!wifiList.isEmpty()) {
+            if (!wifiList.isEmpty()) {
                 return scanNearbyWifi(wifiList);
-//                Log.d("wifi", scanNearbyWifi(wifiList));
-//            }
-//            return ;
+
+            }
+            return "";
+        }
+
+        @JavascriptInterface
+        public String getCellTowerInformation(){
+
+            TelephonyManager tm = (TelephonyManager) MainActivity.this.getSystemService(Context.TELEPHONY_SERVICE);
+            if(tm == null) {
+                return "";
+            }
+            if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(MainActivity.this,Manifest.permission.ACCESS_FINE_LOCATION )!= PackageManager.PERMISSION_GRANTED ) {
+                return "";
+            }
+            List<CellInfo> cellInfoList = tm.getAllCellInfo();
+            if(cellInfoList == null) {
+
+                List<NeighboringCellInfo> cellInfoList1 = tm.getNeighboringCellInfo();
+                if(cellInfoList1 == null)   return "";
+                return getNeighbouringCellInfo(cellInfoList1,getMCC(tm),getMNC(tm));
+            }
+            return getAllCelltowerInfo(cellInfoList);
         }
 }
 

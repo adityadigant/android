@@ -172,7 +172,6 @@ public class CellularInformation{
 
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
                         System.out.print(identityLte.getMcc());
-
                         mcc = identityLte.getMcc();
                         mnc = identityLte.getMnc();
                     } else {
