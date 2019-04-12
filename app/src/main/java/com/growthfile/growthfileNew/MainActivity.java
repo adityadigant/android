@@ -25,6 +25,7 @@ import android.net.Uri;
 
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Bundle;
@@ -57,6 +58,8 @@ import android.telephony.CellSignalStrengthGsm;
 import android.telephony.CellSignalStrengthLte;
 import android.telephony.CellSignalStrengthWcdma;
 import android.telephony.NeighboringCellInfo;
+import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.cdma.CdmaCellLocation;
 import android.telephony.gsm.GsmCellLocation;
@@ -77,6 +80,9 @@ import android.webkit.WebViewClient;
 
 import java.io.*;
 import java.lang.reflect.Array;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -86,6 +92,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import android.provider.Settings.Secure;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -286,6 +293,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         Log.d("onStart", "started");
+        if(VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            WifiManager wifiManager = (WifiManager) MainActivity.this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+
+            if (!wifiManager.isWifiEnabled()) {
+                wifiManager.setWifiEnabled(true);
+            }
+        }
     }
 
     @Override
@@ -429,6 +443,11 @@ public class MainActivity extends AppCompatActivity {
             @SuppressWarnings("deprecation")
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
+//                if (!DetectConnection.checkInternetConnection(MainActivity.this)) {
+//                    Toast.makeText(getApplicationContext(), "No Internet!", Toast.LENGTH_SHORT).show();
+//                } else {
+//                    view.loadUrl(url);
+//                }
                 if (url.contains("geo:")) {
                     Intent mapIntent = new Intent("android.intent.action.VIEW", Uri.parse(url));
                     mapIntent.setPackage("com.google.android.apps.maps");
@@ -454,13 +473,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onReceivedError(WebView webView, int errorCode, String description, String failingUrl) {
 
-                if (errorCode == -2) {
+
                     nocacheLoadUrl = true;
                     webView.loadUrl("file:///android_asset/nocache.html");
 
                     final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_Material_Dialog_Alert);
                     builder.setTitle("No Internet Connection");
-                    builder.setMessage("Check your mobile data or Wi-Fi Connection");
+                    builder.setMessage("Please Check if you have a working internet connection");
                     builder.setCancelable(false);
 
                     builder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {
@@ -480,12 +499,22 @@ public class MainActivity extends AppCompatActivity {
                     AlertDialog dialog = builder.create();
                     dialog.show();
                 }
-            }
+
 
         });
 
     }
-
+//    public class DetectConnection {
+//        public static boolean checkInternetConnection(Context context) {
+//
+//            ConnectivityManager con_manager = (ConnectivityManager)
+//                    context.getSystemService(Context.CONNECTIVITY_SERVICE);
+//
+//            return (con_manager.getActiveNetworkInfo() != null
+//                    && con_manager.getActiveNetworkInfo().isAvailable()
+//                    && con_manager.getActiveNetworkInfo().isConnected());
+//        }
+//    }
     private String encodeImage(Bitmap bm) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         bm.compress(Bitmap.CompressFormat.JPEG, 50, byteArrayOutputStream);
@@ -696,6 +725,8 @@ public class MainActivity extends AppCompatActivity {
         if (!isNetworkAvailable()) { // loading offline
             webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         }
+
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             WebView.setWebContentsDebuggingEnabled(true);
         }
@@ -754,7 +785,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean isNetworkAvailable() {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected() && activeNetworkInfo.isAvailable();
+
     }
 
     private boolean isAndroidSystemWebViewInstalled(String pckgname, PackageManager packageManager) {
@@ -855,48 +887,59 @@ public class MainActivity extends AppCompatActivity {
 
     public String getRadioName(TelephonyManager tm) {
         int networkType = tm.getNetworkType();
-
+        String type = "";
         switch (networkType) {
             case TelephonyManager.NETWORK_TYPE_1xRTT:
-                return "CDMA";
+                type = "CDMA";
+                break;
             case TelephonyManager.NETWORK_TYPE_CDMA:
-                return "CDMA";
+                type =  "CDMA";
+                break;
             case TelephonyManager.NETWORK_TYPE_EDGE:
-                return "GSM";
+                type = "GSM";
+                break;
             case TelephonyManager.NETWORK_TYPE_EHRPD:
-                return "CDMA";
+                type = "CDMA";
+                break;
             case TelephonyManager.NETWORK_TYPE_EVDO_0:
-                return "CDMA";
+                type = "CDMA";
+                break;
             case TelephonyManager.NETWORK_TYPE_EVDO_A:
-                return "CDMA";
+                type = "CDMA";
+                break;
             case TelephonyManager.NETWORK_TYPE_EVDO_B:
-                return "CDMA";
+                type = "CDMA";
+                break;
             case TelephonyManager.NETWORK_TYPE_GPRS:
-                return "GSM";
+                type = "GSM";
+                break;
             case TelephonyManager.NETWORK_TYPE_HSDPA:
-                return "WCDMA";
+                type = "WCDMA";
+                break;
             case TelephonyManager.NETWORK_TYPE_HSPA:
-                return "WCDMA";
+                type = "WCDMA";
+                break;
             case TelephonyManager.NETWORK_TYPE_HSPAP:
-                return "WCDMA";
+                type = "WCDMA";
+                break;
             case TelephonyManager.NETWORK_TYPE_HSUPA:
-                return "WCDMA";
+                type=  "WCDMA";
+                break;
             case TelephonyManager.NETWORK_TYPE_LTE:
-                return "LTE";
+                type = "LTE";
+                break;
             case TelephonyManager.NETWORK_TYPE_UMTS:
-                return "WCDMA";
+                type = "WCDMA";
+                break;
             case TelephonyManager.NETWORK_TYPE_UNKNOWN:
-                return "unknown";
+                type = "";
+                break;
+
         }
-        throw new RuntimeException("New type of network");
+        return type;
     }
 
-    public String converToJSON(List<ScanResult> wifiList,Integer i){
-        return new StringBuilder("{")
-                .append("\"macAddress\":").append(wifiList.get(i).BSSID).append(",")
-                .append("\"signalStrength\":").append(wifiList.get(i).level)
-                .append("}").toString();
-    }
+
 
     public String scanNearbyWifi(List<ScanResult> wifiList) {
         StringBuilder sb = new StringBuilder();
@@ -905,12 +948,18 @@ public class MainActivity extends AppCompatActivity {
             String bssid = wifiList.get(i).BSSID;
             Integer ss = wifiList.get(i).level;
             if(ss != null && !bssid.equals("")) {
-                sb.append("macAddress=").append("'").append(wifiList.get(i).BSSID).append("'").append("&signalStrength=").append("'")
-                        .append(wifiList.get(i).level).append("'");
-                sb.append("&");
+                sb.append("macAddress=").append(wifiList.get(i).BSSID).append("&").append("signalStrength=").append(wifiList.get(i).level);
+                sb.append(",");
             }
         }
-        return sb.toString();
+
+        if(sb.length() != 0) {
+            sb.deleteCharAt(sb.lastIndexOf(","));
+            return sb.toString();
+        }
+
+        return "";
+
     }
 
     public String getAllCelltowerInfo(List<CellInfo> cellInfoList)  {
@@ -919,11 +968,12 @@ public class MainActivity extends AppCompatActivity {
         int lac = 0;
         int signalStrength = 0;
         int cid = 0;
+
         StringBuilder sb = new StringBuilder();
 
 
         for (final CellInfo info : cellInfoList) {
-            JSONObject jsonObject = new JSONObject();
+
             if (info instanceof CellInfoGsm) {
                 final CellSignalStrengthGsm signalStrengthGsm = ((CellInfoGsm) info).getCellSignalStrength();
                 final CellIdentityGsm identityGsm = ((CellInfoGsm) info).getCellIdentity();
@@ -941,7 +991,6 @@ public class MainActivity extends AppCompatActivity {
                         mnc = Integer.parseInt(identityGsm.getMncString());
                     }
                     signalStrength = signalStrengthGsm.getDbm();
-
                 }
             }
 
@@ -949,9 +998,7 @@ public class MainActivity extends AppCompatActivity {
             if (info instanceof CellInfoWcdma) {
                 final CellSignalStrengthWcdma signalStrengthWcdma = ((CellInfoWcdma) info).getCellSignalStrength();
                 final CellIdentityWcdma identityWcdma = ((CellInfoWcdma) info).getCellIdentity();
-
                 cid = identityWcdma.getCid();
-
 
                 if (cid >= 0) {
 
@@ -978,7 +1025,6 @@ public class MainActivity extends AppCompatActivity {
                 if (cid >= 0) {
                     lac = identityLte.getTac();
                     signalStrength = signalStrengthLte.getDbm();
-
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
                         System.out.print(identityLte.getMcc());
                         mcc = identityLte.getMcc();
@@ -1007,11 +1053,18 @@ public class MainActivity extends AppCompatActivity {
             }
 
             if(mcc != Integer.MAX_VALUE && mnc != Integer.MAX_VALUE  && cid != Integer.MAX_VALUE) {
-                sb.append("homeMobileCountryCode=").append(mcc).append("&homeMobileNetworkCode=").append(mnc).append("&cellId=").append(cid).append("&locationAreaCode=").append(lac).append("&signalStrength=").append(signalStrength);
-                sb.append("&");
+
+                sb.append("mobileCountryCode=").append(mcc).append("&").append("mobileNetworkCode=").append(mnc).append("&").append("cellId=").append(cid).
+                        append("&").append("locationAreaCode=").append(lac).append("&")
+                        .append("signalStrength=").append(signalStrength).append("&");
+                sb.append(",");
             }
         }
-        return sb.toString();
+        if(sb.length() != 0) {
+            sb.deleteCharAt(sb.lastIndexOf(","));
+            return sb.toString();
+        }
+        return "";
     }
 
     public String getNeighbouringCellInfo(List<NeighboringCellInfo> neighboringCellInfoList,String mcc,String mnc){
@@ -1062,9 +1115,10 @@ public class MainActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public boolean isConnectionActive() {
-            ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-            NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-            return networkInfo != null && networkInfo.isConnected();
+//            ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+//            NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+//            return networkInfo != null && networkInfo.isConnected();
+            return true;
         }
 
 
@@ -1121,7 +1175,7 @@ public class MainActivity extends AppCompatActivity {
 
             JSONObject device = new JSONObject();
             device.put("baseOs", deviceBaseOs);
-            device.put("appVersion", 9);
+            device.put("appVersion", 10);
             try {
 
                 device.put("id", androidId);
@@ -1142,9 +1196,7 @@ public class MainActivity extends AppCompatActivity {
                 });
                 return device.toString(4);
             }
-        }
-
-        ;
+        };
 
         // device Info //
         @JavascriptInterface
@@ -1235,8 +1287,8 @@ public class MainActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public String getCarrier() {
-            TelephonyManager tm = (TelephonyManager) MainActivity.this.getSystemService(Context.TELEPHONY_SERVICE);
 
+            TelephonyManager tm = (TelephonyManager) MainActivity.this.getSystemService(Context.TELEPHONY_SERVICE);
             String carrier = tm.getNetworkOperatorName();
             if (carrier != null && !carrier.isEmpty()) {
                 return carrier;
@@ -1246,14 +1298,17 @@ public class MainActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public String getWifiAccessPoints() {
+            if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(MainActivity.this,Manifest.permission.ACCESS_FINE_LOCATION )!= PackageManager.PERMISSION_GRANTED ) {
+                return "";
+            }
             WifiManager wifiManager = (WifiManager) MainActivity.this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             if(wifiManager == null) return "";
-            List<ScanResult> wifiList = wifiManager.getScanResults();
-            if (!wifiList.isEmpty()) {
-                return scanNearbyWifi(wifiList);
-
+            if(!wifiManager.isWifiEnabled()) {
+                wifiManager.setWifiEnabled(true);
             }
-            return "";
+            List<ScanResult> wifiList = wifiManager.getScanResults();
+            return scanNearbyWifi(wifiList);
+
         }
 
         @JavascriptInterface
@@ -1267,12 +1322,7 @@ public class MainActivity extends AppCompatActivity {
                 return "";
             }
             List<CellInfo> cellInfoList = tm.getAllCellInfo();
-            if(cellInfoList == null) {
-
-                List<NeighboringCellInfo> cellInfoList1 = tm.getNeighboringCellInfo();
-                if(cellInfoList1 == null)   return "";
-                return getNeighbouringCellInfo(cellInfoList1,getMCC(tm),getMNC(tm));
-            }
+            if(cellInfoList == null || cellInfoList.isEmpty())  return "";
             return getAllCelltowerInfo(cellInfoList);
         }
 }

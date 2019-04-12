@@ -273,18 +273,15 @@ public class CellularInformation{
                 }catch (JSONException e){
                     mainActivity.androidException(e);
                 }
-
             }
+
             if(wifiList.isEmpty() && cellInfoList == null ) {
                 json.put("considerIp", "true");
             }
-
             else {
                 json.put("considerIp", "false");
             }
-
             return json.toString(4);
-
     }
 
 }
