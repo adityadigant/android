@@ -727,9 +727,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            WebView.setWebContentsDebuggingEnabled(true);
-        }
 
         mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
         mWebView.requestFocus(View.FOCUS_DOWN);
@@ -1095,30 +1092,14 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        @JavascriptInterface
-        public String getCellularData() {
 
-            try {
-                CellularInformation mCellularInformation = new CellularInformation(MainActivity.this);
-                return mCellularInformation.fullCellularInformation();
-            } catch (final JSONException e) {
-                mWebView.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        androidException(e);
-                    }
-                });
-                return "";
-            }
-
-        }
 
         @JavascriptInterface
         public boolean isConnectionActive() {
-//            ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-//            NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-//            return networkInfo != null && networkInfo.isConnected();
-            return true;
+            ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+            NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+            return networkInfo != null && networkInfo.isConnected();
+
         }
 
 
