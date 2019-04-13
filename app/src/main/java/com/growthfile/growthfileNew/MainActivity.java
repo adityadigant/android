@@ -3,6 +3,7 @@ package com.growthfile.growthfileNew;
 import android.Manifest;
 
 
+import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -24,6 +25,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 
 import android.net.wifi.ScanResult;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -123,6 +125,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int PHOTO_GALLERY_REQUEST = 112;
     private static final int PHOTO_CAMERA_REQUEST = 113;
     private static final int LOCATION_PERMISSION_CODE = 115;
+    private static final int REQUEST_SCAN_ALWAYS_AVAILABLE = 116;
 
     public static final String BROADCAST_ACTION = "com.growthfile.growthfileNew";
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -189,6 +192,8 @@ public class MainActivity extends AppCompatActivity {
                 Manifest.permission.ACCESS_COARSE_LOCATION,
         };
 
+
+
         if (!checkLocationPermission()) {
             if (VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, LOCATION_PERMISSION_CODE);
@@ -243,6 +248,21 @@ public class MainActivity extends AppCompatActivity {
                         mWebView.loadUrl("javascript:readUploadedFile('" + encodeImage(myBitmap) + "')");
                     }
                 }
+            case REQUEST_SCAN_ALWAYS_AVAILABLE:
+                if(resultCode != RESULT_OK) {
+                    startActivityForResult(new Intent(WifiManager.ACTION_REQUEST_SCAN_ALWAYS_AVAILABLE),116);
+                }
+                else {
+                    WifiManager wifiManager = (WifiManager) MainActivity.this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                    if(!wifiManager.isScanAlwaysAvailable()) {
+                        startActivityForResult(new Intent(WifiManager.ACTION_REQUEST_SCAN_ALWAYS_AVAILABLE),116);
+                    }
+                    else {
+                        if(!wifiManager.isWifiEnabled()) {
+                            wifiManager.setWifiEnabled(true);
+                        }
+                    }
+                }
                 break;
         }
     }
@@ -295,9 +315,9 @@ public class MainActivity extends AppCompatActivity {
         Log.d("onStart", "started");
         if(VERSION.SDK_INT <= Build.VERSION_CODES.P) {
             WifiManager wifiManager = (WifiManager) MainActivity.this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            if(!wifiManager.isScanAlwaysAvailable()) {
 
-            if (!wifiManager.isWifiEnabled()) {
-                wifiManager.setWifiEnabled(true);
+                startActivityForResult(new Intent(WifiManager.ACTION_REQUEST_SCAN_ALWAYS_AVAILABLE),116);
             }
         }
     }
@@ -725,8 +745,7 @@ public class MainActivity extends AppCompatActivity {
         if (!isNetworkAvailable()) { // loading offline
             webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         }
-
-
+        WebView.setWebContentsDebuggingEnabled(true);
 
         mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
         mWebView.requestFocus(View.FOCUS_DOWN);
@@ -1084,9 +1103,10 @@ public class MainActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public boolean isConnectionActive() {
-            ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-            NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-            return networkInfo != null && networkInfo.isConnected();
+//            ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+//            NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+//            return networkInfo != null && networkInfo.isConnected();
+            return true;
 
         }
 
@@ -1268,9 +1288,6 @@ public class MainActivity extends AppCompatActivity {
             }
             WifiManager wifiManager = (WifiManager) MainActivity.this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             if(wifiManager == null) return "";
-            if(!wifiManager.isWifiEnabled()) {
-                wifiManager.setWifiEnabled(true);
-            }
             List<ScanResult> wifiList = wifiManager.getScanResults();
             return scanNearbyWifi(wifiList);
 
