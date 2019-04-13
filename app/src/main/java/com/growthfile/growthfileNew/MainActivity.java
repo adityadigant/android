@@ -944,8 +944,8 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < wifiList.size(); i++) {
             String bssid = wifiList.get(i).BSSID;
             Integer ss = wifiList.get(i).level;
-            if(ss != null && !bssid.equals("")) {
-                sb.append("macAddress=").append(wifiList.get(i).BSSID).append("&").append("signalStrength=").append(wifiList.get(i).level);
+            if(bssid != null) {
+                sb.append("macAddress=").append(bssid).append("&").append("signalStrength=").append(ss);
                 sb.append(",");
             }
         }
@@ -1064,16 +1064,6 @@ public class MainActivity extends AppCompatActivity {
         return "";
     }
 
-    public String getNeighbouringCellInfo(List<NeighboringCellInfo> neighboringCellInfoList,String mcc,String mnc){
-        StringBuilder sb = new StringBuilder();
-        if(mcc.equals("") || mnc.equals("")) return "";
-        for (final NeighboringCellInfo info : neighboringCellInfoList) {
-                sb.append("locationAreaCode=").append(info.getLac()).append("homeMobileCountryCode=").append(mcc).append("homeMobileNetworkCode=").append(mnc)
-                        .append("cellId=").append(info.getCid());
-                sb.append("&");
-            }
-        return sb.toString();
-    }
 
 
     private class viewLoadJavaInterface {
@@ -1091,8 +1081,6 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appId)));
             }
         }
-
-
 
         @JavascriptInterface
         public boolean isConnectionActive() {
@@ -1235,15 +1223,11 @@ public class MainActivity extends AppCompatActivity {
         // Cellular Interfaces
         @JavascriptInterface
         public String getMobileCountryCode() {
-
-
             TelephonyManager tm = (TelephonyManager) MainActivity.this.getSystemService(Context.TELEPHONY_SERVICE);
 
-                return getMCC(tm);
+            return getMCC(tm);
 
-        }
-
-        ;
+        };
 
         @JavascriptInterface
         public String getMobileNetworkCode() {
