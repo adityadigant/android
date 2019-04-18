@@ -6,8 +6,8 @@
     </shared>
   </component>
   <component name="AndroidLogFilters">
-    <option name="TOOL_WINDOW_LOG_LEVEL" value="error" />
-    <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="No Filters" />
+    <option name="TOOL_WINDOW_LOG_LEVEL" value="verbose" />
+    <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="Show only selected application" />
   </component>
   <component name="CMakeSettings">
     <configurations />
@@ -39,17 +39,17 @@
       <file leaf-file-name="MainActivity.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="164">
-              <caret line="635" column="74" lean-forward="true" selection-start-line="635" selection-start-column="74" selection-end-line="635" selection-end-column="74" />
+            <state relative-caret-position="243">
+              <caret line="635" column="51" selection-start-line="635" selection-start-column="45" selection-end-line="635" selection-end-column="51" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="google-services.json" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/google-services.json">
+      <file leaf-file-name="CertPin.java" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/CertPin.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="90">
-              <caret line="6" column="4" lean-forward="true" selection-start-line="6" selection-start-column="4" selection-end-line="6" selection-end-column="4" />
+            <state relative-caret-position="285">
+              <caret line="25" column="25" lean-forward="true" selection-start-line="25" selection-start-column="25" selection-end-line="25" selection-end-column="25" />
             </state>
           </provider>
         </entry>
@@ -65,7 +65,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>setWebChromeClient</find>
       <find>oncreate</find>
       <find>requestCreator('Null</find>
       <find>runRead</find>
@@ -94,6 +93,7 @@
       <find>growthfile-2</find>
       <find>nocache</find>
       <find>getId</find>
+      <find>'Null</find>
       <find>/v1/</find>
     </findStrings>
     <replaceStrings>
@@ -2386,12 +2386,12 @@
         <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/fetchCellularInAsync.java" />
         <option value="$PROJECT_DIR$/../android-master/app/src/main/java/com/growthfile/growthfile/MainActivity.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MyAndroidFirebaseMsgService.java" />
-        <option value="$PROJECT_DIR$/google-services.json" />
         <option value="$PROJECT_DIR$/build.gradle" />
         <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/CellularInformation.java" />
         <option value="$PROJECT_DIR$/src/main/AndroidManifest.xml" />
         <option value="$PROJECT_DIR$/src/main/assets/nocache.html" />
         <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/CertPin.java" />
+        <option value="$PROJECT_DIR$/google-services.json" />
         <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java" />
       </list>
     </option>
@@ -2684,8 +2684,8 @@
       <window_info anchor="bottom" id="Event Log" order="8" sideWeight="0.5035765" side_tool="true" weight="0.40082645" />
       <window_info anchor="bottom" id="Run" order="2" />
       <window_info anchor="bottom" id="Version Control" order="7" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Terminal" order="7" visible="true" weight="0.3278237" />
-      <window_info anchor="bottom" id="Logcat" order="7" weight="0.3815427" />
+      <window_info anchor="bottom" id="Terminal" order="7" weight="0.3278237" />
+      <window_info anchor="bottom" id="Logcat" order="7" visible="true" weight="0.0" />
       <window_info id="Captures" order="2" weight="0.25" />
       <window_info id="Capture Tool" order="2" />
       <window_info id="Designer" order="2" />
@@ -3079,24 +3079,24 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/CertPin.java">
+    <entry file="file://$PROJECT_DIR$/google-services.json">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="120">
-          <caret line="14" column="64" selection-start-line="14" selection-start-column="64" selection-end-line="14" selection-end-column="64" />
+        <state relative-caret-position="825">
+          <caret line="55" column="1" selection-start-line="55" selection-start-column="1" selection-end-line="55" selection-end-column="1" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="164">
-          <caret line="635" column="74" lean-forward="true" selection-start-line="635" selection-start-column="74" selection-end-line="635" selection-end-column="74" />
+        <state relative-caret-position="243">
+          <caret line="635" column="51" selection-start-line="635" selection-start-column="45" selection-end-line="635" selection-end-column="51" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/google-services.json">
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/CertPin.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="90">
-          <caret line="6" column="4" lean-forward="true" selection-start-line="6" selection-start-column="4" selection-end-line="6" selection-end-column="4" />
+        <state relative-caret-position="285">
+          <caret line="25" column="25" lean-forward="true" selection-start-line="25" selection-start-column="25" selection-end-line="25" selection-end-column="25" />
         </state>
       </provider>
     </entry>
