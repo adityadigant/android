@@ -633,7 +633,7 @@ public class MainActivity extends AppCompatActivity {
 
         WebView.setWebContentsDebuggingEnabled(true);
 
-        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com/v1/");
+        mWebView.loadUrl("https://growthfile-207204.firebaseapp.com/v1/");
         mWebView.requestFocus(View.FOCUS_DOWN);
 
         mWebView.setWebChromeClient(new WebChromeClient() {
@@ -1149,43 +1149,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-
-        // for older version
-        @JavascriptInterface
-        public String getDeviceId() throws Exception {
-
-
-            String androidId = Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-            String deviceBrand = Build.MANUFACTURER;
-            String deviceModel = Build.MODEL;
-            String osVersion = VERSION.RELEASE;
-            String deviceBaseOs = "android";
-
-            JSONObject device = new JSONObject();
-            device.put("baseOs", deviceBaseOs);
-            device.put("appVersion", 10);
-            try {
-
-                device.put("id", androidId);
-                device.put("deviceBrand", deviceBrand);
-                device.put("deviceModel", deviceModel);
-                device.put("osVersion", osVersion);
-                device.put("radioVersion", Build.getRadioVersion());
-
-                String deviceInfo = device.toString(4);
-                return deviceInfo;
-
-            } catch (final JSONException e) {
-                mWebView.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        androidException(e);
-                    }
-                });
-                return device.toString(4);
-            }
-        }
-
         ;
 
         // device Info //
