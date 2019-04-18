@@ -6,8 +6,8 @@
     </shared>
   </component>
   <component name="AndroidLogFilters">
-    <option name="TOOL_WINDOW_LOG_LEVEL" value="verbose" />
-    <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="Show only selected application" />
+    <option name="TOOL_WINDOW_LOG_LEVEL" value="error" />
+    <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="No Filters" />
   </component>
   <component name="CMakeSettings">
     <configurations />
@@ -35,56 +35,25 @@
     </system>
   </component>
   <component name="FileEditorManager">
-    <leaf>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file leaf-file-name="MainActivity.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="281">
-              <caret line="263" column="21" selection-start-line="263" selection-start-column="21" selection-end-line="263" selection-end-column="21" />
+            <state relative-caret-position="196">
+              <caret line="729" column="13" selection-start-line="729" selection-start-column="13" selection-end-line="729" selection-end-column="13" />
               <folding>
-                <element signature="e#5241#5398#0" expanded="true" />
-                <element signature="e#5397#5398#0" expanded="true" />
-                <element signature="e#5500#5838#0" expanded="true" />
-                <element signature="e#5837#5838#0" expanded="true" />
-                <element signature="e#13899#14121#0" expanded="true" />
-                <element signature="e#14120#14121#0" expanded="true" />
-                <element signature="e#14858#15164#0" expanded="true" />
-                <element signature="e#15163#15164#0" expanded="true" />
-                <element signature="method#onPageFinished#0;class#13904:19011" />
-                <element signature="e#15972#16727#0" expanded="true" />
-                <element signature="e#16726#16727#0" expanded="true" />
-                <element signature="method#shouldOverrideUrlLoading#0;class#13904:19011" />
-                <element signature="method#shouldOverrideUrlLoading#1;class#13904:19011" />
-                <element signature="method#onReceivedError#0;class#13904:19011" />
-                <element signature="e#19825#20411#0" expanded="true" />
-                <element signature="e#20410#20411#0" expanded="true" />
-                <element signature="e#22714#24452#0" expanded="true" />
-                <element signature="e#24451#24452#0" expanded="true" />
-                <element signature="e#25362#27712#0" expanded="true" />
-                <element signature="e#27711#27712#0" expanded="true" />
-                <element signature="e#28276#28529#0" expanded="true" />
-                <element signature="e#28528#28529#0" expanded="true" />
-                <element signature="e#35088#35609#0" expanded="true" />
-                <element signature="e#35608#35609#0" expanded="true" />
-                <element signature="e#41477#41478#0" expanded="true" />
-                <element signature="e#41513#41514#0" expanded="true" />
-                <element signature="e#42375#42376#0" expanded="true" />
-                <element signature="e#42420#42421#0" expanded="true" />
-                <element signature="e#49128#49319#0" expanded="true" />
-                <element signature="e#49318#49319#0" expanded="true" />
-                <element signature="e#50427#50598#0" expanded="true" />
-                <element signature="e#50597#50598#0" expanded="true" />
-                <element signature="e#45261#45262#0" expanded="true" />
-                <element signature="e#45310#45311#0" expanded="true" />
-                <element signature="e#46065#46066#0" expanded="true" />
-                <element signature="e#46111#46112#0" expanded="true" />
-                <element signature="e#46177#46178#0" expanded="true" />
-                <element signature="e#46217#46218#0" expanded="true" />
-                <element signature="e#46289#46290#0" expanded="true" />
-                <element signature="e#46343#46344#0" expanded="true" />
-                <element signature="e#46428#46429#0" expanded="true" />
-                <element signature="e#46484#46485#0" expanded="true" />
+                <element signature="e#47935#47936#0" expanded="true" />
+                <element signature="e#48013#48014#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="nocache.html" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/assets/nocache.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1410">
+              <caret line="94" column="72" selection-start-line="94" selection-start-column="72" selection-end-line="94" selection-end-column="72" />
             </state>
           </provider>
         </entry>
@@ -100,36 +69,36 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
+      <find>broadcastReceiver</find>
+      <find>getdeviceId</find>
       <find>TESTING</find>
-      <find>isConnect</find>
-      <find>onStart</find>
-      <find>dialog B</find>
-      <find>AlertDialog</find>
-      <find>setPosi</find>
-      <find>Intent</find>
-      <find>AndroidDi</find>
-      <find>setposit</find>
-      <find>photoGalleryIntent</find>
-      <find>new Intent</find>
-      <find>photoCameraIntent</find>
-      <find>startActivityForResult</find>
-      <find>onPermis</find>
-      <find>scann</find>
-      <find>LoadApp</find>
-      <find>isNetworkAvailable</find>
-      <find>webViewCl</find>
-      <find>onPageFinished</find>
+      <find>ONRECEVE</find>
       <find>setWebViewClient</find>
-      <find>REQUEST_SCAN_ALWAYS_AVAILABLE</find>
-      <find>Locationmode</find>
-      <find>scan</find>
-      <find>scanNea</find>
-      <find>ACTION_REQUEST_SCAN_ALWAYS_AVAILABLE</find>
-      <find>startActivityForResult(new Intent(WifiManager.ACTION_REQUEST_SCAN_ALWAYS_AVAILABLE),116);</find>
+      <find>setWebChromeClient</find>
       <find>oncreate</find>
+      <find>requestCreator('Null</find>
+      <find>runRead</find>
+      <find>onreceivedErr</find>
+      <find>onrece</find>
+      <find>AndroidInterface</find>
+      <find>scanAl</find>
       <find>onstart</find>
-      <find>scanNearbyWifi</find>
-      <find>scanning</find>
+      <find>ACTION_REQUEST_SCAN_ALWAYS_AVAILABLE</find>
+      <find>dialo</find>
+      <find>showPermissionNotAllowedDialog</find>
+      <find>setpos</find>
+      <find>setPos</find>
+      <find>androidInterface</find>
+      <find>debug</find>
+      <find>testing</find>
+      <find>loadD</find>
+      <find>loadOffline</find>
+      <find>file:///android_asset/nocache.html</find>
+      <find>scanNear</find>
+      <find>stringB</find>
+      <find>isConnection</find>
+      <find>isNetworkAvailable</find>
+      <find>onreceivedEr</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -2418,20 +2387,20 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/local.properties" />
-        <option value="$PROJECT_DIR$/src/main/assets/nocache.html" />
         <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/fetchCellularInAsync.java" />
         <option value="$PROJECT_DIR$/../android-master/app/src/main/java/com/growthfile/growthfile/MainActivity.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/CertPin.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MyAndroidFirebaseMsgService.java" />
         <option value="$PROJECT_DIR$/google-services.json" />
         <option value="$PROJECT_DIR$/build.gradle" />
-        <option value="$PROJECT_DIR$/src/main/AndroidManifest.xml" />
         <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/CellularInformation.java" />
+        <option value="$PROJECT_DIR$/src/main/AndroidManifest.xml" />
+        <option value="$PROJECT_DIR$/src/main/assets/nocache.html" />
         <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="1">
+  <component name="ProjectFrameBounds">
     <option name="y" value="23" />
     <option name="width" value="1440" />
     <option name="height" value="823" />
@@ -2441,7 +2410,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -2540,6 +2508,8 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
+      <pane id="PackagesPane" />
       <pane id="AndroidView">
         <subPane>
           <expand>
@@ -2551,7 +2521,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="PackagesPane" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -2563,7 +2532,7 @@
     <property name="android.project.structure.last.selected" value="SDK Location" />
     <property name="android.project.structure.proportion" value="0.15" />
     <property name="android.sdk.path" value="$USER_HOME$/Android/Sdk" />
-    <property name="device.picker.selection" value="1c9897ac7d15" />
+    <property name="device.picker.selection" value="52007e558c28c5a9" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/.." />
     <property name="settings.editor.selected.configurable" value="android.sdk-updates" />
   </component>
@@ -2725,7 +2694,6 @@
       <window_info id="Capture Tool" order="2" />
       <window_info id="Designer" order="2" />
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.24892704" />
-      <window_info anchor="right" id="Assistant" order="5" weight="0.3297568" />
       <window_info anchor="bottom" id="Build" order="7" weight="0.3292011" />
       <window_info anchor="right" id="Gradle" order="3" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
@@ -2733,36 +2701,15 @@
       <window_info anchor="right" id="Theme Preview" order="3" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.39944905" />
       <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info anchor="bottom" id="Message" order="0" />
-      <window_info id="Designer" order="2" />
-      <window_info anchor="bottom" id="Event Log" order="8" sideWeight="0.5035765" side_tool="true" weight="0.40082645" />
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.24892704" />
-      <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
-      <window_info id="Build Variants" order="4" side_tool="true" />
-      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Terminal" order="7" weight="0.3278237" />
-      <window_info anchor="right" id="Palette&#9;" order="4" />
-      <window_info anchor="bottom" id="Logcat" order="7" weight="0.3815427" />
-      <window_info anchor="right" id="Device File Explorer" order="3" side_tool="true" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.39944905" />
-      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
-      <window_info id="Image Layers" order="4" />
-      <window_info anchor="right" id="Theme Preview" order="3" />
-      <window_info anchor="bottom" id="Android Profiler" order="8" />
-      <window_info id="Capture Tool" order="2" />
-      <window_info anchor="bottom" id="Version Control" order="7" show_stripe_button="false" />
-      <window_info anchor="right" id="Capture Analysis" order="4" />
-      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Messages" order="7" weight="0.32943144" />
+      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
+      <window_info anchor="right" id="Assistant" order="5" weight="0.3297568" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.3292011" />
-      <window_info anchor="bottom" id="Run" order="2" />
-      <window_info active="true" anchor="bottom" id="Build" order="7" visible="true" weight="0.3292011" />
-      <window_info anchor="bottom" id="Messages" order="7" weight="0.32943144" />
-      <window_info id="Captures" order="2" weight="0.25" />
-      <window_info anchor="right" id="Gradle" order="3" />
-      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
     </layout>
     <layout-to-restore>
       <window_info anchor="bottom" id="Build" order="7" weight="0.3292011" />
@@ -2806,58 +2753,27 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>878</line>
+          <line>859</line>
           <properties />
           <option name="timeStamp" value="353" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>880</line>
+          <line>861</line>
           <properties />
           <option name="timeStamp" value="354" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>873</line>
+          <line>854</line>
           <properties />
           <option name="timeStamp" value="355" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>1290</line>
-          <properties />
-          <option name="timeStamp" value="441" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>972</line>
-          <properties />
-          <option name="timeStamp" value="443" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>973</line>
-          <properties />
-          <option name="timeStamp" value="444" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>976</line>
-          <properties />
-          <option name="timeStamp" value="445" />
-        </line-breakpoint>
       </breakpoints>
-      <option name="time" value="452" />
+      <option name="time" value="515" />
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="206">
-          <caret line="795" column="22" selection-start-line="795" selection-start-column="12" selection-end-line="795" selection-end-column="22" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/CellularInformation.java" />
     <entry file="file://$USER_HOME$/Library/Android/sdk/sources/android-28/java/lang/Runnable.java">
       <provider selected="true" editor-type-id="text-editor">
@@ -3087,13 +3003,13 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/fetchCellularInAsync.java" />
     <entry file="file://$PROJECT_DIR$/src/main/res/layout/activity_main.xml">
-      <provider editor-type-id="android-designer2">
-        <state />
-      </provider>
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="216">
           <caret line="16" column="41" selection-start-line="16" selection-start-column="41" selection-end-line="16" selection-end-column="41" />
         </state>
+      </provider>
+      <provider editor-type-id="android-designer2">
+        <state />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/../android-master/app/src/main/java/com/growthfile/growthfile/MainActivity.java">
@@ -3117,23 +3033,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/AndroidManifest.xml">
-      <provider editor-type-id="android-manifest">
-        <state />
-      </provider>
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="229">
-          <caret line="16" lean-forward="true" selection-start-line="16" selection-end-line="16" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/assets/nocache.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="10" column="7" lean-forward="true" selection-start-line="10" selection-start-column="7" selection-end-line="10" selection-end-column="7" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/CertPin.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="147">
@@ -3152,53 +3051,37 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/CellularInformation.java" />
+    <entry file="file://$PROJECT_DIR$/src/main/AndroidManifest.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="214">
+          <caret line="15" selection-start-line="15" selection-end-line="15" />
+        </state>
+      </provider>
+      <provider editor-type-id="android-manifest">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/assets/nocache.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1410">
+          <caret line="94" column="72" selection-start-line="94" selection-start-column="72" selection-end-line="94" selection-end-column="72" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$USER_HOME$/.gradle/caches/transforms-1/files-1.1/support-fragment-28.0.0-beta01.aar/dc090e7227eb7de067e7c09f310e0f73/jars/classes.jar!/android/support/v4/app/FragmentActivity.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="141">
+          <caret line="132" column="16" selection-start-line="132" selection-start-column="16" selection-end-line="132" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="281">
-          <caret line="263" column="21" selection-start-line="263" selection-start-column="21" selection-end-line="263" selection-end-column="21" />
+        <state relative-caret-position="196">
+          <caret line="729" column="13" selection-start-line="729" selection-start-column="13" selection-end-line="729" selection-end-column="13" />
           <folding>
-            <element signature="e#5241#5398#0" expanded="true" />
-            <element signature="e#5397#5398#0" expanded="true" />
-            <element signature="e#5500#5838#0" expanded="true" />
-            <element signature="e#5837#5838#0" expanded="true" />
-            <element signature="e#13899#14121#0" expanded="true" />
-            <element signature="e#14120#14121#0" expanded="true" />
-            <element signature="e#14858#15164#0" expanded="true" />
-            <element signature="e#15163#15164#0" expanded="true" />
-            <element signature="method#onPageFinished#0;class#13904:19011" />
-            <element signature="e#15972#16727#0" expanded="true" />
-            <element signature="e#16726#16727#0" expanded="true" />
-            <element signature="method#shouldOverrideUrlLoading#0;class#13904:19011" />
-            <element signature="method#shouldOverrideUrlLoading#1;class#13904:19011" />
-            <element signature="method#onReceivedError#0;class#13904:19011" />
-            <element signature="e#19825#20411#0" expanded="true" />
-            <element signature="e#20410#20411#0" expanded="true" />
-            <element signature="e#22714#24452#0" expanded="true" />
-            <element signature="e#24451#24452#0" expanded="true" />
-            <element signature="e#25362#27712#0" expanded="true" />
-            <element signature="e#27711#27712#0" expanded="true" />
-            <element signature="e#28276#28529#0" expanded="true" />
-            <element signature="e#28528#28529#0" expanded="true" />
-            <element signature="e#35088#35609#0" expanded="true" />
-            <element signature="e#35608#35609#0" expanded="true" />
-            <element signature="e#41477#41478#0" expanded="true" />
-            <element signature="e#41513#41514#0" expanded="true" />
-            <element signature="e#42375#42376#0" expanded="true" />
-            <element signature="e#42420#42421#0" expanded="true" />
-            <element signature="e#49128#49319#0" expanded="true" />
-            <element signature="e#49318#49319#0" expanded="true" />
-            <element signature="e#50427#50598#0" expanded="true" />
-            <element signature="e#50597#50598#0" expanded="true" />
-            <element signature="e#45261#45262#0" expanded="true" />
-            <element signature="e#45310#45311#0" expanded="true" />
-            <element signature="e#46065#46066#0" expanded="true" />
-            <element signature="e#46111#46112#0" expanded="true" />
-            <element signature="e#46177#46178#0" expanded="true" />
-            <element signature="e#46217#46218#0" expanded="true" />
-            <element signature="e#46289#46290#0" expanded="true" />
-            <element signature="e#46343#46344#0" expanded="true" />
-            <element signature="e#46428#46429#0" expanded="true" />
-            <element signature="e#46484#46485#0" expanded="true" />
+            <element signature="e#47935#47936#0" expanded="true" />
+            <element signature="e#48013#48014#0" expanded="true" />
           </folding>
         </state>
       </provider>

@@ -193,7 +193,6 @@ public class MainActivity extends AppCompatActivity {
         };
 
 
-
         if (!checkLocationPermission()) {
             if (VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, LOCATION_PERMISSION_CODE);
@@ -249,19 +248,42 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             case REQUEST_SCAN_ALWAYS_AVAILABLE:
-                if(resultCode != RESULT_OK) {
-                    startActivityForResult(new Intent(WifiManager.ACTION_REQUEST_SCAN_ALWAYS_AVAILABLE),116);
-                }
-                else {
-                    WifiManager wifiManager = (WifiManager) MainActivity.this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-                    if(!wifiManager.isScanAlwaysAvailable()) {
-                        startActivityForResult(new Intent(WifiManager.ACTION_REQUEST_SCAN_ALWAYS_AVAILABLE),116);
-                    }
-                    else {
-                        if(!wifiManager.isWifiEnabled()) {
-                            wifiManager.setWifiEnabled(true);
+                if (resultCode != RESULT_OK) {
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_Material_Light_Dialog_Alert);
+                    builder.setTitle("ALLOW WIFI SCANNING");
+                    builder.setMessage("Allowing wifi scanning improves location accuracy of your device.");
+                    builder.setCancelable(false);
+                    builder.setPositiveButton("Enable", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startActivityForResult(new Intent(WifiManager.ACTION_REQUEST_SCAN_ALWAYS_AVAILABLE), 116);
+                            dialog.dismiss();
+                            dialog.cancel();
                         }
+                    });
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                } else {
+                    WifiManager wifiManager = (WifiManager) MainActivity.this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                    if (!wifiManager.isScanAlwaysAvailable()) {
+
+                        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_Material_Light_Dialog_Alert);
+                        builder.setTitle("ALLOW WIFI SCANNING");
+                        builder.setMessage("Allowing wifi scanning improves location accuracy of your device");
+                        builder.setCancelable(false);
+                        builder.setPositiveButton("Allow", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                startActivityForResult(new Intent(WifiManager.ACTION_REQUEST_SCAN_ALWAYS_AVAILABLE), 116);
+                                dialog.dismiss();
+                                dialog.cancel();
+                            }
+                        });
+                        AlertDialog dialog = builder.create();
+
+                        dialog.show();
                     }
+
                 }
                 break;
         }
@@ -313,13 +335,16 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         Log.d("onStart", "started");
-        if(VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-            WifiManager wifiManager = (WifiManager) MainActivity.this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-            if(!wifiManager.isScanAlwaysAvailable()) {
 
-                startActivityForResult(new Intent(WifiManager.ACTION_REQUEST_SCAN_ALWAYS_AVAILABLE),116);
+
+        if (VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+
+            WifiManager wifiManager = (WifiManager) MainActivity.this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            if (!wifiManager.isScanAlwaysAvailable()) {
+                startActivityForResult(new Intent(WifiManager.ACTION_REQUEST_SCAN_ALWAYS_AVAILABLE), 116);
             }
         }
+
     }
 
     @Override
@@ -366,7 +391,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void runRead() {
 
-        this.mWebView.evaluateJavascript("javascript:requestCreator('Null')", null);
+        this.mWebView.evaluateJavascript("runRead()", null);
 
         new Handler().postDelayed(new Runnable() {
             @Override
@@ -404,137 +429,7 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void setWebViewClient() {
-        mWebView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                if (nocacheLoadUrl) return;
 
-                if (!hasPageFinished) {
-                    Log.d("onPageFinished", "true");
-                    mWebView.evaluateJavascript("native.setName('Android')", null);
-                    hasPageFinished = true;
-                    FirebaseInstanceId.getInstance().getInstanceId()
-                            .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                                @Override
-                                public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                                    if (!task.isSuccessful()) {
-                                        Log.w("MainActivity", "getInstanceId failed", task.getException());
-                                        return;
-                                    }
-                                    String token = task.getResult().getToken();
-                                    Log.e("FCMToken", token);
-                                    mWebView.evaluateJavascript("native.setFCMToken('" + token + "')", null);
-                                }
-                            });
-
-
-                    if (getIntent().getExtras() != null) {
-                        JSONObject fcmBody = new JSONObject();
-
-                        for (String key : getIntent().getExtras().keySet()) {
-                            Object value = getIntent().getExtras().get(key);
-
-                            try {
-                                fcmBody.put(key, value);
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        try {
-                            fcmBody.put("notification", true);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-
-
-                        try {
-                            Log.d("fcmBody", fcmBody.toString(4));
-                            mWebView.evaluateJavascript("runRead(" + fcmBody.toString(4) + ")", null);
-
-                        } catch (JSONException e) {
-                            androidException(e);
-                        }
-                    }
-                }
-            }
-
-            @SuppressWarnings("deprecation")
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-//                if (!DetectConnection.checkInternetConnection(MainActivity.this)) {
-//                    Toast.makeText(getApplicationContext(), "No Internet!", Toast.LENGTH_SHORT).show();
-//                } else {
-//                    view.loadUrl(url);
-//                }
-                if (url.contains("geo:")) {
-                    Intent mapIntent = new Intent("android.intent.action.VIEW", Uri.parse(url));
-                    mapIntent.setPackage("com.google.android.apps.maps");
-                    if (mapIntent.resolveActivity(MainActivity.this.getPackageManager()) != null) {
-                        MainActivity.this.startActivity(mapIntent);
-                    }
-                    return true;
-                }
-
-                view.loadUrl(url);
-                return true;
-            }
-
-
-            @RequiresApi(Build.VERSION_CODES.N)
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                String url = request.getUrl().toString();
-                shouldOverrideUrlLoading(view, url);
-                return true;
-            }
-
-            @Override
-            public void onReceivedError(WebView webView, int errorCode, String description, String failingUrl) {
-
-
-                    nocacheLoadUrl = true;
-                    webView.loadUrl("file:///android_asset/nocache.html");
-
-                    final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_Material_Dialog_Alert);
-                    builder.setTitle("No Internet Connection");
-                    builder.setMessage("Please Check if you have a working internet connection");
-                    builder.setCancelable(false);
-
-                    builder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-
-                            if (isNetworkAvailable()) {
-                                dialog.dismiss();
-                                nocacheLoadUrl = false;
-                                LoadApp();
-                            } else {
-                                builder.setTitle("Try Again");
-                                builder.show();
-                            }
-                        }
-                    });
-                    AlertDialog dialog = builder.create();
-                    dialog.show();
-                }
-
-
-        });
-
-    }
-//    public class DetectConnection {
-//        public static boolean checkInternetConnection(Context context) {
-//
-//            ConnectivityManager con_manager = (ConnectivityManager)
-//                    context.getSystemService(Context.CONNECTIVITY_SERVICE);
-//
-//            return (con_manager.getActiveNetworkInfo() != null
-//                    && con_manager.getActiveNetworkInfo().isAvailable()
-//                    && con_manager.getActiveNetworkInfo().isConnected());
-//        }
-//    }
     private String encodeImage(Bitmap bm) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         bm.compress(Bitmap.CompressFormat.JPEG, 50, byteArrayOutputStream);
@@ -575,6 +470,8 @@ public class MainActivity extends AppCompatActivity {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BROADCAST_ACTION);
         intentFilter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+        intentFilter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
+
         IntentFilter providerChangeIntent = new IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION);
 
         providerChangeIntent.addAction(Intent.ACTION_PROVIDER_CHANGED);
@@ -620,6 +517,7 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                 }
+
             }
         };
         registerReceiver(broadcastReceiver, intentFilter);
@@ -727,13 +625,16 @@ public class MainActivity extends AppCompatActivity {
 
         webSettings.setDatabaseEnabled(true);
         webSettings.setUseWideViewPort(true);
-        webSettings.setAppCachePath(getApplicationContext().getCacheDir().getAbsolutePath());
-        webSettings.setAppCacheEnabled(true);
+
         webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
-        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
 
+
+        WebView.setWebContentsDebuggingEnabled(true);
+
+        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com/v1/");
+        mWebView.requestFocus(View.FOCUS_DOWN);
 
         mWebView.setWebChromeClient(new WebChromeClient() {
             @Override
@@ -741,15 +642,94 @@ public class MainActivity extends AppCompatActivity {
                 callback.invoke(origin, true, false);
             }
         });
+        mWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                if (nocacheLoadUrl) return;
 
-        if (!isNetworkAvailable()) { // loading offline
-            webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
-        }
-        WebView.setWebContentsDebuggingEnabled(true);
+                if (!hasPageFinished) {
+                    Log.d("onPageFinished", "true");
+                    mWebView.evaluateJavascript("native.setName('Android')", null);
+                    hasPageFinished = true;
+                    FirebaseInstanceId.getInstance().getInstanceId()
+                            .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                                @Override
+                                public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                                    if (!task.isSuccessful()) {
+                                        Log.w("MainActivity", "getInstanceId failed", task.getException());
+                                        return;
+                                    }
+                                    String token = task.getResult().getToken();
+                                    Log.e("FCMToken", token);
+                                    mWebView.evaluateJavascript("native.setFCMToken('" + token + "')", null);
+                                }
+                            });
 
-        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com");
-        mWebView.requestFocus(View.FOCUS_DOWN);
-        setWebViewClient();
+
+                    if (getIntent().getExtras() != null) {
+                        JSONObject fcmBody = new JSONObject();
+
+                        for (String key : getIntent().getExtras().keySet()) {
+                            Object value = getIntent().getExtras().get(key);
+
+                            try {
+                                fcmBody.put(key, value);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        try {
+                            fcmBody.put("notification", true);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+
+                        try {
+                            Log.d("fcmBody", fcmBody.toString(4));
+                            mWebView.evaluateJavascript("runRead(" + fcmBody.toString(4) + ")", null);
+
+                        } catch (JSONException e) {
+                            androidException(e);
+                        }
+                    }
+                }
+            }
+
+            @SuppressWarnings("deprecation")
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+
+                if (url.contains("geo:")) {
+                    Intent mapIntent = new Intent("android.intent.action.VIEW", Uri.parse(url));
+                    mapIntent.setPackage("com.google.android.apps.maps");
+                    if (mapIntent.resolveActivity(MainActivity.this.getPackageManager()) != null) {
+                        MainActivity.this.startActivity(mapIntent);
+                    }
+                    return true;
+                }
+
+                view.loadUrl(url);
+                return true;
+            }
+
+
+            @RequiresApi(Build.VERSION_CODES.N)
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                String url = request.getUrl().toString();
+                shouldOverrideUrlLoading(view, url);
+                return true;
+            }
+
+            @Override
+            public void onReceivedError(WebView webView, int errorCode, String description, String failingUrl) {
+                Toast.makeText(MainActivity.this, description, Toast.LENGTH_LONG).show();
+                mWebView.loadUrl("file:///android_asset/nocache.html");
+            }
+        });
+
 
     }
 
@@ -868,7 +848,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void androidException(final Exception e) {
-        Log.d("exception log",e.getMessage());
+        Log.d("exception log", e.getMessage());
         final StringWriter sw = new StringWriter();
         final PrintWriter pw = new PrintWriter(sw, true);
         e.printStackTrace(pw);
@@ -883,17 +863,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public String getMCC(TelephonyManager tm) {
-        if(tm == null) return "";
+        if (tm == null) return "";
         if (tm.getNetworkOperator().isEmpty()) {
             return "";
         }
         String operator = tm.getNetworkOperator();
         return operator.substring(0, 3);
-    };
+    }
+
+    ;
 
 
     public String getMNC(TelephonyManager tm) {
-        if(tm == null) return "";
+        if (tm == null) return "";
         if (tm.getNetworkOperator().isEmpty()) {
             return "";
         }
@@ -909,7 +891,7 @@ public class MainActivity extends AppCompatActivity {
                 type = "CDMA";
                 break;
             case TelephonyManager.NETWORK_TYPE_CDMA:
-                type =  "CDMA";
+                type = "CDMA";
                 break;
             case TelephonyManager.NETWORK_TYPE_EDGE:
                 type = "GSM";
@@ -939,7 +921,7 @@ public class MainActivity extends AppCompatActivity {
                 type = "WCDMA";
                 break;
             case TelephonyManager.NETWORK_TYPE_HSUPA:
-                type=  "WCDMA";
+                type = "WCDMA";
                 break;
             case TelephonyManager.NETWORK_TYPE_LTE:
                 type = "LTE";
@@ -956,20 +938,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
     public String scanNearbyWifi(List<ScanResult> wifiList) {
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < wifiList.size(); i++) {
             String bssid = wifiList.get(i).BSSID;
             Integer ss = wifiList.get(i).level;
-            if(bssid != null) {
+            if (bssid != null) {
                 sb.append("macAddress=").append(bssid).append("&").append("signalStrength=").append(ss);
                 sb.append(",");
             }
         }
 
-        if(sb.length() != 0) {
+        if (sb.length() != 0) {
             sb.deleteCharAt(sb.lastIndexOf(","));
             return sb.toString();
         }
@@ -978,9 +959,9 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public String getAllCelltowerInfo(List<CellInfo> cellInfoList)  {
+    public String getAllCelltowerInfo(List<CellInfo> cellInfoList) {
         int mcc = 0;
-        int mnc =0;
+        int mnc = 0;
         int lac = 0;
         int signalStrength = 0;
         int cid = 0;
@@ -991,56 +972,74 @@ public class MainActivity extends AppCompatActivity {
         for (final CellInfo info : cellInfoList) {
 
             if (info instanceof CellInfoGsm) {
+
                 final CellSignalStrengthGsm signalStrengthGsm = ((CellInfoGsm) info).getCellSignalStrength();
+
                 final CellIdentityGsm identityGsm = ((CellInfoGsm) info).getCellIdentity();
+                if (identityGsm != null) {
 
-                cid = identityGsm.getCid();
-                lac = identityGsm.getLac();
-                if (cid >= 0) {
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-                        System.out.print(identityGsm.getMcc());
+                    cid = identityGsm.getCid();
+                    lac = identityGsm.getLac();
+                    if (cid >= 0) {
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                            System.out.print(identityGsm.getMcc());
 
-                        mcc = identityGsm.getMcc();
-                        mnc = identityGsm.getMnc();
-                    } else {
-                        mcc = Integer.parseInt(identityGsm.getMccString());
-                        mnc = Integer.parseInt(identityGsm.getMncString());
+                            mcc = identityGsm.getMcc();
+                            mnc = identityGsm.getMnc();
+                        } else {
+                            mcc = Integer.parseInt(identityGsm.getMccString());
+                            mnc = Integer.parseInt(identityGsm.getMncString());
+                        }
+                        if (signalStrengthGsm != null) {
+                            signalStrength = signalStrengthGsm.getDbm();
+                        }
                     }
-                    signalStrength = signalStrengthGsm.getDbm();
                 }
             }
 
 
             if (info instanceof CellInfoWcdma) {
                 final CellSignalStrengthWcdma signalStrengthWcdma = ((CellInfoWcdma) info).getCellSignalStrength();
+
                 final CellIdentityWcdma identityWcdma = ((CellInfoWcdma) info).getCellIdentity();
-                cid = identityWcdma.getCid();
+                if (identityWcdma != null) {
 
-                if (cid >= 0) {
 
-                    lac = identityWcdma.getLac();
-                    signalStrength = signalStrengthWcdma.getDbm();
+                    cid = identityWcdma.getCid();
 
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-                        System.out.print(identityWcdma.getMcc());
-                        mcc = identityWcdma.getMcc();
-                        mnc = identityWcdma.getMnc();
-                    } else {
-                        mcc = Integer.parseInt(identityWcdma.getMccString());
-                        mnc = Integer.parseInt(identityWcdma.getMncString());
+                    if (cid >= 0) {
+
+                        lac = identityWcdma.getLac();
+                        if (signalStrengthWcdma != null) {
+                            signalStrength = signalStrengthWcdma.getDbm();
+                        }
+
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                            System.out.print(identityWcdma.getMcc());
+                            mcc = identityWcdma.getMcc();
+                            mnc = identityWcdma.getMnc();
+                        } else {
+                            mcc = Integer.parseInt(identityWcdma.getMccString());
+                            mnc = Integer.parseInt(identityWcdma.getMncString());
+                        }
+
                     }
-
                 }
 
             }
             if (info instanceof CellInfoLte) {
                 final CellSignalStrengthLte signalStrengthLte = ((CellInfoLte) info).getCellSignalStrength();
                 final CellIdentityLte identityLte = ((CellInfoLte) info).getCellIdentity();
+                if(identityLte != null) {
+
 
                 cid = identityLte.getCi();
                 if (cid >= 0) {
                     lac = identityLte.getTac();
-                    signalStrength = signalStrengthLte.getDbm();
+                    if(signalStrengthLte != null) {
+                        signalStrength = signalStrengthLte.getDbm();
+                    }
+
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
                         System.out.print(identityLte.getMcc());
                         mcc = identityLte.getMcc();
@@ -1050,39 +1049,42 @@ public class MainActivity extends AppCompatActivity {
                         mcc = Integer.parseInt(identityLte.getMccString());
                         mnc = Integer.parseInt(identityLte.getMncString());
                     }
-
+                }
                 }
             }
 
             if (info instanceof CellInfoCdma) {
                 final CellSignalStrengthCdma signalStrengthCdma = ((CellInfoCdma) info).getCellSignalStrength();
                 final CellIdentityCdma identityCdma = ((CellInfoCdma) info).getCellIdentity();
-
-                cid = identityCdma.getBasestationId();
-                if (cid >= 0) {
-                    lac = identityCdma.getNetworkId();
-                    signalStrength = signalStrengthCdma.getDbm();
-                    mnc = identityCdma.getSystemId();
-                    TelephonyManager tm = (TelephonyManager) MainActivity.this.getSystemService(Context.TELEPHONY_SERVICE);
-                    mcc = Integer.parseInt(getMCC(tm));
+                if(signalStrengthCdma != null) {
+                    cid = identityCdma.getBasestationId();
+                    if (cid >= 0) {
+                        lac = identityCdma.getNetworkId();
+                        if(signalStrengthCdma != null) {
+                            signalStrength = signalStrengthCdma.getDbm();
+                        }
+                        mnc = identityCdma.getSystemId();
+                        TelephonyManager tm = (TelephonyManager) MainActivity.this.getSystemService(Context.TELEPHONY_SERVICE);
+                        mcc = Integer.parseInt(getMCC(tm));
+                    }
                 }
             }
 
-            if(mcc != Integer.MAX_VALUE && mnc != Integer.MAX_VALUE  && cid != Integer.MAX_VALUE) {
+
+            if (mcc != Integer.MAX_VALUE   && mnc != Integer.MAX_VALUE && cid != Integer.MAX_VALUE ) {
 
                 sb.append("mobileCountryCode=").append(mcc).append("&").append("mobileNetworkCode=").append(mnc).append("&").append("cellId=").append(cid).
                         append("&").append("locationAreaCode=").append(lac).append("&")
-                        .append("signalStrength=").append(signalStrength).append("&");
+                        .append("signalStrength=").append(signalStrength);
                 sb.append(",");
             }
         }
-        if(sb.length() != 0) {
+        if (sb.length() != 0) {
             sb.deleteCharAt(sb.lastIndexOf(","));
             return sb.toString();
         }
         return "";
     }
-
 
 
     private class viewLoadJavaInterface {
@@ -1101,15 +1103,12 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+
         @JavascriptInterface
-        public boolean isConnectionActive() {
-//            ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-//            NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-//            return networkInfo != null && networkInfo.isConnected();
-            return true;
-
+        public boolean isWifiOn() {
+            WifiManager wifiManager = (WifiManager) MainActivity.this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            return wifiManager.isWifiEnabled();
         }
-
 
         @JavascriptInterface
         public void openImagePicker() {
@@ -1185,12 +1184,19 @@ public class MainActivity extends AppCompatActivity {
                 });
                 return device.toString(4);
             }
-        };
+        }
+
+        ;
 
         // device Info //
         @JavascriptInterface
         public String getId() {
-            return Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+            try {
+                return Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+            }catch (SecurityException e) {
+                return  "";
+            }
+
         }
 
         @JavascriptInterface
@@ -1247,7 +1253,14 @@ public class MainActivity extends AppCompatActivity {
 
             return getMCC(tm);
 
-        };
+        }
+
+        ;
+
+        @JavascriptInterface
+        public  void loadOffline(){
+            mWebView.loadUrl("file:///android_asset/nocache.html");
+        }
 
         @JavascriptInterface
         public String getMobileNetworkCode() {
@@ -1255,7 +1268,6 @@ public class MainActivity extends AppCompatActivity {
             TelephonyManager tm = (TelephonyManager) MainActivity.this.getSystemService(Context.TELEPHONY_SERVICE);
 
             return getMNC(tm);
-
 
         }
 
@@ -1283,31 +1295,32 @@ public class MainActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public String getWifiAccessPoints() {
-            if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(MainActivity.this,Manifest.permission.ACCESS_FINE_LOCATION )!= PackageManager.PERMISSION_GRANTED ) {
+            if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return "";
             }
             WifiManager wifiManager = (WifiManager) MainActivity.this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-            if(wifiManager == null) return "";
+            if (wifiManager == null) return "";
             List<ScanResult> wifiList = wifiManager.getScanResults();
             return scanNearbyWifi(wifiList);
 
         }
 
         @JavascriptInterface
-        public String getCellTowerInformation(){
+        public String getCellTowerInformation() {
 
             TelephonyManager tm = (TelephonyManager) MainActivity.this.getSystemService(Context.TELEPHONY_SERVICE);
-            if(tm == null) {
+            if (tm == null) {
                 return "";
             }
-            if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(MainActivity.this,Manifest.permission.ACCESS_FINE_LOCATION )!= PackageManager.PERMISSION_GRANTED ) {
+            if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return "";
             }
             List<CellInfo> cellInfoList = tm.getAllCellInfo();
-            if(cellInfoList == null || cellInfoList.isEmpty())  return "";
+            if (cellInfoList == null || cellInfoList.isEmpty()) return "";
             return getAllCelltowerInfo(cellInfoList);
         }
-}
+
+    }
 
     @Override
     public void onBackPressed() {
