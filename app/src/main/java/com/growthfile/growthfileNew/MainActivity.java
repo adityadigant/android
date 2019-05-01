@@ -943,15 +943,15 @@ public class MainActivity extends AppCompatActivity {
         return type;
     }
 
-    public int channel(int freq){
+    public int channel(int freq) {
 
-            if (freq == 2484)
-                return 14;
+        if (freq == 2484)
+            return 14;
 
-            if (freq < 2484)
-                return (freq - 2407) / 5;
+        if (freq < 2484)
+            return (freq - 2407) / 5;
 
-            return freq/5 - 1000;
+        return freq / 5 - 1000;
 
     }
 
@@ -982,17 +982,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public String getAllCelltowerInfo(List<CellInfo> cellInfoList) {
-        int mcc = 0;
-        int mnc = 0;
-        int lac = 0;
-        int signalStrength = 0;
-        int cid = 0;
+
 
         StringBuilder sb = new StringBuilder();
 
 
         for (final CellInfo info : cellInfoList) {
-
+            int mcc = 0;
+            int mnc = 0;
+            int lac = 0;
+            int signalStrength = 0;
+            int cid = 0;
+            int timingAdvance =0;
 
             if (info instanceof CellInfoGsm) {
 
@@ -1001,26 +1002,32 @@ public class MainActivity extends AppCompatActivity {
                 final CellIdentityGsm identityGsm = ((CellInfoGsm) info).getCellIdentity();
 
                 if (identityGsm != null) {
-                    Log.d("gsm",""+identityGsm.getCid()+" , "+info.isRegistered());
+                    Log.d("gsm", "" + identityGsm.getCid() + " , " + info.isRegistered());
 
                     cid = identityGsm.getCid();
                     lac = identityGsm.getLac();
-                    if (cid >= 0) {
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
 
-                            mcc = identityGsm.getMcc();
-                            mnc = identityGsm.getMnc();
-                        } else {
-                            if (identityGsm.getMccString() != null && identityGsm.getMncString() != null) {
 
-                                mcc = Integer.parseInt(identityGsm.getMccString());
-                                mnc = Integer.parseInt(identityGsm.getMncString());
-                            }
-                        }
-                        if (signalStrengthGsm != null) {
-                            signalStrength = signalStrengthGsm.getDbm();
+                    if (VERSION.SDK_INT < Build.VERSION_CODES.P) {
+
+                        mcc = identityGsm.getMcc();
+                        mnc = identityGsm.getMnc();
+                    } else {
+                        if (identityGsm.getMccString() != null && identityGsm.getMncString() != null) {
+
+                            mcc = Integer.parseInt(identityGsm.getMccString());
+                            mnc = Integer.parseInt(identityGsm.getMncString());
                         }
                     }
+                    if (signalStrengthGsm != null) {
+                        signalStrength = signalStrengthGsm.getDbm();
+                        if (VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            timingAdvance = signalStrengthGsm.getTimingAdvance();
+                        }
+
+                    }
+
+
                 }
             }
 
@@ -1030,31 +1037,27 @@ public class MainActivity extends AppCompatActivity {
 
                 final CellIdentityWcdma identityWcdma = ((CellInfoWcdma) info).getCellIdentity();
                 if (identityWcdma != null) {
-                    Log.d("wcdma",""+identityWcdma.getCid()+" , "+info.isRegistered());
-
-
+                    Log.d("wcdma", "" + identityWcdma.getCid() + " , " + info.isRegistered());
                     cid = identityWcdma.getCid();
+                    lac = identityWcdma.getLac();
 
-                    if (cid >= 0) {
 
-                        lac = identityWcdma.getLac();
-                        if (signalStrengthWcdma != null) {
-                            signalStrength = signalStrengthWcdma.getDbm();
+                    if (VERSION.SDK_INT < Build.VERSION_CODES.P) {
+
+                        mcc = identityWcdma.getMcc();
+                        mnc = identityWcdma.getMnc();
+                    } else {
+                        if (identityWcdma.getMccString() != null && identityWcdma.getMncString() != null) {
+
+                            mcc = Integer.parseInt(identityWcdma.getMccString());
+                            mnc = Integer.parseInt(identityWcdma.getMncString());
                         }
-
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-
-                            mcc = identityWcdma.getMcc();
-                            mnc = identityWcdma.getMnc();
-                        } else {
-                            if (identityWcdma.getMccString() != null && identityWcdma.getMncString() != null) {
-
-                                mcc = Integer.parseInt(identityWcdma.getMccString());
-                                mnc = Integer.parseInt(identityWcdma.getMncString());
-                            }
-                        }
+                    }
+                    if (signalStrengthWcdma != null) {
+                        signalStrength = signalStrengthWcdma.getDbm();
 
                     }
+
                 }
 
             }
@@ -1062,27 +1065,30 @@ public class MainActivity extends AppCompatActivity {
                 final CellSignalStrengthLte signalStrengthLte = ((CellInfoLte) info).getCellSignalStrength();
                 final CellIdentityLte identityLte = ((CellInfoLte) info).getCellIdentity();
                 if (identityLte != null) {
-                    Log.d("lte",""+identityLte.getCi()+" , "+info.isRegistered());
+                    Log.d("lte", "" + identityLte.getCi() + " , " + info.isRegistered());
 
                     cid = identityLte.getCi();
-                    if (cid >= 0) {
-                        lac = identityLte.getTac();
-                        if (signalStrengthLte != null) {
-                            signalStrength = signalStrengthLte.getDbm();
-                        };
 
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-                            mcc = identityLte.getMcc();
-                            mnc = identityLte.getMnc();
+                    lac = identityLte.getTac();
 
-                        } else {
-                            if (identityLte.getMccString() != null && identityLte.getMncString() != null) {
 
-                                mcc = Integer.parseInt(identityLte.getMccString());
-                                mnc = Integer.parseInt(identityLte.getMncString());
-                            }
+                    if (VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                        mcc = identityLte.getMcc();
+                        mnc = identityLte.getMnc();
+
+                    } else {
+                        if (identityLte.getMccString() != null && identityLte.getMncString() != null) {
+
+                            mcc = Integer.parseInt(identityLte.getMccString());
+                            mnc = Integer.parseInt(identityLte.getMncString());
                         }
                     }
+                    if (signalStrengthLte != null) {
+                        signalStrength = signalStrengthLte.getDbm();
+                        timingAdvance = signalStrengthLte.getTimingAdvance();
+                    }
+
+
                 }
             }
 
@@ -1091,26 +1097,29 @@ public class MainActivity extends AppCompatActivity {
                 final CellIdentityCdma identityCdma = ((CellInfoCdma) info).getCellIdentity();
                 if (signalStrengthCdma != null) {
                     cid = identityCdma.getBasestationId();
-                    if (cid >= 0) {
-                        lac = identityCdma.getNetworkId();
-                        if (signalStrengthCdma != null) {
-                            signalStrength = signalStrengthCdma.getDbm();
-                        }
-                        mnc = identityCdma.getSystemId();
-                        TelephonyManager tm = (TelephonyManager) MainActivity.this.getSystemService(Context.TELEPHONY_SERVICE);
-                        mcc = Integer.parseInt(getMCC(tm));
-                    }
+
+                    lac = identityCdma.getNetworkId();
+
+                    mnc = identityCdma.getSystemId();
+                    TelephonyManager tm = (TelephonyManager) MainActivity.this.getSystemService(Context.TELEPHONY_SERVICE);
+                    mcc = Integer.parseInt(getMCC(tm));
+
+                    signalStrength = signalStrengthCdma.getDbm();
+
+
                 }
+
             }
 
 
-            if (mcc != Integer.MAX_VALUE && mnc != Integer.MAX_VALUE && cid != Integer.MAX_VALUE) {
-
-                sb.append("mobileCountryCode=").append(mcc).append("&").append("mobileNetworkCode=").append(mnc).append("&").append("cellId=").append(cid).
-                        append("&").append("locationAreaCode=").append(lac).append("&")
-                        .append("signalStrength=").append(signalStrength);
-                sb.append(",");
+            sb.append("mobileCountryCode=").append(mcc).append("&").append("mobileNetworkCode=").append(mnc).append("&").append("cellId=").append(cid).
+                    append("&").append("locationAreaCode=").append(lac).append("&")
+                    .append("signalStrength=").append(signalStrength);
+            if(timingAdvance != 0) {
+                sb.append("&").append("timingAdvance=").append(timingAdvance);
             }
+            sb.append(",");
+
         }
         if (sb.length() != 0) {
             sb.deleteCharAt(sb.lastIndexOf(","));

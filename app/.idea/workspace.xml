@@ -43,10 +43,12 @@
       <file leaf-file-name="MainActivity.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="41">
-              <caret line="1001" column="16" selection-start-line="1001" selection-start-column="16" selection-end-line="1001" selection-end-column="16" />
+            <state relative-caret-position="1985">
+              <caret line="1106" column="20" selection-start-line="1106" selection-start-column="20" selection-end-line="1106" selection-end-column="20" />
               <folding>
                 <element signature="imports" expanded="true" />
+                <element signature="e#45795#45986#0" expanded="true" />
+                <element signature="e#45985#45986#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -2387,11 +2389,11 @@
         <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/CellularInformation.java" />
         <option value="$PROJECT_DIR$/src/main/assets/nocache.html" />
         <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/CertPin.java" />
-        <option value="$PROJECT_DIR$/google-services.json" />
         <option value="$PROJECT_DIR$/build.gradle" />
         <option value="$PROJECT_DIR$/src/main/AndroidManifest.xml" />
         <option value="$PROJECT_DIR$/src/main/res/values/colors.xml" />
         <option value="$PROJECT_DIR$/src/main/res/values/styles.xml" />
+        <option value="$PROJECT_DIR$/google-services.json" />
         <option value="$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java" />
       </list>
     </option>
@@ -2406,18 +2408,8 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="PackagesPane" />
-      <pane id="AndroidView">
-        <subPane>
-          <expand>
-            <path>
-              <item name="app" type="1abcf292:AndroidViewProjectNode" />
-              <item name="Gradle Scripts" type="ae0cef3a:AndroidBuildScriptsGroupNode" />
-            </path>
-          </expand>
-          <select />
-        </subPane>
-      </pane>
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -2534,7 +2526,17 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
+      <pane id="AndroidView">
+        <subPane>
+          <expand>
+            <path>
+              <item name="app" type="1abcf292:AndroidViewProjectNode" />
+              <item name="Gradle Scripts" type="ae0cef3a:AndroidBuildScriptsGroupNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -2693,7 +2695,7 @@
     <frame x="0" y="23" width="1440" height="823" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info anchor="bottom" id="Android Profiler" order="8" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Android Profiler" order="8" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="right" id="Palette&#9;" order="4" />
       <window_info id="Image Layers" order="4" />
@@ -2702,19 +2704,19 @@
       <window_info anchor="bottom" id="Event Log" order="8" sideWeight="0.5035765" side_tool="true" weight="0.40082645" />
       <window_info anchor="bottom" id="Run" order="2" />
       <window_info anchor="bottom" id="Version Control" order="7" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Terminal" order="7" weight="0.3278237" />
-      <window_info active="true" anchor="bottom" id="Logcat" order="7" visible="true" weight="0.3815427" />
+      <window_info anchor="bottom" id="Terminal" order="7" visible="true" weight="0.3278237" />
+      <window_info anchor="bottom" id="Logcat" order="7" weight="0.3815427" />
       <window_info id="Captures" order="2" weight="0.25" />
       <window_info id="Capture Tool" order="2" />
       <window_info id="Designer" order="2" />
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.83741647" visible="true" weight="0.24892704" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.8340164" visible="true" weight="0.24892704" />
       <window_info anchor="bottom" id="Build" order="7" weight="0.3292011" />
       <window_info anchor="right" id="Gradle" order="3" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.39944905" />
       <window_info anchor="right" id="Device File Explorer" order="3" side_tool="true" />
       <window_info anchor="right" id="Theme Preview" order="3" />
-      <window_info id="Favorites" order="2" sideWeight="0.16258352" side_tool="true" visible="true" weight="0.24892704" />
+      <window_info id="Favorites" order="2" sideWeight="0.1659836" side_tool="true" visible="true" weight="0.24892704" />
       <window_info anchor="bottom" id="Messages" order="7" weight="0.32943144" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Assistant" order="5" weight="0.3297568" />
@@ -2767,13 +2769,13 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>1116</line>
+          <line>1125</line>
           <properties />
           <option name="timeStamp" value="537" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>1118</line>
+          <line>1127</line>
           <properties />
           <option name="timeStamp" value="538" />
         </line-breakpoint>
@@ -3063,13 +3065,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/google-services.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="225">
-          <caret line="15" column="23" selection-start-line="15" selection-start-column="23" selection-end-line="15" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/res/values/styles.xml">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="135">
@@ -3084,12 +3079,21 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/google-services.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="372">
+          <caret line="153" column="1" selection-start-line="153" selection-start-column="1" selection-end-line="153" selection-end-column="1" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="41">
-          <caret line="1001" column="16" selection-start-line="1001" selection-start-column="16" selection-end-line="1001" selection-end-column="16" />
+        <state relative-caret-position="1985">
+          <caret line="1106" column="20" selection-start-line="1106" selection-start-column="20" selection-end-line="1106" selection-end-column="20" />
           <folding>
             <element signature="imports" expanded="true" />
+            <element signature="e#45795#45986#0" expanded="true" />
+            <element signature="e#45985#45986#0" expanded="true" />
           </folding>
         </state>
       </provider>
