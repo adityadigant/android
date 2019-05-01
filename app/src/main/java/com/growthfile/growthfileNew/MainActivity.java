@@ -4,6 +4,7 @@ import android.Manifest;
 
 
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -37,6 +38,7 @@ import android.os.StrictMode;
 import android.provider.MediaStore;
 
 import android.provider.Settings;
+import android.support.annotation.LongDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
@@ -629,11 +631,8 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
-
-
         WebView.setWebContentsDebuggingEnabled(true);
-
-        mWebView.loadUrl("https://growthfile-207204.firebaseapp.com/v1/");
+        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com/v1/");
         mWebView.requestFocus(View.FOCUS_DOWN);
 
         mWebView.setWebChromeClient(new WebChromeClient() {
@@ -642,12 +641,19 @@ public class MainActivity extends AppCompatActivity {
                 callback.invoke(origin, true, false);
             }
         });
+
+        final ProgressDialog dialog = new ProgressDialog(MainActivity.this, R.style.MyProgressBar);
+        dialog.setCancelable(false);
+        dialog.setMessage("Loading");
+        dialog.setProgressStyle(android.R.style.Widget_Material_ProgressBar_Large);
+        dialog.show();
+
         mWebView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 if (nocacheLoadUrl) return;
-
+                dialog.cancel();
                 if (!hasPageFinished) {
                     Log.d("onPageFinished", "true");
                     mWebView.evaluateJavascript("native.setName('Android')", null);
@@ -937,21 +943,37 @@ public class MainActivity extends AppCompatActivity {
         return type;
     }
 
+    public int channel(int freq){
+
+            if (freq == 2484)
+                return 14;
+
+            if (freq < 2484)
+                return (freq - 2407) / 5;
+
+            return freq/5 - 1000;
+
+    }
 
     public String scanNearbyWifi(List<ScanResult> wifiList) {
         StringBuilder sb = new StringBuilder();
-
         for (int i = 0; i < wifiList.size(); i++) {
+
             String bssid = wifiList.get(i).BSSID;
             Integer ss = wifiList.get(i).level;
             if (bssid != null) {
-                sb.append("macAddress=").append(bssid).append("&").append("signalStrength=").append(ss);
+
+                sb.append("macAddress=").append(bssid).append("&").append("signalStrength=").append(ss).append("&").append("channel=").append(channel(wifiList.get(i).frequency)).append("&").append("age=").append(0);
                 sb.append(",");
+
+
             }
         }
 
         if (sb.length() != 0) {
             sb.deleteCharAt(sb.lastIndexOf(","));
+            Log.d("wifi", sb.toString());
+
             return sb.toString();
         }
 
@@ -971,24 +993,29 @@ public class MainActivity extends AppCompatActivity {
 
         for (final CellInfo info : cellInfoList) {
 
+
             if (info instanceof CellInfoGsm) {
 
                 final CellSignalStrengthGsm signalStrengthGsm = ((CellInfoGsm) info).getCellSignalStrength();
 
                 final CellIdentityGsm identityGsm = ((CellInfoGsm) info).getCellIdentity();
+
                 if (identityGsm != null) {
+                    Log.d("gsm",""+identityGsm.getCid()+" , "+info.isRegistered());
 
                     cid = identityGsm.getCid();
                     lac = identityGsm.getLac();
                     if (cid >= 0) {
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-                            System.out.print(identityGsm.getMcc());
 
                             mcc = identityGsm.getMcc();
                             mnc = identityGsm.getMnc();
                         } else {
-                            mcc = Integer.parseInt(identityGsm.getMccString());
-                            mnc = Integer.parseInt(identityGsm.getMncString());
+                            if (identityGsm.getMccString() != null && identityGsm.getMncString() != null) {
+
+                                mcc = Integer.parseInt(identityGsm.getMccString());
+                                mnc = Integer.parseInt(identityGsm.getMncString());
+                            }
                         }
                         if (signalStrengthGsm != null) {
                             signalStrength = signalStrengthGsm.getDbm();
@@ -1003,6 +1030,7 @@ public class MainActivity extends AppCompatActivity {
 
                 final CellIdentityWcdma identityWcdma = ((CellInfoWcdma) info).getCellIdentity();
                 if (identityWcdma != null) {
+                    Log.d("wcdma",""+identityWcdma.getCid()+" , "+info.isRegistered());
 
 
                     cid = identityWcdma.getCid();
@@ -1015,12 +1043,15 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-                            System.out.print(identityWcdma.getMcc());
+
                             mcc = identityWcdma.getMcc();
                             mnc = identityWcdma.getMnc();
                         } else {
-                            mcc = Integer.parseInt(identityWcdma.getMccString());
-                            mnc = Integer.parseInt(identityWcdma.getMncString());
+                            if (identityWcdma.getMccString() != null && identityWcdma.getMncString() != null) {
+
+                                mcc = Integer.parseInt(identityWcdma.getMccString());
+                                mnc = Integer.parseInt(identityWcdma.getMncString());
+                            }
                         }
 
                     }
@@ -1030,37 +1061,39 @@ public class MainActivity extends AppCompatActivity {
             if (info instanceof CellInfoLte) {
                 final CellSignalStrengthLte signalStrengthLte = ((CellInfoLte) info).getCellSignalStrength();
                 final CellIdentityLte identityLte = ((CellInfoLte) info).getCellIdentity();
-                if(identityLte != null) {
+                if (identityLte != null) {
+                    Log.d("lte",""+identityLte.getCi()+" , "+info.isRegistered());
 
+                    cid = identityLte.getCi();
+                    if (cid >= 0) {
+                        lac = identityLte.getTac();
+                        if (signalStrengthLte != null) {
+                            signalStrength = signalStrengthLte.getDbm();
+                        };
 
-                cid = identityLte.getCi();
-                if (cid >= 0) {
-                    lac = identityLte.getTac();
-                    if(signalStrengthLte != null) {
-                        signalStrength = signalStrengthLte.getDbm();
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                            mcc = identityLte.getMcc();
+                            mnc = identityLte.getMnc();
+
+                        } else {
+                            if (identityLte.getMccString() != null && identityLte.getMncString() != null) {
+
+                                mcc = Integer.parseInt(identityLte.getMccString());
+                                mnc = Integer.parseInt(identityLte.getMncString());
+                            }
+                        }
                     }
-
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-                        System.out.print(identityLte.getMcc());
-                        mcc = identityLte.getMcc();
-                        mnc = identityLte.getMnc();
-
-                    } else {
-                        mcc = Integer.parseInt(identityLte.getMccString());
-                        mnc = Integer.parseInt(identityLte.getMncString());
-                    }
-                }
                 }
             }
 
             if (info instanceof CellInfoCdma) {
                 final CellSignalStrengthCdma signalStrengthCdma = ((CellInfoCdma) info).getCellSignalStrength();
                 final CellIdentityCdma identityCdma = ((CellInfoCdma) info).getCellIdentity();
-                if(signalStrengthCdma != null) {
+                if (signalStrengthCdma != null) {
                     cid = identityCdma.getBasestationId();
                     if (cid >= 0) {
                         lac = identityCdma.getNetworkId();
-                        if(signalStrengthCdma != null) {
+                        if (signalStrengthCdma != null) {
                             signalStrength = signalStrengthCdma.getDbm();
                         }
                         mnc = identityCdma.getSystemId();
@@ -1071,7 +1104,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
 
-            if (mcc != Integer.MAX_VALUE   && mnc != Integer.MAX_VALUE && cid != Integer.MAX_VALUE ) {
+            if (mcc != Integer.MAX_VALUE && mnc != Integer.MAX_VALUE && cid != Integer.MAX_VALUE) {
 
                 sb.append("mobileCountryCode=").append(mcc).append("&").append("mobileNetworkCode=").append(mnc).append("&").append("cellId=").append(cid).
                         append("&").append("locationAreaCode=").append(lac).append("&")
@@ -1149,6 +1182,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+
         ;
 
         // device Info //
@@ -1156,8 +1190,8 @@ public class MainActivity extends AppCompatActivity {
         public String getId() {
             try {
                 return Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-            }catch (SecurityException e) {
-                return  "";
+            } catch (SecurityException e) {
+                return "";
             }
 
         }
@@ -1182,10 +1216,11 @@ public class MainActivity extends AppCompatActivity {
                 if (VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     return Long.toString((int) packageInfo.getLongVersionCode());
                 }
+//
                 return Integer.toString(packageInfo.versionCode);
 
             } catch (PackageManager.NameNotFoundException e) {
-                return "10";
+                return "11";
             }
         }
 
@@ -1221,7 +1256,7 @@ public class MainActivity extends AppCompatActivity {
         ;
 
         @JavascriptInterface
-        public  void loadOffline(){
+        public void loadOffline() {
             mWebView.loadUrl("file:///android_asset/nocache.html");
         }
 
@@ -1278,9 +1313,13 @@ public class MainActivity extends AppCompatActivity {
             if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return "";
             }
+
+
             List<CellInfo> cellInfoList = tm.getAllCellInfo();
+
             if (cellInfoList == null || cellInfoList.isEmpty()) return "";
             return getAllCelltowerInfo(cellInfoList);
+
         }
 
     }
