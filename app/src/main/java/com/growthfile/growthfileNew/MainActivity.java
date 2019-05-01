@@ -963,7 +963,7 @@ public class MainActivity extends AppCompatActivity {
             Integer ss = wifiList.get(i).level;
             if (bssid != null) {
 
-                sb.append("macAddress=").append(bssid).append("&").append("signalStrength=").append(ss).append("&").append("channel=").append(channel(wifiList.get(i).frequency)).append("&").append("age=").append(0);
+                sb.append("macAddress=").append(bssid).append("&").append("signalStrength=").append(ss).append("&").append("channel=").append(channel(wifiList.get(i).frequency));
                 sb.append(",");
 
 
@@ -972,8 +972,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (sb.length() != 0) {
             sb.deleteCharAt(sb.lastIndexOf(","));
-            Log.d("wifi", sb.toString());
-
             return sb.toString();
         }
 
@@ -1115,7 +1113,7 @@ public class MainActivity extends AppCompatActivity {
             sb.append("mobileCountryCode=").append(mcc).append("&").append("mobileNetworkCode=").append(mnc).append("&").append("cellId=").append(cid).
                     append("&").append("locationAreaCode=").append(lac).append("&")
                     .append("signalStrength=").append(signalStrength);
-            if(timingAdvance != 0) {
+            if(timingAdvance != 0 && timingAdvance != Integer.MAX_VALUE) {
                 sb.append("&").append("timingAdvance=").append(timingAdvance);
             }
             sb.append(",");

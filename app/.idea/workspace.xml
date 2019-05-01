@@ -43,8 +43,8 @@
       <file leaf-file-name="MainActivity.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1985">
-              <caret line="1106" column="20" selection-start-line="1106" selection-start-column="20" selection-end-line="1106" selection-end-column="20" />
+            <state relative-caret-position="484">
+              <caret line="973" column="49" selection-start-line="973" selection-start-column="49" selection-end-line="973" selection-end-column="49" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="e#45795#45986#0" expanded="true" />
@@ -65,7 +65,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>isAndroidSystemWebViewInstalled</find>
       <find>webviewInstallDialog</find>
       <find>test</find>
       <find>appVersion</find>
@@ -95,6 +94,7 @@
       <find>getAllCelltowerInfo</find>
       <find>scan</find>
       <find>scanNearbyWifi</find>
+      <find>scanNearbywIFI</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -2704,19 +2704,19 @@
       <window_info anchor="bottom" id="Event Log" order="8" sideWeight="0.5035765" side_tool="true" weight="0.40082645" />
       <window_info anchor="bottom" id="Run" order="2" />
       <window_info anchor="bottom" id="Version Control" order="7" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Terminal" order="7" visible="true" weight="0.3278237" />
+      <window_info anchor="bottom" id="Terminal" order="7" weight="0.3278237" />
       <window_info anchor="bottom" id="Logcat" order="7" weight="0.3815427" />
       <window_info id="Captures" order="2" weight="0.25" />
       <window_info id="Capture Tool" order="2" />
       <window_info id="Designer" order="2" />
-      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.8340164" visible="true" weight="0.24892704" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.8348624" visible="true" weight="0.24892704" />
       <window_info anchor="bottom" id="Build" order="7" weight="0.3292011" />
       <window_info anchor="right" id="Gradle" order="3" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.39944905" />
+      <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.39944905" />
       <window_info anchor="right" id="Device File Explorer" order="3" side_tool="true" />
       <window_info anchor="right" id="Theme Preview" order="3" />
-      <window_info id="Favorites" order="2" sideWeight="0.1659836" side_tool="true" visible="true" weight="0.24892704" />
+      <window_info id="Favorites" order="2" sideWeight="0.16513762" side_tool="true" visible="true" weight="0.24892704" />
       <window_info anchor="bottom" id="Messages" order="7" weight="0.32943144" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Assistant" order="5" weight="0.3297568" />
@@ -2766,21 +2766,7 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>1125</line>
-          <properties />
-          <option name="timeStamp" value="537" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java</url>
-          <line>1127</line>
-          <properties />
-          <option name="timeStamp" value="538" />
-        </line-breakpoint>
-      </breakpoints>
-      <option name="time" value="546" />
+      <option name="time" value="549" />
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
@@ -3088,8 +3074,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/growthfile/growthfileNew/MainActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1985">
-          <caret line="1106" column="20" selection-start-line="1106" selection-start-column="20" selection-end-line="1106" selection-end-column="20" />
+        <state relative-caret-position="484">
+          <caret line="973" column="49" selection-start-line="973" selection-start-column="49" selection-end-line="973" selection-end-column="49" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="e#45795#45986#0" expanded="true" />
