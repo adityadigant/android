@@ -5,14 +5,10 @@
         <!-- Customize your theme here. -->
 
     </style>
-    <style name="MyProgressBar" parent="android:Theme.Holo.Dialog">
+    <style name="appLoader" parent="android:Theme.Holo.Dialog">
         <item name="android:alertDialogStyle">@style/CustomAlertDialogStyle</item>
         <item name="android:windowBackground">@color/transparent</item>
-        <item name="android:textColorPrimary">#FFFFFF</item>
-        <item name="android:backgroundDimEnabled">false</item>
-        <item name="android:textColor">#FFFFFF</item>
-        <item name="android:textStyle">normal</item>
-        <item name="android:textSize">15sp</item>
+        <item name="android:backgroundDimEnabled">true</item>
     </style>
     <style name="CustomAlertDialogStyle">
         <item name="android:bottomBright">@color/blue</item>

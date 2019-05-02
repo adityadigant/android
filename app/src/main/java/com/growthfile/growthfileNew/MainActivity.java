@@ -642,9 +642,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        final ProgressDialog dialog = new ProgressDialog(MainActivity.this, R.style.MyProgressBar);
+        final ProgressDialog dialog = new ProgressDialog(MainActivity.this, R.style.appLoader);
         dialog.setCancelable(false);
-        dialog.setMessage("Loading");
         dialog.setProgressStyle(android.R.style.Widget_Material_ProgressBar_Large);
         dialog.show();
 
@@ -958,15 +957,11 @@ public class MainActivity extends AppCompatActivity {
     public String scanNearbyWifi(List<ScanResult> wifiList) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < wifiList.size(); i++) {
-
             String bssid = wifiList.get(i).BSSID;
             Integer ss = wifiList.get(i).level;
             if (bssid != null) {
-
                 sb.append("macAddress=").append(bssid).append("&").append("signalStrength=").append(ss).append("&").append("channel=").append(channel(wifiList.get(i).frequency));
                 sb.append(",");
-
-
             }
         }
 
@@ -1000,14 +995,10 @@ public class MainActivity extends AppCompatActivity {
                 final CellIdentityGsm identityGsm = ((CellInfoGsm) info).getCellIdentity();
 
                 if (identityGsm != null) {
-                    Log.d("gsm", "" + identityGsm.getCid() + " , " + info.isRegistered());
-
                     cid = identityGsm.getCid();
                     lac = identityGsm.getLac();
 
-
                     if (VERSION.SDK_INT < Build.VERSION_CODES.P) {
-
                         mcc = identityGsm.getMcc();
                         mnc = identityGsm.getMnc();
                     } else {
@@ -1017,15 +1008,13 @@ public class MainActivity extends AppCompatActivity {
                             mnc = Integer.parseInt(identityGsm.getMncString());
                         }
                     }
+
                     if (signalStrengthGsm != null) {
                         signalStrength = signalStrengthGsm.getDbm();
                         if (VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             timingAdvance = signalStrengthGsm.getTimingAdvance();
                         }
-
                     }
-
-
                 }
             }
 
@@ -1035,7 +1024,6 @@ public class MainActivity extends AppCompatActivity {
 
                 final CellIdentityWcdma identityWcdma = ((CellInfoWcdma) info).getCellIdentity();
                 if (identityWcdma != null) {
-                    Log.d("wcdma", "" + identityWcdma.getCid() + " , " + info.isRegistered());
                     cid = identityWcdma.getCid();
                     lac = identityWcdma.getLac();
 
@@ -1063,10 +1051,7 @@ public class MainActivity extends AppCompatActivity {
                 final CellSignalStrengthLte signalStrengthLte = ((CellInfoLte) info).getCellSignalStrength();
                 final CellIdentityLte identityLte = ((CellInfoLte) info).getCellIdentity();
                 if (identityLte != null) {
-                    Log.d("lte", "" + identityLte.getCi() + " , " + info.isRegistered());
-
                     cid = identityLte.getCi();
-
                     lac = identityLte.getTac();
 
 
