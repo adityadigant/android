@@ -5,22 +5,6 @@
         <!-- Customize your theme here. -->
 
     </style>
-    <style name="appLoader" parent="android:Theme.Holo.Dialog">
-        <item name="android:alertDialogStyle">@style/CustomAlertDialogStyle</item>
-        <item name="android:windowBackground">@color/transparent</item>
-        <item name="android:backgroundDimEnabled">true</item>
-    </style>
-    <style name="CustomAlertDialogStyle">
-        <item name="android:bottomBright">@color/blue</item>
-        <item name="android:bottomDark">@color/blue</item>
-        <item name="android:bottomMedium">@color/blue</item>
-        <item name="android:centerBright">@color/blue</item>
-        <item name="android:centerDark">@color/blue</item>
-        <item name="android:centerMedium">@color/blue</item>
-        <item name="android:fullBright">@color/blue</item>
-        <item name="android:fullDark">@color/blue</item>
-        <item name="android:topBright">@color/blue</item>
-        <item name="android:topDark">@color/blue</item>
-    </style>
+
 
 </resources>

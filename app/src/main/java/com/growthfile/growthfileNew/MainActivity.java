@@ -642,17 +642,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        final ProgressDialog dialog = new ProgressDialog(MainActivity.this, R.style.appLoader);
-        dialog.setCancelable(false);
-        dialog.setProgressStyle(android.R.style.Widget_Material_ProgressBar_Large);
-        dialog.show();
+
 
         mWebView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 if (nocacheLoadUrl) return;
-                dialog.cancel();
+
                 if (!hasPageFinished) {
                     Log.d("onPageFinished", "true");
                     mWebView.evaluateJavascript("native.setName('Android')", null);
@@ -943,14 +940,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public int channel(int freq) {
-
         if (freq == 2484)
             return 14;
-
-        if (freq < 2484)
-            return (freq - 2407) / 5;
-
-        return freq / 5 - 1000;
+        if (freq >= 2412 && freq < 2484) {
+            return (freq - 2412) / 5 + 1;
+        } else if (freq >= 5170 && freq <= 5825) {
+            return (freq - 5170) / 5 + 34;
+        } else {
+            return 0;
+        }
 
     }
 
@@ -959,6 +957,7 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < wifiList.size(); i++) {
             String bssid = wifiList.get(i).BSSID;
             Integer ss = wifiList.get(i).level;
+            Integer freq = wifiList.get(i).frequency;
             if (bssid != null) {
                 sb.append("macAddress=").append(bssid).append("&").append("signalStrength=").append(ss).append("&").append("channel=").append(channel(wifiList.get(i).frequency));
                 sb.append(",");
@@ -1070,7 +1069,6 @@ public class MainActivity extends AppCompatActivity {
                         signalStrength = signalStrengthLte.getDbm();
                         timingAdvance = signalStrengthLte.getTimingAdvance();
                     }
-
 
                 }
             }

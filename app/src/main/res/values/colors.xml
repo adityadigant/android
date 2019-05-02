@@ -2,6 +2,6 @@
 <resources>
 
 
-        <color name="transparent">#00000000</color>
+        <color name="transparent">#000000</color>
         <color name="blue">#0399f4</color>
 </resources>
