@@ -631,8 +631,7 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
-        WebView.setWebContentsDebuggingEnabled(true);
-        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com/v1/");
+        mWebView.loadUrl("https://growthfile-207204.firebaseapp.com/v1/");
         mWebView.requestFocus(View.FOCUS_DOWN);
 
         mWebView.setWebChromeClient(new WebChromeClient() {
@@ -641,8 +640,6 @@ public class MainActivity extends AppCompatActivity {
                 callback.invoke(origin, true, false);
             }
         });
-
-
 
         mWebView.setWebViewClient(new WebViewClient() {
             @Override
@@ -1017,7 +1014,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-
             if (info instanceof CellInfoWcdma) {
                 final CellSignalStrengthWcdma signalStrengthWcdma = ((CellInfoWcdma) info).getCellSignalStrength();
 
@@ -1206,7 +1202,7 @@ public class MainActivity extends AppCompatActivity {
                 if (VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     return Long.toString((int) packageInfo.getLongVersionCode());
                 }
-//
+
                 return Integer.toString(packageInfo.versionCode);
 
             } catch (PackageManager.NameNotFoundException e) {
