@@ -631,7 +631,8 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
-        mWebView.loadUrl("https://growthfile-207204.firebaseapp.com/v1/");
+        mWebView.setWebContentsDebuggingEnabled(true);
+        mWebView.loadUrl("https://ios-testing-5796.firebaseapp.com/v1/");
         mWebView.requestFocus(View.FOCUS_DOWN);
 
         mWebView.setWebChromeClient(new WebChromeClient() {
@@ -954,7 +955,7 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < wifiList.size(); i++) {
             String bssid = wifiList.get(i).BSSID;
             Integer ss = wifiList.get(i).level;
-            Integer freq = wifiList.get(i).frequency;
+
             if (bssid != null) {
                 sb.append("macAddress=").append(bssid).append("&").append("signalStrength=").append(ss).append("&").append("channel=").append(channel(wifiList.get(i).frequency));
                 sb.append(",");
