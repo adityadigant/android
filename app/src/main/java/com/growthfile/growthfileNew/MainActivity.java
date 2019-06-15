@@ -2,47 +2,45 @@ package com.growthfile.growthfileNew;
 
 import android.Manifest;
 
-
-import android.app.Dialog;
-import android.app.ProgressDialog;
+import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
 import java.io.StringWriter;
 import java.io.PrintWriter;
 
+import android.graphics.Matrix;
 import android.location.LocationManager;
+import android.media.ExifInterface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 
 import android.net.wifi.ScanResult;
-import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.os.StrictMode;
+import android.provider.ContactsContract;
 import android.provider.MediaStore;
 
 import android.provider.Settings;
-import android.support.annotation.LongDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.pm.PackageInfoCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -56,23 +54,20 @@ import android.telephony.CellInfoCdma;
 import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
 import android.telephony.CellInfoWcdma;
-import android.telephony.CellLocation;
 import android.telephony.CellSignalStrengthCdma;
 import android.telephony.CellSignalStrengthGsm;
 import android.telephony.CellSignalStrengthLte;
 import android.telephony.CellSignalStrengthWcdma;
-import android.telephony.NeighboringCellInfo;
-import android.telephony.SubscriptionInfo;
-import android.telephony.SubscriptionManager;
+
 import android.telephony.TelephonyManager;
-import android.telephony.cdma.CdmaCellLocation;
-import android.telephony.gsm.GsmCellLocation;
+
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
+import android.webkit.CookieManager;
+import android.webkit.CookieSyncManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 
@@ -83,17 +78,10 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import java.io.*;
-import java.lang.reflect.Array;
-import java.net.HttpURLConnection;
-import java.net.InetAddress;
-import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+
 
 import android.provider.Settings.Secure;
 import android.widget.Toast;
@@ -102,13 +90,6 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.annotations.Expose;
-import com.google.gson.reflect.TypeToken;
-
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -128,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int PHOTO_CAMERA_REQUEST = 113;
     private static final int LOCATION_PERMISSION_CODE = 115;
     private static final int REQUEST_SCAN_ALWAYS_AVAILABLE = 116;
+    private  static  final  int GET_CONTACT_REQUEST = 117;
 
     public static final String BROADCAST_ACTION = "com.growthfile.growthfileNew";
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -153,25 +135,25 @@ public class MainActivity extends AppCompatActivity {
         new CertPin().execute();
 
         mContext = getApplicationContext();
-        swipeToRefresh = findViewById(R.id.swipeToRefresh);
-        swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-
-                runRead();
-            }
-
-        });
-        swipeToRefresh.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
-            @Override
-            public void onScrollChanged() {
-                if (mWebView.getScrollY() == 0) {
-                    swipeToRefresh.setEnabled(true);
-                } else {
-                    swipeToRefresh.setEnabled(false);
-                }
-            }
-        });
+//        swipeToRefresh = findViewById(R.id.swipeToRefresh);
+//        swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+//            @Override
+//            public void onRefresh() {
+//
+//                runRead();
+//            }
+//
+//        });
+//        swipeToRefresh.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
+//            @Override
+//            public void onScrollChanged() {
+//                if (mWebView.getScrollY() == 0) {
+//                    swipeToRefresh.setEnabled(true);
+//                } else {
+//                    swipeToRefresh.setEnabled(false);
+//                }
+//            }
+//        });
 
         if (!checkDeviceOsCompatibility()) {
 
@@ -218,8 +200,38 @@ public class MainActivity extends AppCompatActivity {
                 if (resultCode == RESULT_OK) {
                     File imgFile = new File(pictureImagePath);
                     if (imgFile.exists()) {
-                        Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-                        mWebView.loadUrl("javascript:setFilePath('" + encodeImage(myBitmap) + "')");
+                        Bitmap bitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+                        try {
+                            Bitmap changedBit = bitmap;
+                            ExifInterface ei = new ExifInterface(imgFile.getAbsolutePath());
+                            int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+
+                            switch (orientation) {
+                                case ExifInterface.ORIENTATION_ROTATE_90:
+                                    changedBit =  rotate(bitmap, 90);
+                                    break;
+                                case ExifInterface.ORIENTATION_ROTATE_180:
+                                    changedBit = rotate(bitmap, 180);
+                                    break;
+                                case ExifInterface.ORIENTATION_ROTATE_270:
+                                    changedBit = rotate(bitmap, 270);
+                                    break;
+                                case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
+                                    changedBit = flip(bitmap, true, false);
+                                    break;
+                                case ExifInterface.ORIENTATION_FLIP_VERTICAL:
+                                    changedBit = flip(bitmap, false, true);
+                                    break;
+                                default:
+                                    changedBit = bitmap;
+                            }
+                            mWebView.loadUrl("javascript:setFilePath('" + encodeImage(changedBit) + "')");
+
+                        } catch (IOException e) {
+                            mWebView.loadUrl("javascript:setFilePath('" + encodeImage(bitmap) + "')");
+                            e.printStackTrace();
+                        }
+
 
                     }
                 }
@@ -249,6 +261,63 @@ public class MainActivity extends AppCompatActivity {
                         mWebView.loadUrl("javascript:readUploadedFile('" + encodeImage(myBitmap) + "')");
                     }
                 }
+                break;
+            case GET_CONTACT_REQUEST:
+                if(resultCode == RESULT_OK) {
+                    Cursor cursor = null;
+                    StringBuilder sb = new StringBuilder();
+                    try {
+
+//
+//                        Uri uri = intent.getData();
+//                        cursor = getContentResolver().query(uri, null, null, null, null);
+//
+//
+//                        cursor.moveToFirst();
+//                        String name =cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+//                        String phoneNumber = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+//                        String email = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.CONTACT_ID));
+//
+//
+//                        Log.d("email",""+email);
+//                        Log.d("phoneNumber",""+phoneNumber);
+//
+//                        sb.append("phoneNumber=").append(phoneNumber).append("&")
+//                                .append("&").append("displayName=").append(name)
+//                                .append("&").append("email=").append(email);
+//                        mWebView.evaluateJavascript("getSelectedContact('"+ sb+"')",null);
+//                        cursor.close();
+
+                        ContentResolver cr = MainActivity.this.getContentResolver();
+                        Cursor cur = cr.query(ContactsContract.Contacts.CONTENT_URI,null, null, null, null);
+                        if (cur.getCount() > 0) {
+                            while (cur.moveToNext()) {
+                                String id = cur.getString(cur.getColumnIndex(ContactsContract.Contacts._ID));
+                                Cursor cur1 = cr.query(
+                                        ContactsContract.CommonDataKinds.Email.CONTENT_URI, null,
+                                        ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?",
+                                        new String[]{id}, null);
+                                while (cur1.moveToNext()) {
+                                    //to get the contact names
+                                    String number = cur1.getString(cur1.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                                    String name=cur1.getString(cur1.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                                    String email = cur1.getString(cur1.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
+                                    Log.d("email",email);
+                                    Log.d("name",name);
+                                    Log.d("number",number);
+                                }
+                                cur1.close();
+                            }
+                        }
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+
+                }
+                else {
+                    Toast.makeText(MainActivity.this,"Failed To Read Contact",Toast.LENGTH_LONG);
+                }
+                break;
             case REQUEST_SCAN_ALWAYS_AVAILABLE:
                 if (resultCode != RESULT_OK) {
                     final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_Material_Light_Dialog_Alert);
@@ -331,6 +400,16 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+        else if(requestCode == GET_CONTACT_REQUEST) {
+            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED ) {
+                startActivityForResult(getContactIntent(),GET_CONTACT_REQUEST);
+            }
+            else {
+                Toast.makeText(MainActivity.this,"Permission not granted",Toast.LENGTH_LONG);
+            }
+
+
+        }
     }
 
     @Override
@@ -380,7 +459,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        swipeToRefresh.getViewTreeObserver().removeOnScrollChangedListener(mOnScrollChangedListener);
+//        swipeToRefresh.getViewTreeObserver().removeOnScrollChangedListener(mOnScrollChangedListener);
     }
 
     @Override
@@ -390,19 +469,32 @@ public class MainActivity extends AppCompatActivity {
         // make sure to unregister your receiver after finishing of this activity
         unregisterReceiver(broadcastReceiver);
     }
+//
+//    public void runRead() {
+//
+//        this.mWebView.evaluateJavascript("runRead()", null);
+//
+//        new Handler().postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                if (swipeToRefresh.isRefreshing()) {
+//                    swipeToRefresh.setRefreshing(false);
+//                }
+//            }
+//        }, 2000);
+//    }
 
-    public void runRead() {
 
-        this.mWebView.evaluateJavascript("runRead()", null);
+    public static Bitmap rotate(Bitmap bitmap, float degrees) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(degrees);
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+    }
 
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (swipeToRefresh.isRefreshing()) {
-                    swipeToRefresh.setRefreshing(false);
-                }
-            }
-        }, 2000);
+    public static Bitmap flip(Bitmap bitmap, boolean horizontal, boolean vertical) {
+        Matrix matrix = new Matrix();
+        matrix.preScale(horizontal ? -1 : 1, vertical ? -1 : 1);
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
     }
 
     public void showLocationModeChangeDialog() {
@@ -609,6 +701,11 @@ public class MainActivity extends AppCompatActivity {
         choosePicture.setType("image/*");
         return choosePicture;
     }
+    private Intent getContactIntent(){
+        Intent getContact  = new Intent(Intent.ACTION_PICK,ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
+
+        return getContact;
+    };
 
     private void LoadApp() {
 
@@ -632,7 +729,6 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
         mWebView.setWebContentsDebuggingEnabled(true);
-        mWebView.loadUrl("https://ios-testing-5796.firebaseapp.com/v1/");
         mWebView.requestFocus(View.FOCUS_DOWN);
 
         mWebView.setWebChromeClient(new WebChromeClient() {
@@ -729,8 +825,9 @@ public class MainActivity extends AppCompatActivity {
                 mWebView.loadUrl("file:///android_asset/nocache.html");
             }
         });
+        
 
-
+        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com/v1/");
     }
 
 
@@ -957,7 +1054,7 @@ public class MainActivity extends AppCompatActivity {
             Integer ss = wifiList.get(i).level;
 
             if (bssid != null) {
-                sb.append("macAddress=").append(bssid).append("&").append("signalStrength=").append(ss).append("&").append("channel=").append(channel(wifiList.get(i).frequency));
+                sb.append("macAddress=").append(bssid).append("&").append("signalStrength=").append(ss).append("&").append("channel=").append(channel(wifiList.get(i).frequency)).append("&").append("ssid=").append(wifiList.get(i).SSID);
                 sb.append(",");
             }
         }
@@ -1306,6 +1403,22 @@ public class MainActivity extends AppCompatActivity {
 
             if (cellInfoList == null || cellInfoList.isEmpty()) return "";
             return getAllCelltowerInfo(cellInfoList);
+
+        }
+        @JavascriptInterface
+        public void getContact(){
+            String[] PERMISSIONS = {
+                    Manifest.permission.READ_CONTACTS
+
+            };
+            if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(MainActivity.this,PERMISSIONS , GET_CONTACT_REQUEST);
+
+
+            }
+            else {
+                startActivityForResult(getContactIntent(),GET_CONTACT_REQUEST);
+            }
 
         }
 
