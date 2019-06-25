@@ -71,6 +71,7 @@ import android.webkit.CookieSyncManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -110,11 +111,11 @@ public class MainActivity extends AppCompatActivity {
     private static final int LOCATION_PERMISSION_CODE = 115;
     private static final int REQUEST_SCAN_ALWAYS_AVAILABLE = 116;
     private  static  final  int GET_CONTACT_REQUEST = 117;
-
+    private  static  final  int GALLERY_REQUEST = 118;
     public static final String BROADCAST_ACTION = "com.growthfile.growthfileNew";
     private static final String TAG = MainActivity.class.getSimpleName();
     private String pictureImagePath = "";
-
+    private  ValueCallback<Uri[]> mUploadMsg;
     private boolean hasPageFinished = false;
     private boolean nocacheLoadUrl = false;
 
@@ -240,14 +241,27 @@ public class MainActivity extends AppCompatActivity {
             case PHOTO_GALLERY_REQUEST:
                 if (resultCode == RESULT_OK) {
                     Uri uri = intent.getData();
-                    try {
-                        Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
-                        if (bitmap != null) {
-                            mWebView.loadUrl("javascript:readUploadedFile('" + encodeImage(bitmap) + "')");
+                    if(uri != null) {
+                        InputStream inputStream = null;
+                        try {
+                            inputStream = getContentResolver().openInputStream(uri);
+                        }
+                        catch(FileNotFoundException e){
+                            e.printStackTrace();
                         }
 
-                    } catch (IOException e) {
-                        e.printStackTrace();
+
+                        BitmapFactory.Options o = new BitmapFactory.Options();
+                        o.inSampleSize = 5;
+
+                        Bitmap bmp = BitmapFactory.decodeStream(inputStream,null,o);
+                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                        bmp.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+                        String path = MediaStore.Images.Media.insertImage(MainActivity.this.getContentResolver(), bmp, "Image", null);
+                        mUploadMsg.onReceiveValue(new Uri[]{Uri.parse(path)});
+                    }
+                    else {
+                        mUploadMsg.onReceiveValue(new Uri[]{});
                     }
                 }
 
@@ -469,20 +483,7 @@ public class MainActivity extends AppCompatActivity {
         // make sure to unregister your receiver after finishing of this activity
         unregisterReceiver(broadcastReceiver);
     }
-//
-//    public void runRead() {
-//
-//        this.mWebView.evaluateJavascript("runRead()", null);
-//
-//        new Handler().postDelayed(new Runnable() {
-//            @Override
-//            public void run() {
-//                if (swipeToRefresh.isRefreshing()) {
-//                    swipeToRefresh.setRefreshing(false);
-//                }
-//            }
-//        }, 2000);
-//    }
+
 
 
     public static Bitmap rotate(Bitmap bitmap, float degrees) {
@@ -736,6 +737,11 @@ public class MainActivity extends AppCompatActivity {
             public void onGeolocationPermissionsShowPrompt(final String origin, final GeolocationPermissions.Callback callback) {
                 callback.invoke(origin, true, false);
             }
+            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> uploadMsg,WebChromeClient.FileChooserParams fileChooserParams){
+                openFileChooser(uploadMsg);
+                return  true;
+
+            }
         });
 
         mWebView.setWebViewClient(new WebViewClient() {
@@ -827,10 +833,22 @@ public class MainActivity extends AppCompatActivity {
         });
         
 
-        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com/v1/");
+        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com/");
     }
 
+    private void openFileChooser(ValueCallback<Uri[]> uploadMsg){
+        mUploadMsg = uploadMsg;
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("image/*");
+        Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
+        chooserIntent.putExtra(Intent.EXTRA_INTENT,intent);
+        chooserIntent.putExtra(Intent.EXTRA_TITLE,"Choose File");
 
+        startActivityForResult(chooserIntent,GALLERY_REQUEST);
+
+
+    }
     private void webviewInstallDialog() {
         String message = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
         String title = "App Incompatibility Issue";
