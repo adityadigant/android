@@ -174,9 +174,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         if (!checkDeviceOsCompatibility()) {
-
             showOsUncompatibleDialog();
-
             return;
         }
 
@@ -631,8 +629,8 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
-        mWebView.setWebContentsDebuggingEnabled(true);
-        mWebView.loadUrl("https://ios-testing-5796.firebaseapp.com/v1/");
+
+        mWebView.loadUrl("https://growthfile-207204.firebaseapp.com/v1/");
         mWebView.requestFocus(View.FOCUS_DOWN);
 
         mWebView.setWebChromeClient(new WebChromeClient() {
@@ -1207,7 +1205,7 @@ public class MainActivity extends AppCompatActivity {
                 return Integer.toString(packageInfo.versionCode);
 
             } catch (PackageManager.NameNotFoundException e) {
-                return "11";
+                return "12";
             }
         }
 
