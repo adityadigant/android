@@ -282,47 +282,47 @@ public class MainActivity extends AppCompatActivity {
                     StringBuilder sb = new StringBuilder();
                     try {
 
-//
-//                        Uri uri = intent.getData();
-//                        cursor = getContentResolver().query(uri, null, null, null, null);
-//
-//
-//                        cursor.moveToFirst();
-//                        String name =cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
-//                        String phoneNumber = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-//                        String email = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.CONTACT_ID));
-//
-//
-//                        Log.d("email",""+email);
-//                        Log.d("phoneNumber",""+phoneNumber);
-//
-//                        sb.append("phoneNumber=").append(phoneNumber).append("&")
-//                                .append("&").append("displayName=").append(name)
-//                                .append("&").append("email=").append(email);
-//                        mWebView.evaluateJavascript("getSelectedContact('"+ sb+"')",null);
-//                        cursor.close();
 
-                        ContentResolver cr = MainActivity.this.getContentResolver();
-                        Cursor cur = cr.query(ContactsContract.Contacts.CONTENT_URI,null, null, null, null);
-                        if (cur.getCount() > 0) {
-                            while (cur.moveToNext()) {
-                                String id = cur.getString(cur.getColumnIndex(ContactsContract.Contacts._ID));
-                                Cursor cur1 = cr.query(
-                                        ContactsContract.CommonDataKinds.Email.CONTENT_URI, null,
-                                        ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?",
-                                        new String[]{id}, null);
-                                while (cur1.moveToNext()) {
-                                    //to get the contact names
-                                    String number = cur1.getString(cur1.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                                    String name=cur1.getString(cur1.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
-                                    String email = cur1.getString(cur1.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
-                                    Log.d("email",email);
-                                    Log.d("name",name);
-                                    Log.d("number",number);
-                                }
-                                cur1.close();
-                            }
-                        }
+                        Uri uri = intent.getData();
+                        cursor = getContentResolver().query(uri, null, null, null, null);
+
+
+                        cursor.moveToFirst();
+                        String name =cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                        String phoneNumber = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                        String email = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.CONTACT_ID));
+
+
+                        Log.d("email",""+email);
+                        Log.d("phoneNumber",""+phoneNumber);
+
+                        sb.append("phoneNumber=").append(phoneNumber).append("&")
+                                .append("&").append("displayName=").append(name)
+                                .append("&").append("email=").append(email);
+                        mWebView.evaluateJavascript("document.getElementById('form-iframe').contentWindow.setContact('"+ sb+"')",null);
+                        cursor.close();
+
+//                        ContentResolver cr = MainActivity.this.getContentResolver();
+//                        Cursor cur = cr.query(ContactsContract.Contacts.CONTENT_URI,null, null, null, null);
+//                        if (cur.getCount() > 0) {
+//                            while (cur.moveToNext()) {
+//                                String id = cur.getString(cur.getColumnIndex(ContactsContract.Contacts._ID));
+//                                Cursor cur1 = cr.query(
+//                                        ContactsContract.CommonDataKinds.Email.CONTENT_URI, null,
+//                                        ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?",
+//                                        new String[]{id}, null);
+//                                while (cur1.moveToNext()) {
+//                                    //to get the contact names
+//                                    String number = cur1.getString(cur1.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+//                                    String name=cur1.getString(cur1.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+//                                    String email = cur1.getString(cur1.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
+//                                    Log.d("email",email);
+//                                    Log.d("name",name);
+//                                    Log.d("number",number);
+//                                }
+//                                cur1.close();
+//                            }
+//                        }
                     }catch (Exception e){
                         e.printStackTrace();
                     }
@@ -833,7 +833,7 @@ public class MainActivity extends AppCompatActivity {
         });
         
 
-        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com/");
+        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com/v1/");
     }
 
     private void openFileChooser(ValueCallback<Uri[]> uploadMsg){
