@@ -280,53 +280,63 @@ public class MainActivity extends AppCompatActivity {
                 if(resultCode == RESULT_OK) {
                     Cursor cursor = null;
                     StringBuilder sb = new StringBuilder();
+                    ContentResolver cr = getContentResolver();
+                    String id="";
+                    String name= "";
+                    String phone="";
+                    String email="";
                     try {
 
 
                         Uri uri = intent.getData();
-                        cursor = getContentResolver().query(uri, null, null, null, null);
+                        cursor = cr.query(uri, null, null, null, null);
 
 
-                        cursor.moveToFirst();
-                        String name =cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
-                        String phoneNumber = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                        String email = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.CONTACT_ID));
+
+                        if(cursor != null && cursor.moveToFirst()) {
+
+                            id = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
+                            name =cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                            phone = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                            Cursor pCur = cr.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,null,
+                                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID +" = ?",
+                                    new String[]{id}, null);
+                            while (pCur.moveToNext()) {
+                                 phone = pCur.getString(
+                                        pCur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+
+                            }
+                            pCur.close();
 
 
-                        Log.d("email",""+email);
-                        Log.d("phoneNumber",""+phoneNumber);
+                            Cursor emailCur = cr.query(
+                                    ContactsContract.CommonDataKinds.Email.CONTENT_URI,
+                                    null,
+                                    ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?",
 
-                        sb.append("phoneNumber=").append(phoneNumber).append("&")
-                                .append("&").append("displayName=").append(name)
-                                .append("&").append("email=").append(email);
-                        mWebView.evaluateJavascript("document.getElementById('form-iframe').contentWindow.setContact('"+ sb+"')",null);
-                        cursor.close();
+                                    new String[]{id}, null);
+                            Log.d("emailCount",""+emailCur.getCount());
 
-//                        ContentResolver cr = MainActivity.this.getContentResolver();
-//                        Cursor cur = cr.query(ContactsContract.Contacts.CONTENT_URI,null, null, null, null);
-//                        if (cur.getCount() > 0) {
-//                            while (cur.moveToNext()) {
-//                                String id = cur.getString(cur.getColumnIndex(ContactsContract.Contacts._ID));
-//                                Cursor cur1 = cr.query(
-//                                        ContactsContract.CommonDataKinds.Email.CONTENT_URI, null,
-//                                        ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?",
-//                                        new String[]{id}, null);
-//                                while (cur1.moveToNext()) {
-//                                    //to get the contact names
-//                                    String number = cur1.getString(cur1.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-//                                    String name=cur1.getString(cur1.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
-//                                    String email = cur1.getString(cur1.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
-//                                    Log.d("email",email);
-//                                    Log.d("name",name);
-//                                    Log.d("number",number);
-//                                }
-//                                cur1.close();
-//                            }
-//                        }
+                            while (emailCur.moveToNext()) {
+
+                                email = emailCur.getString(
+                                        emailCur.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
+
+                            }
+                            emailCur.close();
+                            Log.d("email",""+email);
+                            Log.d("phoneNumber",""+phone);
+
+                            sb.append("phoneNumber=").append(phone).append("&")
+                                    .append("&").append("displayName=").append(name)
+                                    .append("&").append("email=").append(email);
+                            mWebView.evaluateJavascript("document.getElementById('form-iframe').contentWindow.setContact('"+ sb+"')",null);
+                            cursor.close();
+
+                        };
                     }catch (Exception e){
                         e.printStackTrace();
                     }
-
                 }
                 else {
                     Toast.makeText(MainActivity.this,"Failed To Read Contact",Toast.LENGTH_LONG);
@@ -703,8 +713,7 @@ public class MainActivity extends AppCompatActivity {
         return choosePicture;
     }
     private Intent getContactIntent(){
-        Intent getContact  = new Intent(Intent.ACTION_PICK,ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
-
+        Intent getContact  = new Intent(Intent.ACTION_PICK,ContactsContract.Contacts.CONTENT_URI);
         return getContact;
     };
 
@@ -731,6 +740,13 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollbarFadingEnabled(true);
         mWebView.setWebContentsDebuggingEnabled(true);
         mWebView.requestFocus(View.FOCUS_DOWN);
+        mWebView.setLongClickable(true);
+        mWebView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                return true;
+            }
+        });
 
         mWebView.setWebChromeClient(new WebChromeClient() {
             @Override
@@ -824,17 +840,16 @@ public class MainActivity extends AppCompatActivity {
                 shouldOverrideUrlLoading(view, url);
                 return true;
             }
-
             @Override
             public void onReceivedError(WebView webView, int errorCode, String description, String failingUrl) {
                 Toast.makeText(MainActivity.this, description, Toast.LENGTH_LONG).show();
                 mWebView.loadUrl("file:///android_asset/nocache.html");
             }
         });
-        
 
         mWebView.loadUrl("https://growthfile-testing.firebaseapp.com/v1/");
     }
+
 
     private void openFileChooser(ValueCallback<Uri[]> uploadMsg){
         mUploadMsg = uploadMsg;
@@ -844,10 +859,7 @@ public class MainActivity extends AppCompatActivity {
         Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
         chooserIntent.putExtra(Intent.EXTRA_INTENT,intent);
         chooserIntent.putExtra(Intent.EXTRA_TITLE,"Choose File");
-
         startActivityForResult(chooserIntent,GALLERY_REQUEST);
-
-
     }
     private void webviewInstallDialog() {
         String message = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
