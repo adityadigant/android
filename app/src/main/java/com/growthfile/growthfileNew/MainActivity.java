@@ -278,68 +278,22 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case GET_CONTACT_REQUEST:
                 if(resultCode == RESULT_OK) {
-                    Cursor cursor = null;
-                    StringBuilder sb = new StringBuilder();
-                    ContentResolver cr = getContentResolver();
-                    String id="";
-                    String name= "";
-                    String phone="";
-                    String email="";
+                   Contact contact = null;
                     try {
+                        Uri contactUri = intent.getData();
+                        contact = fetchAndBuildContact(getApplicationContext(),contactUri);
+                        Log.d("Picked Contact",contact.toString());
 
 
-                        Uri uri = intent.getData();
-                        cursor = cr.query(uri, null, null, null, null);
-
-
-
-                        if(cursor != null && cursor.moveToFirst()) {
-
-                            id = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
-                            name =cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                            phone = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                            Cursor pCur = cr.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,null,
-                                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID +" = ?",
-                                    new String[]{id}, null);
-                            while (pCur.moveToNext()) {
-                                 phone = pCur.getString(
-                                        pCur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-
-                            }
-                            pCur.close();
-
-
-                            Cursor emailCur = cr.query(
-                                    ContactsContract.CommonDataKinds.Email.CONTENT_URI,
-                                    null,
-                                    ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?",
-
-                                    new String[]{id}, null);
-                            Log.d("emailCount",""+emailCur.getCount());
-
-                            while (emailCur.moveToNext()) {
-
-                                email = emailCur.getString(
-                                        emailCur.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
-
-                            }
-                            emailCur.close();
-                            Log.d("email",""+email);
-                            Log.d("phoneNumber",""+phone);
-
-                            sb.append("phoneNumber=").append(phone).append("&")
-                                    .append("&").append("displayName=").append(name)
-                                    .append("&").append("email=").append(email);
-                            mWebView.evaluateJavascript("document.getElementById('form-iframe').contentWindow.setContact('"+ sb+"')",null);
-                            cursor.close();
-
-                        };
-                    }catch (Exception e){
-                        e.printStackTrace();
                     }
+                    catch (Exception e) {
+                        Toast.makeText(mContext,e.getMessage(),Toast.LENGTH_LONG);
+                    }
+
                 }
                 else {
-                    Toast.makeText(MainActivity.this,"Failed To Read Contact",Toast.LENGTH_LONG);
+                    Toast.makeText(mContext,"Failed To Pick Contact",Toast.LENGTH_LONG);
+
                 }
                 break;
             case REQUEST_SCAN_ALWAYS_AVAILABLE:
@@ -495,7 +449,71 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    private Contact fetchAndBuildContact(Context ctx, Uri contactUri) {
 
+        Cursor cursorLookUp = ctx.getContentResolver().query(contactUri,new String[]{ContactsContract.Data.LOOKUP_KEY},null,null,null);
+        Contact contact = null;
+        String loopUpKey = "";
+        if(cursorLookUp.moveToFirst()) {
+                loopUpKey = cursorLookUp.getString(cursorLookUp.getColumnIndex(ContactsContract.Data.LOOKUP_KEY));
+                if(loopUpKey != null) {
+                    contact = new Contact();
+                    contact = buildPhoneDetails(loopUpKey,ctx,contact);
+                    contact = buildEmailDetails(loopUpKey,ctx,contact);
+
+
+                }
+        }
+        cursorLookUp.close();
+
+        return contact;
+    }
+
+    private  Contact buildPhoneDetails(String lookUpKey,Context ctx,Contact contact) {
+
+        ContentResolver contentResolver = ctx.getContentResolver();
+        String contactWhere = ContactsContract.Data.LOOKUP_KEY + " = ? AND " + ContactsContract.Data.MIMETYPE + " = ?";
+        String[] contactWhereParams = new String[]{lookUpKey, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE};
+        Cursor cursorPhone = contentResolver.query(ContactsContract.Data.CONTENT_URI, null, contactWhere, contactWhereParams, null);
+        if(cursorPhone.getCount() > 0) {
+
+            if(cursorPhone.moveToNext()) {
+                if(Integer.parseInt(cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER))) > 0) {
+                    String displayName = cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                    String phoneNumber = cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                    int contactType = cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.TYPE);
+                    contact.displayName = displayName;
+                    contact.phoneNumber = phoneNumber;
+                    contact.contactType = contactType;
+
+
+                }
+            }
+        }
+        cursorPhone.close();
+        return contact;
+    }
+
+    private  Contact buildEmailDetails(String lookUpKey,Context ctx,Contact contact) {
+        ContentResolver contentResolver = ctx.getContentResolver();
+        String emailWhere = ContactsContract.Data.LOOKUP_KEY+" = ? AND "+ContactsContract.Data.MIMETYPE+" ? ";
+        String[] emailWhereParams = new String[]{lookUpKey,ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE};
+        Cursor emailCursor = contentResolver.query(ContactsContract.Data.CONTENT_URI,null,emailWhere,emailWhereParams,null);
+        if(emailCursor.moveToNext()) {
+            String emailId = emailCursor.getString(emailCursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
+            contact.emailId = emailId;
+        }
+        emailCursor.close();
+        return contact;
+    }
+    public class Contact {
+
+        String displayName;
+        String emailId;
+        String phoneNumber;
+
+        int contactType;
+    }
     public static Bitmap rotate(Bitmap bitmap, float degrees) {
         Matrix matrix = new Matrix();
         matrix.postRotate(degrees);
@@ -713,7 +731,7 @@ public class MainActivity extends AppCompatActivity {
         return choosePicture;
     }
     private Intent getContactIntent(){
-        Intent getContact  = new Intent(Intent.ACTION_PICK,ContactsContract.Contacts.CONTENT_URI);
+        Intent getContact  = new Intent(Intent.ACTION_PICK,ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
         return getContact;
     };
 
