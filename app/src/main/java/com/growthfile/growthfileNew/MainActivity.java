@@ -114,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
     private  static  final  int GALLERY_REQUEST = 118;
     public static final String BROADCAST_ACTION = "com.growthfile.growthfileNew";
     private static final String TAG = MainActivity.class.getSimpleName();
+    public String contactCallbackFunctionName = "";
     private String pictureImagePath = "";
     private  ValueCallback<Uri[]> mUploadMsg;
     private boolean hasPageFinished = false;
@@ -281,20 +282,32 @@ public class MainActivity extends AppCompatActivity {
                    Contact contact = null;
                     try {
                         Uri contactUri = intent.getData();
+
+
                         contact = fetchAndBuildContact(getApplicationContext(),contactUri);
                         Log.d("Picked Contact",contact.toString());
+                        Log.d("displayName",contact.displayName);
+                        Log.d("phoneNumber",contact.phoneNumber);
+                        Log.d("email",contact.emailId);
+
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("displayName=").append(contact.displayName).append("&phoneNumber=").append(contact.phoneNumber)
+                                .append("&email=").append(contact.emailId);
+                        mWebView.evaluateJavascript("window['"+contactCallbackFunctionName+"']('"+sb+"')",null);
+
 
                     }
                     catch (Exception e) {
                         e.printStackTrace();
+
+                        mWebView.evaluateJavascript("window['"+contactCallbackFunctionName+"Failed']('"+e.getMessage()+" at line Number "+ e.getStackTrace()[0].getLineNumber()+"')",null);
                         Toast.makeText(mContext,e.getMessage(),Toast.LENGTH_LONG).show();
                     }
-
                 }
                 else {
                     Toast.makeText(mContext,"Failed To Pick Contact",Toast.LENGTH_LONG).show();
-
                 }
+
                 break;
             case REQUEST_SCAN_ALWAYS_AVAILABLE:
                 if (resultCode != RESULT_OK) {
@@ -458,7 +471,7 @@ public class MainActivity extends AppCompatActivity {
                 loopUpKey = cursorLookUp.getString(cursorLookUp.getColumnIndex(ContactsContract.Data.LOOKUP_KEY));
                 if(loopUpKey != null) {
                     contact = new Contact();
-                    contact = buildPhoneDetails(loopUpKey,ctx,contact);
+                    contact = buildPhoneDetails(contactUri,ctx,contact);
                     contact = buildEmailDetails(loopUpKey,ctx,contact);
 
 
@@ -469,13 +482,18 @@ public class MainActivity extends AppCompatActivity {
         return contact;
     }
 
-    private  Contact buildPhoneDetails(String lookUpKey,Context ctx,Contact contact) {
+    private  Contact buildPhoneDetails(Uri contactUri,Context ctx,Contact contact) {
 
         ContentResolver contentResolver = ctx.getContentResolver();
-        String contactWhere = ContactsContract.Data.LOOKUP_KEY + " = ? AND " + ContactsContract.Data.MIMETYPE + " = ?";
-        String[] contactWhereParams = new String[]{lookUpKey, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE};
-        Cursor cursorPhone = contentResolver.query(ContactsContract.Data.CONTENT_URI, null, contactWhere, contactWhereParams, null);
+//        String contactWhere = ContactsContract.Data.LOOKUP_KEY + " = ? AND " + ContactsContract.Data.MIMETYPE + " = ?";
+//        String[] contactWhereParams = new String[]{lookUpKey, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE};
+//        Cursor cursorPhone = contentResolver.query(ContactsContract.Data.CONTENT_URI, null, contactWhere, contactWhereParams, null);
+        Cursor cursorPhone = contentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,
+                ContactsContract.CommonDataKinds.Phone._ID + "=?",
+                new String[]{contactUri.getLastPathSegment()}, null);
+
         if(cursorPhone.getCount() > 0) {
+
 
             if(cursorPhone.moveToNext()) {
                 if(Integer.parseInt(cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER))) > 0) {
@@ -485,7 +503,6 @@ public class MainActivity extends AppCompatActivity {
                     contact.displayName = displayName;
                     contact.phoneNumber = phoneNumber;
                     contact.contactType = contactType;
-
 
                 }
             }
@@ -503,14 +520,16 @@ public class MainActivity extends AppCompatActivity {
             String emailId = emailCursor.getString(emailCursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
             contact.emailId = emailId;
         }
+
+
         emailCursor.close();
         return contact;
     }
     public class Contact {
 
-        String displayName;
-        String emailId;
-        String phoneNumber;
+        String displayName = "";
+        String emailId = "";
+        String phoneNumber = "";
 
         int contactType;
     }
@@ -732,6 +751,8 @@ public class MainActivity extends AppCompatActivity {
     }
     private Intent getContactIntent(){
         Intent getContact  = new Intent(Intent.ACTION_PICK,ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
+
+
         return getContact;
     };
 
@@ -1454,14 +1475,15 @@ public class MainActivity extends AppCompatActivity {
 
         }
         @JavascriptInterface
-        public void getContact(){
+        public void getContact(String functionName){
             String[] PERMISSIONS = {
                     Manifest.permission.READ_CONTACTS
 
             };
+            contactCallbackFunctionName = functionName;
             if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(MainActivity.this,PERMISSIONS , GET_CONTACT_REQUEST);
 
+                ActivityCompat.requestPermissions(MainActivity.this,PERMISSIONS , GET_CONTACT_REQUEST);
 
             }
             else {
