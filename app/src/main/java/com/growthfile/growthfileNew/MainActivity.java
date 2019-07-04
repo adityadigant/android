@@ -284,15 +284,15 @@ public class MainActivity extends AppCompatActivity {
                         contact = fetchAndBuildContact(getApplicationContext(),contactUri);
                         Log.d("Picked Contact",contact.toString());
 
-
                     }
                     catch (Exception e) {
-                        Toast.makeText(mContext,e.getMessage(),Toast.LENGTH_LONG);
+                        e.printStackTrace();
+                        Toast.makeText(mContext,e.getMessage(),Toast.LENGTH_LONG).show();
                     }
 
                 }
                 else {
-                    Toast.makeText(mContext,"Failed To Pick Contact",Toast.LENGTH_LONG);
+                    Toast.makeText(mContext,"Failed To Pick Contact",Toast.LENGTH_LONG).show();
 
                 }
                 break;
@@ -496,7 +496,7 @@ public class MainActivity extends AppCompatActivity {
 
     private  Contact buildEmailDetails(String lookUpKey,Context ctx,Contact contact) {
         ContentResolver contentResolver = ctx.getContentResolver();
-        String emailWhere = ContactsContract.Data.LOOKUP_KEY+" = ? AND "+ContactsContract.Data.MIMETYPE+" ? ";
+        String emailWhere = ContactsContract.Data.LOOKUP_KEY+" = ? AND "+ContactsContract.Data.MIMETYPE+" = ? ";
         String[] emailWhereParams = new String[]{lookUpKey,ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE};
         Cursor emailCursor = contentResolver.query(ContactsContract.Data.CONTENT_URI,null,emailWhere,emailWhereParams,null);
         if(emailCursor.moveToNext()) {
