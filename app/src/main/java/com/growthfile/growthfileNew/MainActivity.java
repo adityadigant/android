@@ -244,6 +244,7 @@ public class MainActivity extends AppCompatActivity {
                     Uri uri = intent.getData();
                     if(uri != null) {
                         InputStream inputStream = null;
+
                         try {
                             inputStream = getContentResolver().openInputStream(uri);
                         }
@@ -253,13 +254,14 @@ public class MainActivity extends AppCompatActivity {
 
 
                         BitmapFactory.Options o = new BitmapFactory.Options();
-                        o.inSampleSize = 5;
+                        o.inSampleSize = 2;
 
                         Bitmap bmp = BitmapFactory.decodeStream(inputStream,null,o);
                         ByteArrayOutputStream stream = new ByteArrayOutputStream();
                         bmp.compress(Bitmap.CompressFormat.JPEG, 100, stream);
                         String path = MediaStore.Images.Media.insertImage(MainActivity.this.getContentResolver(), bmp, "Image", null);
                         mUploadMsg.onReceiveValue(new Uri[]{Uri.parse(path)});
+                        
                     }
                     else {
                         mUploadMsg.onReceiveValue(new Uri[]{});
