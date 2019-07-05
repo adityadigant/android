@@ -10,3 +10,4 @@
 .externalNativeBuild
 /release
 google-services.json
+.idea
