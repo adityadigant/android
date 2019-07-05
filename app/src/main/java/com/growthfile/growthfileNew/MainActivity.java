@@ -778,7 +778,7 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
 
-        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com");
+        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com/");
         mWebView.setWebContentsDebuggingEnabled(true);
         mWebView.requestFocus(View.FOCUS_DOWN);
         mWebView.setLongClickable(true);
@@ -888,7 +888,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com/v1/");
+
     }
 
 
