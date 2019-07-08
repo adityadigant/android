@@ -237,29 +237,30 @@ public class MainActivity extends AppCompatActivity {
                 }
                 break;
 
-            case PHOTO_GALLERY_REQUEST:
+            case GALLERY_REQUEST:
                 if (resultCode == RESULT_OK) {
                     Uri uri = intent.getData();
                     if(uri != null) {
-                        InputStream inputStream = null;
+                        mUploadMsg.onReceiveValue(new Uri[]{uri});
+//                        InputStream inputStream = null;
+//
+//                        try {
+//                            inputStream = getContentResolver().openInputStream(uri);
+//                        }
+//                        catch(FileNotFoundException e){
+//                            e.printStackTrace();
+//                        }
+//
+//
+//                        BitmapFactory.Options o = new BitmapFactory.Options();
+//                        o.inSampleSize = 2;
+//
+//                        Bitmap bmp = BitmapFactory.decodeStream(inputStream,null,o);
+//                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+//                        bmp.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+//                        String path = MediaStore.Images.Media.insertImage(MainActivity.this.getContentResolver(), bmp, "Image", null);
+//                        mUploadMsg.onReceiveValue(new Uri[]{Uri.parse(path)});
 
-                        try {
-                            inputStream = getContentResolver().openInputStream(uri);
-                        }
-                        catch(FileNotFoundException e){
-                            e.printStackTrace();
-                        }
-
-
-                        BitmapFactory.Options o = new BitmapFactory.Options();
-                        o.inSampleSize = 2;
-
-                        Bitmap bmp = BitmapFactory.decodeStream(inputStream,null,o);
-                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                        bmp.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-                        String path = MediaStore.Images.Media.insertImage(MainActivity.this.getContentResolver(), bmp, "Image", null);
-                        mUploadMsg.onReceiveValue(new Uri[]{Uri.parse(path)});
-                        
                     }
                     else {
                         mUploadMsg.onReceiveValue(new Uri[]{});
@@ -897,10 +898,15 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("image/*");
+
         Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
         chooserIntent.putExtra(Intent.EXTRA_INTENT,intent);
+
         chooserIntent.putExtra(Intent.EXTRA_TITLE,"Choose File");
-        startActivityForResult(chooserIntent,GALLERY_REQUEST);
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(takePictureIntent, GALLERY_REQUEST);
+
+
     }
     private void webviewInstallDialog() {
         String message = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
