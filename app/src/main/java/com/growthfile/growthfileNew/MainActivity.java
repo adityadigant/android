@@ -203,6 +203,7 @@ public class MainActivity extends AppCompatActivity {
             case CAMERA_ONLY_REQUEST:
                 if (resultCode == RESULT_OK) {
                     File imgFile = new File(pictureImagePath);
+                    String callbackName = camera_view.getName();
                     if (imgFile.exists()) {
                         Bitmap bitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
                         final  int maxWidth = deviceWidth();
@@ -228,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("outHeight",""+outHeight);
                         Bitmap scaled = Bitmap.createScaledBitmap(bitmap,outWidth,outHeight,false);
 
-                        String callbackName = camera_view.getName();
+
 
                         try {
                             Bitmap changedBit = null;
@@ -254,17 +255,17 @@ public class MainActivity extends AppCompatActivity {
                                 default:
                                     changedBit = scaled;
                             }
-                            Log.d("script","setFilePath('"+encodeImage(changedBit)+"')");
-                            Log.d("script2",callbackName+"('"+encodeImage(changedBit)+"')");
 
-                            mWebView.evaluateJavascript("setFilePath('"+encodeImage(changedBit)+"')",null);
+                            mWebView.loadUrl("javascript:"+callbackName+"('"+encodeImage(changedBit)+"')");
+
 
                         } catch (IOException e) {
-                            mWebView.evaluateJavascript(callbackName+"('" + encodeImage(scaled) + "')",null);
+                            mWebView.loadUrl("javascript:"+callbackName+"('"+encodeImage(scaled)+"')");
                             e.printStackTrace();
                         }
-
+                        return;
                     }
+                    mWebView.loadUrl("javascript:"+callbackName+"Failed('Please Try Again')");
                 }
                 break;
 
@@ -393,25 +394,15 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestCode == CAMERA_ONLY_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED && grantResults[2] == PackageManager.PERMISSION_GRANTED) {
-                try {
+
                     startActivityForResult(photoCameraIntent(), CAMERA_ONLY_REQUEST);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    createIntentForCameraOnly();
-                }
+
             }
         }
         else if (requestCode == PHOTO_CAMERA_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED && grantResults[2] == PackageManager.PERMISSION_GRANTED) {
-                try {
-                    startActivityForResult(photoCameraIntent(), PHOTO_CAMERA_REQUEST);
 
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    pictureImagePath = null;
-                    cameraUri = null;
-                    Toast.makeText(MainActivity.this,"Failed To Open Camera. Please Choose From Gallery",Toast.LENGTH_LONG).show();
-                }
+                    startActivityForResult(photoCameraIntent(), PHOTO_CAMERA_REQUEST);
 
             }
             else {
@@ -653,6 +644,7 @@ public class MainActivity extends AppCompatActivity {
         return encoded;
     }
 
+
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
     }
@@ -740,7 +732,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    private Intent photoCameraIntent() throws IOException {
+    private Intent photoCameraIntent() {
         Intent takePicture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = timeStamp + ".jpg";
@@ -841,12 +833,9 @@ public class MainActivity extends AppCompatActivity {
                                                 showPermissionNotAllowedDialog(title, message, true);
                                             }
                                         } else {
-                                            try {
-                                                startActivityForResult(photoCameraIntent(), PHOTO_CAMERA_REQUEST);
-                                            } catch (IOException e) {
-                                                Toast.makeText(MainActivity.this,"Cannot Open Camera. Please Choose from Gallery",Toast.LENGTH_LONG).show();
-                                                androidException(e);
-                                            }
+
+                                            startActivityForResult(photoCameraIntent(), PHOTO_CAMERA_REQUEST);
+
                                         }
 
                                         break;
@@ -1057,12 +1046,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void createIntentForCameraOnly() {
-        Intent CAMERA_ONLY_INTENT = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (CAMERA_ONLY_INTENT.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(CAMERA_ONLY_INTENT, CAMERA_ONLY_REQUEST);
-        }
-    }
+
 
     private boolean checkLocationPermission() {
 
@@ -1383,17 +1367,9 @@ public class MainActivity extends AppCompatActivity {
                 }
 
             } else {
-                try {
+
                     startActivityForResult(photoCameraIntent(), CAMERA_ONLY_REQUEST);
-                } catch (final IOException e) {
-                    mWebView.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            androidException(e);
-                        }
-                    });
-                    createIntentForCameraOnly();
-                }
+
             }
         }
 
