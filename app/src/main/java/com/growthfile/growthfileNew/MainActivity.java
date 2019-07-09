@@ -106,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver broadcastReceiver;
     public AlertDialog appAlert;
     public AlertDialog airplaneDialog = null;
+    public  Camera_View camera_view = null;
 
     private static final int CAMERA_ONLY_REQUEST = 111;
     private static final int PHOTO_GALLERY_REQUEST = 112;
@@ -226,6 +227,9 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("outWidth",""+outWidth);
                         Log.d("outHeight",""+outHeight);
                         Bitmap scaled = Bitmap.createScaledBitmap(bitmap,outWidth,outHeight,false);
+
+                        String callbackName = camera_view.getName();
+
                         try {
                             Bitmap changedBit = null;
                             ExifInterface ei = new ExifInterface(imgFile.getAbsolutePath());
@@ -250,11 +254,13 @@ public class MainActivity extends AppCompatActivity {
                                 default:
                                     changedBit = scaled;
                             }
-                            Log.d("width",""+changedBit.getWidth());
-                            mWebView.loadUrl("javascript:setFilePath('" + encodeImage(changedBit) + "')");
+                            Log.d("script","setFilePath('"+encodeImage(changedBit)+"')");
+                            Log.d("script2",callbackName+"('"+encodeImage(changedBit)+"')");
+
+                            mWebView.evaluateJavascript("setFilePath('"+encodeImage(changedBit)+"')",null);
 
                         } catch (IOException e) {
-                            mWebView.loadUrl("javascript:setFilePath('" + encodeImage(scaled) + "')");
+                            mWebView.evaluateJavascript(callbackName+"('" + encodeImage(scaled) + "')",null);
                             e.printStackTrace();
                         }
 
@@ -579,6 +585,16 @@ public class MainActivity extends AppCompatActivity {
         String phoneNumber = "";
 
         int contactType;
+    }
+    public class Camera_View {
+        String callbackFunctionName;
+
+        public  Camera_View(String functionName) {
+            this.callbackFunctionName = functionName;
+        }
+        public String getName(){
+            return callbackFunctionName;
+        }
     }
 
     public int deviceWidth(){
@@ -1345,7 +1361,7 @@ public class MainActivity extends AppCompatActivity {
 
         @JavascriptInterface
 
-        public void startCamera() {
+        public void startCamera(String functionName) {
 
 
             String[] PERMISSIONS_CAMERA = {
@@ -1353,10 +1369,13 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.READ_EXTERNAL_STORAGE,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
             };
+             camera_view = new Camera_View(functionName);
+
 
             if (!hasPermissions(MainActivity.this, PERMISSIONS_CAMERA)) {
                 if (VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_CAMERA, CAMERA_ONLY_REQUEST);
+
                 } else {
                     String title = "Storage and Camera Permission";
                     String message = "Allow Storage and Camera Permission to get Picture";
