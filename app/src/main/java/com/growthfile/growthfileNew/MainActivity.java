@@ -13,6 +13,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -41,6 +42,7 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -116,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     public String contactCallbackFunctionName = "";
     private String pictureImagePath = "";
+    private  Uri cameraUri;
     private  ValueCallback<Uri[]> mUploadMsg;
     private boolean hasPageFinished = false;
     private boolean nocacheLoadUrl = false;
@@ -201,37 +204,59 @@ public class MainActivity extends AppCompatActivity {
                     File imgFile = new File(pictureImagePath);
                     if (imgFile.exists()) {
                         Bitmap bitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+                        final  int maxWidth = deviceWidth();
+                        final int maxHeight = deviceHeight();
+
+                        int inWidth = bitmap.getWidth();
+                        int inHeight = bitmap.getHeight();
+                        int outWidth=inWidth;
+                        int outHeight=inHeight;
+
+                        if(inWidth > inHeight){
+                            if(inWidth > maxWidth) {
+                                outWidth = maxWidth;
+                                outHeight = (inHeight * maxWidth) / inWidth;
+                            }
+                        } else {
+                            if(inHeight > maxHeight) {
+                                outHeight = maxHeight;
+                                outWidth = (inWidth * maxHeight) / inHeight;
+                            }
+                        }
+                        Log.d("outWidth",""+outWidth);
+                        Log.d("outHeight",""+outHeight);
+                        Bitmap scaled = Bitmap.createScaledBitmap(bitmap,outWidth,outHeight,false);
                         try {
-                            Bitmap changedBit = bitmap;
+                            Bitmap changedBit = null;
                             ExifInterface ei = new ExifInterface(imgFile.getAbsolutePath());
                             int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
 
                             switch (orientation) {
                                 case ExifInterface.ORIENTATION_ROTATE_90:
-                                    changedBit =  rotate(bitmap, 90);
+                                    changedBit =  rotate(scaled, 90);
                                     break;
                                 case ExifInterface.ORIENTATION_ROTATE_180:
-                                    changedBit = rotate(bitmap, 180);
+                                    changedBit = rotate(scaled, 180);
                                     break;
                                 case ExifInterface.ORIENTATION_ROTATE_270:
-                                    changedBit = rotate(bitmap, 270);
+                                    changedBit = rotate(scaled, 270);
                                     break;
                                 case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
-                                    changedBit = flip(bitmap, true, false);
+                                    changedBit = flip(scaled, true, false);
                                     break;
                                 case ExifInterface.ORIENTATION_FLIP_VERTICAL:
-                                    changedBit = flip(bitmap, false, true);
+                                    changedBit = flip(scaled, false, true);
                                     break;
                                 default:
-                                    changedBit = bitmap;
+                                    changedBit = scaled;
                             }
+                            Log.d("width",""+changedBit.getWidth());
                             mWebView.loadUrl("javascript:setFilePath('" + encodeImage(changedBit) + "')");
 
                         } catch (IOException e) {
-                            mWebView.loadUrl("javascript:setFilePath('" + encodeImage(bitmap) + "')");
+                            mWebView.loadUrl("javascript:setFilePath('" + encodeImage(scaled) + "')");
                             e.printStackTrace();
                         }
-
 
                     }
                 }
@@ -240,31 +265,19 @@ public class MainActivity extends AppCompatActivity {
             case GALLERY_REQUEST:
                 if (resultCode == RESULT_OK) {
                     Uri uri = intent.getData();
-                    if(uri != null) {
-                        mUploadMsg.onReceiveValue(new Uri[]{uri});
-//                        InputStream inputStream = null;
-//
-//                        try {
-//                            inputStream = getContentResolver().openInputStream(uri);
-//                        }
-//                        catch(FileNotFoundException e){
-//                            e.printStackTrace();
-//                        }
-//
-//
-//                        BitmapFactory.Options o = new BitmapFactory.Options();
-//                        o.inSampleSize = 2;
-//
-//                        Bitmap bmp = BitmapFactory.decodeStream(inputStream,null,o);
-//                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-//                        bmp.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-//                        String path = MediaStore.Images.Media.insertImage(MainActivity.this.getContentResolver(), bmp, "Image", null);
-//                        mUploadMsg.onReceiveValue(new Uri[]{Uri.parse(path)});
 
+                    if (uri != null) {
+                        mUploadMsg.onReceiveValue(new Uri[]{uri});
+                        mUploadMsg = null;
+                    } else {
+                        mUploadMsg.onReceiveValue(null);
+                        mUploadMsg = null;
                     }
-                    else {
-                        mUploadMsg.onReceiveValue(new Uri[]{});
-                    }
+                }
+                else {
+                    mUploadMsg.onReceiveValue(null);
+                    mUploadMsg = null;
+
                 }
 
                 break;
@@ -272,10 +285,25 @@ public class MainActivity extends AppCompatActivity {
                 if (resultCode == RESULT_OK) {
                     File imgFile = new File(pictureImagePath);
                     if (imgFile.exists()) {
-                        Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-
-                        mWebView.loadUrl("javascript:readUploadedFile('" + encodeImage(myBitmap) + "')");
+                        if (cameraUri != null) {
+                            mUploadMsg.onReceiveValue(new Uri[]{cameraUri});
+                            mUploadMsg = null;
+                        } else {
+                            mUploadMsg.onReceiveValue(null);
+                            mUploadMsg = null;
+                        }
                     }
+                    else  {
+                        pictureImagePath = null;
+                        Toast.makeText(MainActivity.this,"Please Try Again",Toast.LENGTH_LONG).show();
+                        mUploadMsg.onReceiveValue(null);
+                        mUploadMsg = null;
+                    }
+                }
+                else {
+                    mUploadMsg.onReceiveValue(null);
+                    mUploadMsg = null;
+
                 }
                 break;
             case GET_CONTACT_REQUEST:
@@ -366,19 +394,35 @@ public class MainActivity extends AppCompatActivity {
                     createIntentForCameraOnly();
                 }
             }
-        } else if (requestCode == PHOTO_CAMERA_REQUEST) {
+        }
+        else if (requestCode == PHOTO_CAMERA_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED && grantResults[2] == PackageManager.PERMISSION_GRANTED) {
                 try {
                     startActivityForResult(photoCameraIntent(), PHOTO_CAMERA_REQUEST);
+
                 } catch (IOException e) {
                     e.printStackTrace();
+                    pictureImagePath = null;
+                    cameraUri = null;
+                    Toast.makeText(MainActivity.this,"Failed To Open Camera. Please Choose From Gallery",Toast.LENGTH_LONG).show();
                 }
+
             }
-        } else if (requestCode == PHOTO_GALLERY_REQUEST) {
+            else {
+                pictureImagePath = null;
+                cameraUri = null;
+            }
+        } else if (requestCode == GALLERY_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                startActivityForResult(photoGalleryIntent(), PHOTO_GALLERY_REQUEST);
+                startActivityForResult(photoGalleryIntent(), GALLERY_REQUEST);
             }
-        } else if (requestCode == LOCATION_PERMISSION_CODE) {
+            else {
+                mUploadMsg.onReceiveValue(null);
+                mUploadMsg = null;
+            }
+        }
+
+        else if (requestCode == LOCATION_PERMISSION_CODE) {
             if (grantResults.length > 0) {
                 if (grantResults[0] != PackageManager.PERMISSION_GRANTED || grantResults[1] != PackageManager.PERMISSION_GRANTED) {
 
@@ -429,6 +473,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d("onReumse", "resume");
         if (checkLocationPermission()) {
             try {
+
                 String script = "try { runRead() }catch(e){}";
                 mWebView.evaluateJavascript(script, null);
             } catch (Exception e) {
@@ -461,6 +506,7 @@ public class MainActivity extends AppCompatActivity {
         // make sure to unregister your receiver after finishing of this activity
         unregisterReceiver(broadcastReceiver);
     }
+
 
 
     private Contact fetchAndBuildContact(Context ctx, Uri contactUri) {
@@ -533,6 +579,15 @@ public class MainActivity extends AppCompatActivity {
         String phoneNumber = "";
 
         int contactType;
+    }
+
+    public int deviceWidth(){
+        return Resources.getSystem().getDisplayMetrics().widthPixels;
+
+    }
+    public int deviceHeight(){
+        return Resources.getSystem().getDisplayMetrics().heightPixels;
+
     }
     public static Bitmap rotate(Bitmap bitmap, float degrees) {
         Matrix matrix = new Matrix();
@@ -668,67 +723,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void createProfileIntent() {
-        final String[] PERMISSIONS_PHOTO_CAMERA = {
-                Manifest.permission.CAMERA,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.READ_EXTERNAL_STORAGE
-        };
-
-        final String[] PERMISSIONS_PHOTO_GALLERY = {
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.READ_EXTERNAL_STORAGE
-        };
-
-        final Context context = MainActivity.this;
-        final AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle("Choose Image Location");
-        builder.setCancelable(true);
-        builder.setItems(new CharSequence[]
-                        {"Camera", "Gallery"},
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        switch (which) {
-                            case 0:
-
-
-                                if (!hasPermissions(MainActivity.this, PERMISSIONS_PHOTO_CAMERA)) {
-
-                                    if (VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                        ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_PHOTO_CAMERA, PHOTO_CAMERA_REQUEST);
-                                    } else {
-                                        String title = "Storage and Camera Permission";
-                                        String message = "Allow Storage and Camera Permission to get Picture";
-                                        showPermissionNotAllowedDialog(title, message, true);
-                                    }
-                                } else {
-                                    try {
-                                        startActivityForResult(photoCameraIntent(), PHOTO_CAMERA_REQUEST);
-                                    } catch (IOException e) {
-
-                                        androidException(e);
-                                    }
-                                }
-
-                                break;
-                            case 1:
-                                if (!hasPermissions(MainActivity.this, PERMISSIONS_PHOTO_GALLERY)) {
-                                    if (VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                        ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_PHOTO_GALLERY, PHOTO_GALLERY_REQUEST);
-                                    } else {
-                                        String title = "Storage and Camera Permission";
-                                        String message = "Allow Storage and Camera Permission to get Picture";
-                                        showPermissionNotAllowedDialog(title, message, true);
-                                    }
-                                } else {
-                                    startActivityForResult(photoGalleryIntent(), PHOTO_GALLERY_REQUEST);
-                                }
-                                break;
-                        }
-                    }
-                });
-        builder.create().show();
-    }
 
     private Intent photoCameraIntent() throws IOException {
         Intent takePicture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -740,6 +734,7 @@ public class MainActivity extends AppCompatActivity {
         pictureImagePath = storageDir.getAbsolutePath() + "/" + imageFileName;
         File file = new File(pictureImagePath);
         Uri outputFileUri = Uri.fromFile(file);
+        cameraUri = outputFileUri;
         takePicture.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
         return takePicture;
 
@@ -796,9 +791,67 @@ public class MainActivity extends AppCompatActivity {
                 callback.invoke(origin, true, false);
             }
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> uploadMsg,WebChromeClient.FileChooserParams fileChooserParams){
-                openFileChooser(uploadMsg);
-                return  true;
+                mUploadMsg = uploadMsg;
+                final String[] PERMISSIONS_PHOTO_CAMERA = {
+                        Manifest.permission.CAMERA,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.READ_EXTERNAL_STORAGE
+                };
 
+                final String[] PERMISSIONS_PHOTO_GALLERY = {
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.READ_EXTERNAL_STORAGE
+                };
+
+                final Context context = MainActivity.this;
+                final AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Choose Image Location");
+                builder.setCancelable(false);
+                builder.setItems(new CharSequence[]
+                                {"Camera", "Gallery"},
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                switch (which) {
+                                    case 0:
+
+
+                                        if (!hasPermissions(MainActivity.this, PERMISSIONS_PHOTO_CAMERA)) {
+
+                                            if (VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                                ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_PHOTO_CAMERA, PHOTO_CAMERA_REQUEST);
+                                            } else {
+                                                String title = "Storage and Camera Permission";
+                                                String message = "Allow Storage and Camera Permission to get Picture";
+                                                showPermissionNotAllowedDialog(title, message, true);
+                                            }
+                                        } else {
+                                            try {
+                                                startActivityForResult(photoCameraIntent(), PHOTO_CAMERA_REQUEST);
+                                            } catch (IOException e) {
+                                                Toast.makeText(MainActivity.this,"Cannot Open Camera. Please Choose from Gallery",Toast.LENGTH_LONG).show();
+                                                androidException(e);
+                                            }
+                                        }
+
+                                        break;
+                                    case 1:
+                                        if (!hasPermissions(MainActivity.this, PERMISSIONS_PHOTO_GALLERY)) {
+                                            if (VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                                ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_PHOTO_GALLERY, GALLERY_REQUEST);
+                                            } else {
+                                                String title = "Storage and Camera Permission";
+                                                String message = "Allow Storage and Camera Permission to get Picture";
+                                                showPermissionNotAllowedDialog(title, message, true);
+                                            }
+                                        } else {
+                                            startActivityForResult(photoGalleryIntent(), GALLERY_REQUEST);
+                                        }
+                                        break;
+                                }
+                            }
+                        });
+                builder.create().show();
+                return  true;
             }
         });
 
@@ -807,7 +860,6 @@ public class MainActivity extends AppCompatActivity {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 if (nocacheLoadUrl) return;
-
                 if (!hasPageFinished) {
                     Log.d("onPageFinished", "true");
                     mWebView.evaluateJavascript("native.setName('Android')", null);
@@ -893,21 +945,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void openFileChooser(ValueCallback<Uri[]> uploadMsg){
-        mUploadMsg = uploadMsg;
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("image/*");
-
-        Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
-        chooserIntent.putExtra(Intent.EXTRA_INTENT,intent);
-
-        chooserIntent.putExtra(Intent.EXTRA_TITLE,"Choose File");
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        startActivityForResult(takePictureIntent, GALLERY_REQUEST);
-
-
-    }
     private void webviewInstallDialog() {
         String message = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
         String title = "App Incompatibility Issue";
@@ -1304,10 +1341,7 @@ public class MainActivity extends AppCompatActivity {
             return wifiManager.isWifiEnabled();
         }
 
-        @JavascriptInterface
-        public void openImagePicker() {
-            createProfileIntent();
-        }
+
 
         @JavascriptInterface
 
