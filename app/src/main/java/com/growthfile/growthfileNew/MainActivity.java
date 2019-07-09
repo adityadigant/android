@@ -106,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver broadcastReceiver;
     public AlertDialog appAlert;
     public AlertDialog airplaneDialog = null;
-    public  Camera_View camera_view = null;
+    public  JsCallbackName jsCallbackName = null;
 
     private static final int CAMERA_ONLY_REQUEST = 111;
     private static final int PHOTO_GALLERY_REQUEST = 112;
@@ -203,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
             case CAMERA_ONLY_REQUEST:
                 if (resultCode == RESULT_OK) {
                     File imgFile = new File(pictureImagePath);
-                    String callbackName = camera_view.getName();
+                    String callbackName = jsCallbackName.getName();
                     if (imgFile.exists()) {
                         Bitmap bitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
                         final  int maxWidth = deviceWidth();
@@ -316,6 +316,7 @@ public class MainActivity extends AppCompatActivity {
             case GET_CONTACT_REQUEST:
                 if(resultCode == RESULT_OK) {
                    Contact contact = null;
+                   String callbackName = jsCallbackName.getName();
                     try {
                         Uri contactUri = intent.getData();
 
@@ -329,14 +330,14 @@ public class MainActivity extends AppCompatActivity {
                         StringBuilder sb = new StringBuilder();
                         sb.append("displayName=").append(contact.displayName).append("&phoneNumber=").append(contact.phoneNumber)
                                 .append("&email=").append(contact.emailId);
-                        mWebView.evaluateJavascript("window['"+contactCallbackFunctionName+"']('"+sb+"')",null);
+                        mWebView.evaluateJavascript(callbackName+"('"+sb+"')",null);
 
 
                     }
                     catch (Exception e) {
                         e.printStackTrace();
 
-                        mWebView.evaluateJavascript("window['"+contactCallbackFunctionName+"Failed']('"+e.getMessage()+" at line Number "+ e.getStackTrace()[0].getLineNumber()+"')",null);
+                        mWebView.evaluateJavascript(callbackName+"Failed('"+e.getMessage()+" at line Number "+ e.getStackTrace()[0].getLineNumber()+"')",null);
                         Toast.makeText(mContext,e.getMessage(),Toast.LENGTH_LONG).show();
                     }
                 }
@@ -577,14 +578,14 @@ public class MainActivity extends AppCompatActivity {
 
         int contactType;
     }
-    public class Camera_View {
-        String callbackFunctionName;
+    public class JsCallbackName {
+        String functionName;
 
-        public  Camera_View(String functionName) {
-            this.callbackFunctionName = functionName;
+        public  JsCallbackName(String name) {
+            this.functionName = name;
         }
         public String getName(){
-            return callbackFunctionName;
+            return functionName;
         }
     }
 
@@ -1353,7 +1354,7 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.READ_EXTERNAL_STORAGE,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
             };
-             camera_view = new Camera_View(functionName);
+            jsCallbackName = new JsCallbackName(functionName);
 
 
             if (!hasPermissions(MainActivity.this, PERMISSIONS_CAMERA)) {
@@ -1367,13 +1368,9 @@ public class MainActivity extends AppCompatActivity {
                 }
 
             } else {
-
                     startActivityForResult(photoCameraIntent(), CAMERA_ONLY_REQUEST);
-
             }
-        }
-
-        ;
+        };
 
         // device Info //
         @JavascriptInterface
@@ -1517,7 +1514,7 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.READ_CONTACTS
 
             };
-            contactCallbackFunctionName = functionName;
+            jsCallbackName = new JsCallbackName(functionName);
             if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
 
                 ActivityCompat.requestPermissions(MainActivity.this,PERMISSIONS , GET_CONTACT_REQUEST);
