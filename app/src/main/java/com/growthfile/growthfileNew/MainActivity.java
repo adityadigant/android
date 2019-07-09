@@ -756,7 +756,7 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
 
-        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com/v1/");
+        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com/");
         mWebView.setWebContentsDebuggingEnabled(true);
         mWebView.requestFocus(View.FOCUS_DOWN);
         mWebView.setLongClickable(true);
