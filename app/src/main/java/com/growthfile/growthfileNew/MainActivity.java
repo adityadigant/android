@@ -2,10 +2,8 @@ package com.growthfile.growthfileNew;
 
 import android.Manifest;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -42,7 +40,6 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.FileProvider;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -68,8 +65,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
-import android.webkit.CookieManager;
-import android.webkit.CookieSyncManager;
+
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 
@@ -100,16 +96,12 @@ import org.json.JSONObject;
 public class MainActivity extends AppCompatActivity {
 
     private WebView mWebView;
-    SwipeRefreshLayout swipeToRefresh;
-    private ViewTreeObserver.OnScrollChangedListener mOnScrollChangedListener;
     private Context mContext;
     private BroadcastReceiver broadcastReceiver;
-    public AlertDialog appAlert;
     public AlertDialog airplaneDialog = null;
     public  JsCallbackName jsCallbackName = null;
 
     private static final int CAMERA_ONLY_REQUEST = 111;
-    private static final int PHOTO_GALLERY_REQUEST = 112;
     private static final int PHOTO_CAMERA_REQUEST = 113;
     private static final int LOCATION_PERMISSION_CODE = 115;
     private static final int REQUEST_SCAN_ALWAYS_AVAILABLE = 116;
@@ -117,7 +109,6 @@ public class MainActivity extends AppCompatActivity {
     private  static  final  int GALLERY_REQUEST = 118;
     public static final String BROADCAST_ACTION = "com.growthfile.growthfileNew";
     private static final String TAG = MainActivity.class.getSimpleName();
-    public String contactCallbackFunctionName = "";
     private String pictureImagePath = "";
     private  Uri cameraUri;
     private  ValueCallback<Uri[]> mUploadMsg;
@@ -141,25 +132,7 @@ public class MainActivity extends AppCompatActivity {
         new CertPin().execute();
 
         mContext = getApplicationContext();
-//        swipeToRefresh = findViewById(R.id.swipeToRefresh);
-//        swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-//            @Override
-//            public void onRefresh() {
-//
-//                runRead();
-//            }
-//
-//        });
-//        swipeToRefresh.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
-//            @Override
-//            public void onScrollChanged() {
-//                if (mWebView.getScrollY() == 0) {
-//                    swipeToRefresh.setEnabled(true);
-//                } else {
-//                    swipeToRefresh.setEnabled(false);
-//                }
-//            }
-//        });
+
 
         if (!checkDeviceOsCompatibility()) {
             showOsUncompatibleDialog();
