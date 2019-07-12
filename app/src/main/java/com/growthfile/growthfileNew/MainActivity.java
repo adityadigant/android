@@ -62,6 +62,7 @@ import android.telephony.TelephonyManager;
 
 import android.util.Base64;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
@@ -91,6 +92,8 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import static android.webkit.WebView.HitTestResult.SRC_ANCHOR_TYPE;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -197,11 +200,12 @@ public class MainActivity extends AppCompatActivity {
                                 outHeight = maxHeight;
                                 outWidth = (inWidth * maxHeight) / inHeight;
                             }
-                        }
+                        };
+
+
                         Log.d("outWidth",""+outWidth);
                         Log.d("outHeight",""+outHeight);
                         Bitmap scaled = Bitmap.createScaledBitmap(bitmap,outWidth,outHeight,false);
-
 
 
                         try {
@@ -756,16 +760,37 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
 
-        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com/");
+        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com/v1/");
         mWebView.setWebContentsDebuggingEnabled(true);
         mWebView.requestFocus(View.FOCUS_DOWN);
+
         mWebView.setLongClickable(true);
         mWebView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
+
+                WebView webView = (WebView) v;
+                WebView.HitTestResult result = webView.getHitTestResult();
+
+                if (result != null) {
+                    Log.d("type",""+result.getType());
+                    if (result.getType() == WebView.HitTestResult.UNKNOWN_TYPE) {
+                        return true;
+                    }
+
+                    if(result.getType() == SRC_ANCHOR_TYPE) {
+                        Log.d("Details",result.getExtra());
+                        Uri uri = Uri.parse(result.getExtra());
+                        mWebView.evaluateJavascript(uri.getLastPathSegment(),null);
+                        return false;
+                    }
+                }
                 return true;
             }
         });
+
+        registerForContextMenu(mWebView);
+
 
         mWebView.setWebChromeClient(new WebChromeClient() {
             @Override
@@ -795,8 +820,6 @@ public class MainActivity extends AppCompatActivity {
                             public void onClick(DialogInterface dialog, int which) {
                                 switch (which) {
                                     case 0:
-
-
                                         if (!hasPermissions(MainActivity.this, PERMISSIONS_PHOTO_CAMERA)) {
 
                                             if (VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -922,6 +945,29 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
+//    @Override
+//    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+//        super.onCreateContextMenu(menu, v, menuInfo);
+//
+//        WebView webView = (WebView) v;
+//        WebView.HitTestResult result = webView.getHitTestResult();
+//
+//        if (result != null) {
+//            Log.d("type",""+result.getType());
+//            if (result.getType() == WebView.HitTestResult.UNKNOWN_TYPE) {
+//                return;
+//
+//            }
+//
+//            if(result.getType() == SRC_ANCHOR_TYPE) {
+//                Log.d("Details",result.getExtra());
+//                Uri uri = Uri.parse(result.getExtra());
+//                mWebView.evaluateJavascript(uri.getLastPathSegment(),null);
+//
+//            }
+//        }
+//    }
 
 
     private void webviewInstallDialog() {
