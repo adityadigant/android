@@ -769,22 +769,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onLongClick(View v) {
 
-                WebView webView = (WebView) v;
-                WebView.HitTestResult result = webView.getHitTestResult();
-
-                if (result != null) {
-                    Log.d("type",""+result.getType());
-                    if (result.getType() == WebView.HitTestResult.UNKNOWN_TYPE) {
-                        return true;
-                    }
-
-                    if(result.getType() == SRC_ANCHOR_TYPE) {
-                        Log.d("Details",result.getExtra());
-                        Uri uri = Uri.parse(result.getExtra());
-                        mWebView.evaluateJavascript(uri.getLastPathSegment(),null);
-                        return false;
-                    }
-                }
                 return true;
             }
         });
