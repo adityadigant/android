@@ -90,6 +90,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -102,22 +103,21 @@ public class MainActivity extends AppCompatActivity {
     private Context mContext;
     private BroadcastReceiver broadcastReceiver;
     public AlertDialog airplaneDialog = null;
-    public  JsCallbackName jsCallbackName = null;
+    public JsCallbackName jsCallbackName = null;
 
     private static final int CAMERA_ONLY_REQUEST = 111;
     private static final int PHOTO_CAMERA_REQUEST = 113;
     private static final int LOCATION_PERMISSION_CODE = 115;
     private static final int REQUEST_SCAN_ALWAYS_AVAILABLE = 116;
-    private  static  final  int GET_CONTACT_REQUEST = 117;
-    private  static  final  int GALLERY_REQUEST = 118;
+    private static final int GET_CONTACT_REQUEST = 117;
+    private static final int GALLERY_REQUEST = 118;
     public static final String BROADCAST_ACTION = "com.growthfile.growthfileNew";
     private static final String TAG = MainActivity.class.getSimpleName();
     private String pictureImagePath = "";
-    private  Uri cameraUri;
-    private  ValueCallback<Uri[]> mUploadMsg;
+    private Uri cameraUri;
+    private ValueCallback<Uri[]> mUploadMsg;
     private boolean hasPageFinished = false;
     private boolean nocacheLoadUrl = false;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -175,6 +175,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
 
+
         switch (requestCode) {
             case CAMERA_ONLY_REQUEST:
                 if (resultCode == RESULT_OK) {
@@ -182,30 +183,31 @@ public class MainActivity extends AppCompatActivity {
                     String callbackName = jsCallbackName.getName();
                     if (imgFile.exists()) {
                         Bitmap bitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-                        final  int maxWidth = deviceWidth();
+                        final int maxWidth = deviceWidth();
                         final int maxHeight = deviceHeight();
 
                         int inWidth = bitmap.getWidth();
                         int inHeight = bitmap.getHeight();
-                        int outWidth=inWidth;
-                        int outHeight=inHeight;
+                        int outWidth = inWidth;
+                        int outHeight = inHeight;
 
-                        if(inWidth > inHeight){
-                            if(inWidth > maxWidth) {
+                        if (inWidth > inHeight) {
+                            if (inWidth > maxWidth) {
                                 outWidth = maxWidth;
                                 outHeight = (inHeight * maxWidth) / inWidth;
                             }
                         } else {
-                            if(inHeight > maxHeight) {
+                            if (inHeight > maxHeight) {
                                 outHeight = maxHeight;
                                 outWidth = (inWidth * maxHeight) / inHeight;
                             }
-                        };
+                        }
+                        ;
 
 
-                        Log.d("outWidth",""+outWidth);
-                        Log.d("outHeight",""+outHeight);
-                        Bitmap scaled = Bitmap.createScaledBitmap(bitmap,outWidth,outHeight,false);
+                        Log.d("outWidth", "" + outWidth);
+                        Log.d("outHeight", "" + outHeight);
+                        Bitmap scaled = Bitmap.createScaledBitmap(bitmap, outWidth, outHeight, false);
 
 
                         try {
@@ -215,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
 
                             switch (orientation) {
                                 case ExifInterface.ORIENTATION_ROTATE_90:
-                                    changedBit =  rotate(scaled, 90);
+                                    changedBit = rotate(scaled, 90);
                                     break;
                                 case ExifInterface.ORIENTATION_ROTATE_180:
                                     changedBit = rotate(scaled, 180);
@@ -233,17 +235,20 @@ public class MainActivity extends AppCompatActivity {
                                     changedBit = scaled;
                             }
 
-                            mWebView.loadUrl("javascript:"+callbackName+"('"+encodeImage(changedBit)+"')");
+                            mWebView.loadUrl("javascript:" + callbackName + "('" + encodeImage(changedBit) + "')");
 
 
                         } catch (IOException e) {
-                            mWebView.loadUrl("javascript:"+callbackName+"('"+encodeImage(scaled)+"')");
+                            mWebView.loadUrl("javascript:" + callbackName + "('" + encodeImage(scaled) + "')");
                             e.printStackTrace();
+
                         }
                         return;
                     }
-                    mWebView.loadUrl("javascript:"+callbackName+"Failed('Please Try Again')");
+                    mWebView.loadUrl("javascript:" + callbackName + "Failed('Please Try Again')");
+
                 }
+//                intentStarted = false;
                 break;
 
             case GALLERY_REQUEST:
@@ -256,14 +261,14 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         mUploadMsg.onReceiveValue(null);
                         mUploadMsg = null;
+
                     }
-                }
-                else {
+                } else {
                     mUploadMsg.onReceiveValue(null);
                     mUploadMsg = null;
 
                 }
-
+//                intentStarted = false;
                 break;
             case PHOTO_CAMERA_REQUEST:
                 if (resultCode == RESULT_OK) {
@@ -276,52 +281,50 @@ public class MainActivity extends AppCompatActivity {
                             mUploadMsg.onReceiveValue(null);
                             mUploadMsg = null;
                         }
-                    }
-                    else  {
+                    } else {
                         pictureImagePath = null;
-                        Toast.makeText(MainActivity.this,"Please Try Again",Toast.LENGTH_LONG).show();
+                        Toast.makeText(MainActivity.this, "Please Try Again", Toast.LENGTH_LONG).show();
                         mUploadMsg.onReceiveValue(null);
                         mUploadMsg = null;
                     }
-                }
-                else {
+                } else {
                     mUploadMsg.onReceiveValue(null);
                     mUploadMsg = null;
 
                 }
+//                intentStarted = false;
                 break;
             case GET_CONTACT_REQUEST:
-                if(resultCode == RESULT_OK) {
-                   Contact contact = null;
-                   String callbackName = jsCallbackName.getName();
+                if (resultCode == RESULT_OK) {
+                    Contact contact = null;
+                    String callbackName = jsCallbackName.getName();
                     try {
                         Uri contactUri = intent.getData();
 
 
-                        contact = fetchAndBuildContact(getApplicationContext(),contactUri);
-                        Log.d("Picked Contact",contact.toString());
-                        Log.d("displayName",contact.displayName);
-                        Log.d("phoneNumber",contact.phoneNumber);
-                        Log.d("email",contact.emailId);
+                        contact = fetchAndBuildContact(getApplicationContext(), contactUri);
+                        Log.d("Picked Contact", contact.toString());
+                        Log.d("displayName", contact.displayName);
+                        Log.d("phoneNumber", contact.phoneNumber);
+                        Log.d("email", contact.emailId);
 
                         StringBuilder sb = new StringBuilder();
                         sb.append("displayName=").append(contact.displayName).append("&phoneNumber=").append(contact.phoneNumber)
                                 .append("&email=").append(contact.emailId);
-                        mWebView.evaluateJavascript(callbackName+"('"+sb+"')",null);
+                        mWebView.evaluateJavascript(callbackName + "('" + sb + "')", null);
 
 
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
 
-                        mWebView.evaluateJavascript(callbackName+"Failed('"+e.getMessage()+" at line Number "+ e.getStackTrace()[0].getLineNumber()+"')",null);
-                        Toast.makeText(mContext,e.getMessage(),Toast.LENGTH_LONG).show();
+                        mWebView.evaluateJavascript(callbackName + "Failed('" + e.getMessage() + " at line Number " + e.getStackTrace()[0].getLineNumber() + "')", null);
+                        Toast.makeText(mContext, e.getMessage(), Toast.LENGTH_LONG).show();
                     }
-                }
-                else {
-                    Toast.makeText(mContext,"Failed To Pick Contact",Toast.LENGTH_LONG).show();
-                }
+                } else {
 
+                    Toast.makeText(mContext, "Failed To Pick Contact", Toast.LENGTH_LONG).show();
+                }
+//                intentStarted = false;
                 break;
             case REQUEST_SCAN_ALWAYS_AVAILABLE:
                 if (resultCode != RESULT_OK) {
@@ -359,7 +362,7 @@ public class MainActivity extends AppCompatActivity {
 
                         dialog.show();
                     }
-
+//                    intentStarted = false;
                 }
                 break;
         }
@@ -370,34 +373,33 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
 
+
         if (requestCode == CAMERA_ONLY_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED && grantResults[2] == PackageManager.PERMISSION_GRANTED) {
 
-                    startActivityForResult(photoCameraIntent(), CAMERA_ONLY_REQUEST);
+                startActivityForResult(photoCameraIntent(), CAMERA_ONLY_REQUEST);
+//                    intentStarted = true;
 
             }
-        }
-        else if (requestCode == PHOTO_CAMERA_REQUEST) {
+        } else if (requestCode == PHOTO_CAMERA_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED && grantResults[2] == PackageManager.PERMISSION_GRANTED) {
 
-                    startActivityForResult(photoCameraIntent(), PHOTO_CAMERA_REQUEST);
+                startActivityForResult(photoCameraIntent(), PHOTO_CAMERA_REQUEST);
+//                intentStarted = true;
 
-            }
-            else {
+            } else {
                 pictureImagePath = null;
                 cameraUri = null;
             }
         } else if (requestCode == GALLERY_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                 startActivityForResult(photoGalleryIntent(), GALLERY_REQUEST);
-            }
-            else {
+//                intentStarted = true;
+            } else {
                 mUploadMsg.onReceiveValue(null);
                 mUploadMsg = null;
             }
-        }
-
-        else if (requestCode == LOCATION_PERMISSION_CODE) {
+        } else if (requestCode == LOCATION_PERMISSION_CODE) {
             if (grantResults.length > 0) {
                 if (grantResults[0] != PackageManager.PERMISSION_GRANTED || grantResults[1] != PackageManager.PERMISSION_GRANTED) {
 
@@ -406,17 +408,18 @@ public class MainActivity extends AppCompatActivity {
                     boolean cancelable = false;
 
                     showPermissionNotAllowedDialog(title, message, cancelable);
+
                 } else {
                     LoadApp();
+//                    intentStarted = false;
                 }
             }
-        }
-        else if(requestCode == GET_CONTACT_REQUEST) {
-            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED ) {
-                startActivityForResult(getContactIntent(),GET_CONTACT_REQUEST);
-            }
-            else {
-                Toast.makeText(MainActivity.this,"Permission not granted",Toast.LENGTH_LONG);
+        } else if (requestCode == GET_CONTACT_REQUEST) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startActivityForResult(getContactIntent(), GET_CONTACT_REQUEST);
+//                intentStarted = true;
+            } else {
+                Toast.makeText(MainActivity.this, "Permission not granted", Toast.LENGTH_LONG).show();
             }
 
 
@@ -443,17 +446,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         registerMyReceiver();
-
-
         Log.d("onReumse", "resume");
         if (checkLocationPermission()) {
-            try {
-
-                String script = "try { runRead() }catch(e){}";
-                mWebView.evaluateJavascript(script, null);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            String script = "try { backgroundTransition() }catch(e){}";
+            mWebView.evaluateJavascript(script, null);
         }
 
         if (!networkProviderEnabled()) {
@@ -480,31 +476,31 @@ public class MainActivity extends AppCompatActivity {
 
         // make sure to unregister your receiver after finishing of this activity
         unregisterReceiver(broadcastReceiver);
-    }
 
+    }
 
 
     private Contact fetchAndBuildContact(Context ctx, Uri contactUri) {
 
-        Cursor cursorLookUp = ctx.getContentResolver().query(contactUri,new String[]{ContactsContract.Data.LOOKUP_KEY},null,null,null);
+        Cursor cursorLookUp = ctx.getContentResolver().query(contactUri, new String[]{ContactsContract.Data.LOOKUP_KEY}, null, null, null);
         Contact contact = null;
         String loopUpKey = "";
-        if(cursorLookUp.moveToFirst()) {
-                loopUpKey = cursorLookUp.getString(cursorLookUp.getColumnIndex(ContactsContract.Data.LOOKUP_KEY));
-                if(loopUpKey != null) {
-                    contact = new Contact();
-                    contact = buildPhoneDetails(contactUri,ctx,contact);
-                    contact = buildEmailDetails(loopUpKey,ctx,contact);
+        if (cursorLookUp.moveToFirst()) {
+            loopUpKey = cursorLookUp.getString(cursorLookUp.getColumnIndex(ContactsContract.Data.LOOKUP_KEY));
+            if (loopUpKey != null) {
+                contact = new Contact();
+                contact = buildPhoneDetails(contactUri, ctx, contact);
+                contact = buildEmailDetails(loopUpKey, ctx, contact);
 
 
-                }
+            }
         }
         cursorLookUp.close();
 
         return contact;
     }
 
-    private  Contact buildPhoneDetails(Uri contactUri,Context ctx,Contact contact) {
+    private Contact buildPhoneDetails(Uri contactUri, Context ctx, Contact contact) {
 
         ContentResolver contentResolver = ctx.getContentResolver();
 //        String contactWhere = ContactsContract.Data.LOOKUP_KEY + " = ? AND " + ContactsContract.Data.MIMETYPE + " = ?";
@@ -514,11 +510,11 @@ public class MainActivity extends AppCompatActivity {
                 ContactsContract.CommonDataKinds.Phone._ID + "=?",
                 new String[]{contactUri.getLastPathSegment()}, null);
 
-        if(cursorPhone.getCount() > 0) {
+        if (cursorPhone.getCount() > 0) {
 
 
-            if(cursorPhone.moveToNext()) {
-                if(Integer.parseInt(cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER))) > 0) {
+            if (cursorPhone.moveToNext()) {
+                if (Integer.parseInt(cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER))) > 0) {
                     String displayName = cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
                     String phoneNumber = cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
                     int contactType = cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.TYPE);
@@ -533,12 +529,12 @@ public class MainActivity extends AppCompatActivity {
         return contact;
     }
 
-    private  Contact buildEmailDetails(String lookUpKey,Context ctx,Contact contact) {
+    private Contact buildEmailDetails(String lookUpKey, Context ctx, Contact contact) {
         ContentResolver contentResolver = ctx.getContentResolver();
-        String emailWhere = ContactsContract.Data.LOOKUP_KEY+" = ? AND "+ContactsContract.Data.MIMETYPE+" = ? ";
-        String[] emailWhereParams = new String[]{lookUpKey,ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE};
-        Cursor emailCursor = contentResolver.query(ContactsContract.Data.CONTENT_URI,null,emailWhere,emailWhereParams,null);
-        if(emailCursor.moveToNext()) {
+        String emailWhere = ContactsContract.Data.LOOKUP_KEY + " = ? AND " + ContactsContract.Data.MIMETYPE + " = ? ";
+        String[] emailWhereParams = new String[]{lookUpKey, ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE};
+        Cursor emailCursor = contentResolver.query(ContactsContract.Data.CONTENT_URI, null, emailWhere, emailWhereParams, null);
+        if (emailCursor.moveToNext()) {
             String emailId = emailCursor.getString(emailCursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
             contact.emailId = emailId;
         }
@@ -547,6 +543,7 @@ public class MainActivity extends AppCompatActivity {
         emailCursor.close();
         return contact;
     }
+
     public class Contact {
 
         String displayName = "";
@@ -555,25 +552,30 @@ public class MainActivity extends AppCompatActivity {
 
         int contactType;
     }
+
     public class JsCallbackName {
         String functionName;
 
-        public  JsCallbackName(String name) {
+        public JsCallbackName(String name) {
             this.functionName = name;
         }
-        public String getName(){
+
+        public String getName() {
             return functionName;
         }
     }
 
-    public int deviceWidth(){
+
+    public int deviceWidth() {
         return Resources.getSystem().getDisplayMetrics().widthPixels;
 
     }
-    public int deviceHeight(){
+
+    public int deviceHeight() {
         return Resources.getSystem().getDisplayMetrics().heightPixels;
 
     }
+
     public static Bitmap rotate(Bitmap bitmap, float degrees) {
         Matrix matrix = new Matrix();
         matrix.postRotate(degrees);
@@ -673,7 +675,7 @@ public class MainActivity extends AppCompatActivity {
 
                     } catch (Exception e) {
                         androidException(e);
-                        mWebView.evaluateJavascript("runRead()", null);
+                        mWebView.evaluateJavascript("runRead('1')", null);
                     }
                 }
 
@@ -709,7 +711,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
     private Intent photoCameraIntent() {
         Intent takePicture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
@@ -731,12 +732,15 @@ public class MainActivity extends AppCompatActivity {
         choosePicture.setType("image/*");
         return choosePicture;
     }
-    private Intent getContactIntent(){
-        Intent getContact  = new Intent(Intent.ACTION_PICK,ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
+
+    private Intent getContactIntent() {
+        Intent getContact = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
 
 
         return getContact;
-    };
+    }
+
+    ;
 
     private void LoadApp() {
 
@@ -760,28 +764,19 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
 
-        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com/v1/");
+        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com");
         mWebView.setWebContentsDebuggingEnabled(true);
         mWebView.requestFocus(View.FOCUS_DOWN);
 
-        mWebView.setLongClickable(true);
-        mWebView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-
-                return true;
-            }
-        });
-
         registerForContextMenu(mWebView);
-
 
         mWebView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onGeolocationPermissionsShowPrompt(final String origin, final GeolocationPermissions.Callback callback) {
                 callback.invoke(origin, true, false);
             }
-            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> uploadMsg,WebChromeClient.FileChooserParams fileChooserParams){
+
+            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> uploadMsg, WebChromeClient.FileChooserParams fileChooserParams) {
                 mUploadMsg = uploadMsg;
                 final String[] PERMISSIONS_PHOTO_CAMERA = {
                         Manifest.permission.CAMERA,
@@ -837,7 +832,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         });
                 builder.create().show();
-                return  true;
+                return true;
             }
         });
 
@@ -920,6 +915,7 @@ public class MainActivity extends AppCompatActivity {
                 shouldOverrideUrlLoading(view, url);
                 return true;
             }
+
             @Override
             public void onReceivedError(WebView webView, int errorCode, String description, String failingUrl) {
                 Toast.makeText(MainActivity.this, description, Toast.LENGTH_LONG).show();
@@ -1049,7 +1045,6 @@ public class MainActivity extends AppCompatActivity {
         return service.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
     }
-
 
 
     private boolean checkLocationPermission() {
@@ -1198,7 +1193,7 @@ public class MainActivity extends AppCompatActivity {
             int lac = 0;
             int signalStrength = 0;
             int cid = 0;
-            int timingAdvance =0;
+            int timingAdvance = 0;
 
             if (info instanceof CellInfoGsm) {
 
@@ -1308,7 +1303,7 @@ public class MainActivity extends AppCompatActivity {
             sb.append("mobileCountryCode=").append(mcc).append("&").append("mobileNetworkCode=").append(mnc).append("&").append("cellId=").append(cid).
                     append("&").append("locationAreaCode=").append(lac).append("&")
                     .append("signalStrength=").append(signalStrength);
-            if(timingAdvance != 0 && timingAdvance != Integer.MAX_VALUE) {
+            if (timingAdvance != 0 && timingAdvance != Integer.MAX_VALUE) {
                 sb.append("&").append("timingAdvance=").append(timingAdvance);
             }
             sb.append(",");
@@ -1346,7 +1341,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-
         @JavascriptInterface
 
         public void startCamera(String functionName) {
@@ -1371,9 +1365,11 @@ public class MainActivity extends AppCompatActivity {
                 }
 
             } else {
-                    startActivityForResult(photoCameraIntent(), CAMERA_ONLY_REQUEST);
+                startActivityForResult(photoCameraIntent(), CAMERA_ONLY_REQUEST);
             }
-        };
+        }
+
+        ;
 
         // device Info //
         @JavascriptInterface
@@ -1511,20 +1507,23 @@ public class MainActivity extends AppCompatActivity {
             return getAllCelltowerInfo(cellInfoList);
 
         }
+
         @JavascriptInterface
-        public void getContact(String functionName){
+        public void getContact(String functionName) {
             String[] PERMISSIONS = {
                     Manifest.permission.READ_CONTACTS
 
             };
+
             jsCallbackName = new JsCallbackName(functionName);
             if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
 
-                ActivityCompat.requestPermissions(MainActivity.this,PERMISSIONS , GET_CONTACT_REQUEST);
+                ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, GET_CONTACT_REQUEST);
 
-            }
-            else {
-                startActivityForResult(getContactIntent(),GET_CONTACT_REQUEST);
+            } else {
+
+
+                startActivityForResult(getContactIntent(), GET_CONTACT_REQUEST);
             }
 
         }
