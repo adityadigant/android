@@ -422,7 +422,6 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "Permission not granted", Toast.LENGTH_LONG).show();
             }
 
-
         }
     }
 
@@ -764,10 +763,10 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
 
-        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com");
-        mWebView.setWebContentsDebuggingEnabled(true);
-        mWebView.requestFocus(View.FOCUS_DOWN);
+        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com/v2/");
 
+        WebView.setWebContentsDebuggingEnabled(true);
+        mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
 
         mWebView.setWebChromeClient(new WebChromeClient() {
@@ -1406,7 +1405,7 @@ public class MainActivity extends AppCompatActivity {
                 return Integer.toString(packageInfo.versionCode);
 
             } catch (PackageManager.NameNotFoundException e) {
-                return "12";
+                return "13";
             }
         }
 
@@ -1532,7 +1531,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-
 
         if (mWebView.canGoBack()) {
             mWebView.goBack(); // emulates back history
