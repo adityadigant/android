@@ -86,6 +86,9 @@ import java.util.List;
 import android.provider.Settings.Secure;
 import android.widget.Toast;
 
+import com.facebook.FacebookSdk;
+import com.facebook.LoggingBehavior;
+import com.facebook.appevents.AppEventsLogger;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -118,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
     private ValueCallback<Uri[]> mUploadMsg;
     private boolean hasPageFinished = false;
     private boolean nocacheLoadUrl = false;
+    AppEventsLogger logger;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -466,7 +470,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-//        swipeToRefresh.getViewTreeObserver().removeOnScrollChangedListener(mOnScrollChangedListener);
+//      swipeToRefresh.getViewTreeObserver().removeOnScrollChangedListener(mOnScrollChangedListener);
     }
 
     @Override
@@ -763,12 +767,14 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
 
-        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com/v2/");
+        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com/v2/");
 
         WebView.setWebContentsDebuggingEnabled(true);
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
-
+        logger = AppEventsLogger.newLogger(MainActivity.this);
+        FacebookSdk.setIsDebugEnabled(true);
+        FacebookSdk.addLoggingBehavior(LoggingBehavior.APP_EVENTS);
         mWebView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onGeolocationPermissionsShowPrompt(final String origin, final GeolocationPermissions.Callback callback) {
@@ -1405,7 +1411,7 @@ public class MainActivity extends AppCompatActivity {
                 return Integer.toString(packageInfo.versionCode);
 
             } catch (PackageManager.NameNotFoundException e) {
-                return "13";
+                return "14";
             }
         }
 
@@ -1525,6 +1531,10 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(getContactIntent(), GET_CONTACT_REQUEST);
             }
 
+        }
+        @JavascriptInterface
+        public  void logEvent(String eventName) {
+            logger.logEvent(eventName);
         }
 
     }
