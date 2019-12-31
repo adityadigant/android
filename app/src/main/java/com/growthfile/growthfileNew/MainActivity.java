@@ -762,19 +762,18 @@ public class MainActivity extends AppCompatActivity {
 
         webSettings.setDatabaseEnabled(true);
         webSettings.setUseWideViewPort(true);
+        WebView.setWebContentsDebuggingEnabled(true);
 
         webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
 
-        mWebView.loadUrl("https://growthfile-207204.firebaseapp.com/v2/");
+        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com/v2/");
 
-        WebView.setWebContentsDebuggingEnabled(true);
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
         logger = AppEventsLogger.newLogger(MainActivity.this);
-        FacebookSdk.setIsDebugEnabled(true);
-        FacebookSdk.addLoggingBehavior(LoggingBehavior.APP_EVENTS);
+
         mWebView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onGeolocationPermissionsShowPrompt(final String origin, final GeolocationPermissions.Callback callback) {
