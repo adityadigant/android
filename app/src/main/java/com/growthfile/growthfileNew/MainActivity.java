@@ -37,12 +37,11 @@ import android.provider.ContactsContract;
 import android.provider.MediaStore;
 
 import android.provider.Settings;
-import android.support.annotation.NonNull;
-import android.support.annotation.RequiresApi;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 
 import android.telephony.CellIdentityCdma;
 import android.telephony.CellIdentityGsm;
@@ -62,9 +61,7 @@ import android.telephony.TelephonyManager;
 
 import android.util.Base64;
 import android.util.Log;
-import android.view.ContextMenu;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 
 import android.webkit.GeolocationPermissions;
@@ -86,18 +83,20 @@ import java.util.List;
 import android.provider.Settings.Secure;
 import android.widget.Toast;
 
-import com.facebook.FacebookSdk;
-import com.facebook.LoggingBehavior;
 import com.facebook.appevents.AppEventsLogger;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
+import com.google.firebase.dynamiclinks.PendingDynamicLinkData;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import static android.webkit.WebView.HitTestResult.SRC_ANCHOR_TYPE;
+import static com.facebook.FacebookSdk.getApplicationContext;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -122,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean hasPageFinished = false;
     private boolean nocacheLoadUrl = false;
     AppEventsLogger logger;
+    Uri deepLink = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -442,6 +442,8 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(new Intent(WifiManager.ACTION_REQUEST_SCAN_ALWAYS_AVAILABLE), 116);
             }
         }
+
+
 
     }
 
@@ -768,11 +770,37 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
 
-        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com/v2/");
+        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com/v2/");
 
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
         logger = AppEventsLogger.newLogger(MainActivity.this);
+        FirebaseDynamicLinks.getInstance()
+                .getDynamicLink(getIntent())
+                .addOnSuccessListener(MainActivity.this, new OnSuccessListener<PendingDynamicLinkData>() {
+                    @Override
+                    public void onSuccess(PendingDynamicLinkData pendingDynamicLinkData) {
+                        // Get deep link from result (may be null if no link is found)
+
+                        if (pendingDynamicLinkData != null) {
+                            deepLink = pendingDynamicLinkData.getLink();
+                        }
+
+
+                        // Handle the deep link. For example, open the linked
+                        // content, or apply promotional credit to the user's
+                        // account.
+                        // ...
+
+                        // ...
+                    }
+                })
+                .addOnFailureListener(MainActivity.this , new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w(TAG, "getDynamicLink:onFailure", e);
+                    }
+                });
 
         mWebView.setWebChromeClient(new WebChromeClient() {
             @Override
@@ -849,6 +877,8 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("onPageFinished", "true");
                     mWebView.evaluateJavascript("native.setName('Android')", null);
                     hasPageFinished = true;
+
+
                     FirebaseInstanceId.getInstance().getInstanceId()
                             .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
                                 @Override
@@ -891,6 +921,11 @@ public class MainActivity extends AppCompatActivity {
                             androidException(e);
                         }
                     }
+                    if(deepLink != null) {
+                        Log.d("string",deepLink.toString());
+                        mWebView.evaluateJavascript("parseDynamicLink('"+deepLink.toString()+"')",null);
+
+                    }
                 }
             }
 
@@ -929,29 +964,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-
-//    @Override
-//    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-//        super.onCreateContextMenu(menu, v, menuInfo);
-//
-//        WebView webView = (WebView) v;
-//        WebView.HitTestResult result = webView.getHitTestResult();
-//
-//        if (result != null) {
-//            Log.d("type",""+result.getType());
-//            if (result.getType() == WebView.HitTestResult.UNKNOWN_TYPE) {
-//                return;
-//
-//            }
-//
-//            if(result.getType() == SRC_ANCHOR_TYPE) {
-//                Log.d("Details",result.getExtra());
-//                Uri uri = Uri.parse(result.getExtra());
-//                mWebView.evaluateJavascript(uri.getLastPathSegment(),null);
-//
-//            }
-//        }
-//    }
 
 
     private void webviewInstallDialog() {
@@ -1521,12 +1533,8 @@ public class MainActivity extends AppCompatActivity {
 
             jsCallbackName = new JsCallbackName(functionName);
             if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
-
                 ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, GET_CONTACT_REQUEST);
-
             } else {
-
-
                 startActivityForResult(getContactIntent(), GET_CONTACT_REQUEST);
             }
 

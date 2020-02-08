@@ -27,9 +27,9 @@ import android.os.Environment;
 import android.provider.MediaStore;
 
 import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
+import androidx.core.app.ActivityCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;

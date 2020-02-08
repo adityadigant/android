@@ -35,7 +35,7 @@
             android:name="com.facebook.sdk.CodelessDebugLogEnabled"
             android:value="true" />
         <meta-data android:name="com.facebook.sdk.AdvertiserIDCollectionEnabled"
-            android:value="false"/>
+            android:value="true"/>
         <meta-data android:name="com.facebook.sdk.AutoLogAppEventsEnabled"
             android:value="true"/>
         <activity android:name=".MainActivity"
@@ -45,6 +45,14 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data
+                    android:host="example.com"
+                    android:scheme="https"/>
             </intent-filter>
         </activity>
         <service android:name=".MyAndroidFirebaseMsgService">
