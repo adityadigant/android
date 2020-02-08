@@ -924,7 +924,7 @@ public class MainActivity extends AppCompatActivity {
                     if(deepLink != null) {
                         Log.d("string",deepLink.toString());
                         mWebView.evaluateJavascript("parseDynamicLink('"+deepLink.toString()+"')",null);
-
+                        deepLink = null;
                     }
                 }
             }
