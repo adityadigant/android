@@ -770,7 +770,7 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollbarFadingEnabled(true);
 
 
-        mWebView.loadUrl("https://growthfile-207204.firebaseapp.com/v2/");
+        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com/v2/");
 
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
