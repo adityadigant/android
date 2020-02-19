@@ -2,7 +2,9 @@ package com.growthfile.growthfileNew;
 
 import android.Manifest;
 
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -23,6 +25,7 @@ import android.graphics.Matrix;
 import android.location.LocationManager;
 import android.media.ExifInterface;
 import android.net.ConnectivityManager;
+import android.net.MailTo;
 import android.net.NetworkInfo;
 import android.net.Uri;
 
@@ -59,6 +62,7 @@ import android.telephony.CellSignalStrengthWcdma;
 
 import android.telephony.TelephonyManager;
 
+import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
@@ -75,6 +79,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import java.io.*;
+import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -96,14 +101,18 @@ import com.google.firebase.iid.InstanceIdResult;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
+import static android.content.Intent.EXTRA_CHOSEN_COMPONENT;
+import static android.net.wifi.WifiManager.SCAN_RESULTS_AVAILABLE_ACTION;
 import static com.facebook.FacebookSdk.getApplicationContext;
 
 
 public class MainActivity extends AppCompatActivity {
 
-    private WebView mWebView;
+    public static WebView mWebView;
     private Context mContext;
     private BroadcastReceiver broadcastReceiver;
+    private  BroadcastReceiver shareRec;
     public AlertDialog airplaneDialog = null;
     public JsCallbackName jsCallbackName = null;
 
@@ -113,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_SCAN_ALWAYS_AVAILABLE = 116;
     private static final int GET_CONTACT_REQUEST = 117;
     private static final int GALLERY_REQUEST = 118;
+    private  static  final  int shareIntentCode = 119;
     public static final String BROADCAST_ACTION = "com.growthfile.growthfileNew";
     private static final String TAG = MainActivity.class.getSimpleName();
     private String pictureImagePath = "";
@@ -659,9 +669,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void registerMyReceiver() {
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(BROADCAST_ACTION);
+//        intentFilter.addAction(BROADCAST_ACTION);
         intentFilter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
-        intentFilter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
+        intentFilter.addAction(SCAN_RESULTS_AVAILABLE_ACTION);
+
 
         IntentFilter providerChangeIntent = new IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION);
 
@@ -671,18 +682,32 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.d("broadcastReceiver", "taken");
-                if (intent.getAction().equals(BROADCAST_ACTION)) {
-                    String fcmBody;
-                    try {
-                        fcmBody = intent.getStringExtra("fcmNotificationData");
+                if(intent.getAction().equals(SCAN_RESULTS_AVAILABLE_ACTION)) {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                        boolean success = intent.getBooleanExtra(
+                                WifiManager.EXTRA_RESULTS_UPDATED, false);
+                        if(success) {
+                            WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 
-                        mWebView.evaluateJavascript("runRead(" + fcmBody + ")", null);
-
-                    } catch (Exception e) {
-                        androidException(e);
-                        mWebView.evaluateJavascript("runRead('1')", null);
+                            List<ScanResult> results = wifiManager.getScanResults();
+                            String scanResult = scanNearbyWifi(results);
+                            mWebView.evaluateJavascript("updatedWifiScans('"+scanResult+"')",null);
+                        }
                     }
                 }
+
+//                if (intent.getAction().equals(BROADCAST_ACTION)) {
+//                    String fcmBody;
+//                    try {
+//                        fcmBody = intent.getStringExtra("fcmNotificationData");
+//
+//                        mWebView.evaluateJavascript("runRead(" + fcmBody + ")", null);
+//
+//                    } catch (Exception e) {
+//                        androidException(e);
+//                        mWebView.evaluateJavascript("runRead('1')", null);
+//                    }
+//                }
 
 
                 if (intent.getAction().equals(Intent.ACTION_AIRPLANE_MODE_CHANGED)) {
@@ -713,6 +738,7 @@ public class MainActivity extends AppCompatActivity {
         };
         registerReceiver(broadcastReceiver, intentFilter);
         registerReceiver(broadcastReceiver, providerChangeIntent);
+
     }
 
 
@@ -769,8 +795,8 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
 
-
-        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com/v2/");
+        mWebView.setWebContentsDebuggingEnabled(true);
+        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com/v2/");
 
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
@@ -932,15 +958,36 @@ public class MainActivity extends AppCompatActivity {
             @SuppressWarnings("deprecation")
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                Uri uri = Uri.parse(url);
 
                 if (url.contains("geo:")) {
-                    Intent mapIntent = new Intent("android.intent.action.VIEW", Uri.parse(url));
+                    Intent mapIntent = new Intent("android.intent.action.VIEW",uri);
                     mapIntent.setPackage("com.google.android.apps.maps");
                     if (mapIntent.resolveActivity(MainActivity.this.getPackageManager()) != null) {
                         MainActivity.this.startActivity(mapIntent);
                     }
                     return true;
                 }
+                if(url.startsWith("mailto:")) {
+                    MailTo mt = MailTo.parse(url);
+                    Intent mail = new Intent(Intent.ACTION_SEND);
+                    mail.putExtra(Intent.EXTRA_SUBJECT,mt.getSubject());
+                    mail.putExtra(Intent.EXTRA_CC,mt.getCc());
+                    mail.putExtra(Intent.EXTRA_EMAIL,mt.getTo());
+                    mail.putExtra(Intent.EXTRA_TEXT,mt.getBody());
+                    mail.setType("message/rfc822");
+                    startActivity(mail);
+                    return true;
+                }
+                if(url.startsWith("tel:")) {
+                    startActivity(new Intent(Intent.ACTION_DIAL,uri));
+                    return true;
+                }
+                if(url.startsWith("sms:")) {
+                    handleSMSLink(url);
+                    return true;
+                }
+
 
                 view.loadUrl(url);
                 return true;
@@ -964,6 +1011,61 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
+    protected void handleSMSLink(String url){
+        /*
+            If you want to ensure that your intent is handled only by a text messaging app (and not
+            other email or social apps), then use the ACTION_SENDTO action
+            and include the "smsto:" data scheme
+        */
+
+        // Initialize a new intent to send sms message
+        Intent intent = new Intent(Intent.ACTION_SENDTO);
+
+        // Extract the phoneNumber from sms url
+        String phoneNumber = url.split("[:?]")[1];
+
+        if(!TextUtils.isEmpty(phoneNumber)){
+            // Set intent data
+            // This ensures only SMS apps respond
+            intent.setData(Uri.parse("smsto:" + phoneNumber));
+
+            // Alternate data scheme
+            //intent.setData(Uri.parse("sms:" + phoneNumber));
+        }else {
+            // If the sms link built without phone number
+            intent.setData(Uri.parse("smsto:"));
+
+            // Alternate data scheme
+            //intent.setData(Uri.parse("sms:" + phoneNumber));
+        }
+
+
+        // Extract the sms body from sms url
+        if(url.contains("body=")){
+            String smsBody = url.split("body=")[1];
+
+            // Encode the sms body
+            try{
+                smsBody = URLDecoder.decode(smsBody,"UTF-8");
+            }catch (UnsupportedEncodingException e){
+                e.printStackTrace();
+            }
+
+            if(!TextUtils.isEmpty(smsBody)){
+                // Set intent body
+                intent.putExtra("sms_body",smsBody);
+            }
+        }
+
+        if(intent.resolveActivity(getPackageManager())!=null){
+            // Start the sms app
+            startActivity(intent);
+        }else {
+            Toast.makeText(mContext,"No SMS app found.",Toast.LENGTH_SHORT).show();
+        }
+    }
+
 
 
     private void webviewInstallDialog() {
@@ -1030,7 +1132,6 @@ public class MainActivity extends AppCompatActivity {
                     String shortenVersionName = pi.versionName.length() < 2 ? pi.versionName : pi.versionName.substring(0, 2);
                     int parsedShortenVersion = Integer.parseInt(shortenVersionName);
                     return parsedShortenVersion >= stableVersion;
-
                 }
                 return false;
 
@@ -1542,6 +1643,39 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public  void logEvent(String eventName) {
             logger.logEvent(eventName);
+        }
+        @JavascriptInterface
+        public void share(String shareObject) {
+            try {
+                JSONObject data = new JSONObject(shareObject);
+                Intent sendIntent = new Intent();
+                sendIntent.setAction(Intent.ACTION_SEND);
+                sendIntent.putExtra(Intent.EXTRA_TEXT,data.getString("shareText"));
+                sendIntent.setType(data.getString("type"));
+                try {
+                    JSONObject emailData = new JSONObject(data.getString("email"));
+                    Log.d("cc",emailData.getString("cc"));
+                    sendIntent.putExtra(Intent.EXTRA_CC,emailData.getString("cc"));
+
+                    sendIntent.putExtra(Intent.EXTRA_SUBJECT,emailData.getString("subject"));
+                }catch (Exception ex) {
+
+                }
+                sendIntent.putExtra(Intent.EXTRA_TITLE, "Invite users");
+
+                PendingIntent pi = PendingIntent.getBroadcast(MainActivity.this, shareIntentCode,
+                        new Intent(MainActivity.this,ShareBroadcastReceiver.class),
+                        FLAG_UPDATE_CURRENT);
+
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP_MR1) {
+                    Intent shareIntent = Intent.createChooser(sendIntent,"Invite users",pi.getIntentSender());
+                    startActivity(shareIntent);
+                }
+            }catch (Exception ex) {
+
+            }
+
         }
 
     }

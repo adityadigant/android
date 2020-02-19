@@ -10,6 +10,7 @@ import org.json.JSONObject;
 import java.util.Map;
 
 import static android.content.ContentValues.TAG;
+import static com.growthfile.growthfileNew.MainActivity.mWebView;
 
 public class MyAndroidFirebaseMsgService extends FirebaseMessagingService{
     @Override
@@ -31,7 +32,8 @@ public class MyAndroidFirebaseMsgService extends FirebaseMessagingService{
                 Map<String, String> params = remoteMessage.getData();
                 JSONObject object  = new JSONObject(params);
                 Log.e("JSON_OBJECT",object.toString());
-                broadCastIntent.putExtra("fcmNotificationData",object.toString());
+                mWebView.evaluateJavascript("runRead(" + object.toString() + ")", null);
+
         };
         sendBroadcast(broadCastIntent);
 

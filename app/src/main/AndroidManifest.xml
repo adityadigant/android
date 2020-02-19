@@ -38,6 +38,8 @@
             android:value="true"/>
         <meta-data android:name="com.facebook.sdk.AutoLogAppEventsEnabled"
             android:value="true"/>
+        <receiver android:name=".ShareBroadcastReceiver"></receiver>
+
         <activity android:name=".MainActivity"
             android:hardwareAccelerated="false">
 
@@ -54,6 +56,7 @@
                     android:host="example.com"
                     android:scheme="https"/>
             </intent-filter>
+
         </activity>
         <service android:name=".MyAndroidFirebaseMsgService">
             <intent-filter>
