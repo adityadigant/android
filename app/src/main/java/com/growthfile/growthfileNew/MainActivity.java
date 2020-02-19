@@ -801,7 +801,6 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
 
-
         mWebView.loadUrl("https://growthfile-207204.firebaseapp.com/v2/");
 
         mWebView.requestFocus(View.FOCUS_DOWN);
@@ -858,7 +857,7 @@ public class MainActivity extends AppCompatActivity {
                 final Context context = MainActivity.this;
                 final AlertDialog.Builder builder = new AlertDialog.Builder(context);
                 builder.setTitle("Choose Image Location");
-                builder.setCancelable(false);
+                builder.setCancelable(true);
                 builder.setItems(new CharSequence[]
                                 {"Camera", "Gallery"},
                         new DialogInterface.OnClickListener() {
@@ -897,6 +896,13 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
                         });
+                builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialog) {
+                        mUploadMsg.onReceiveValue(null);
+                        mUploadMsg = null;
+                    }
+                });
                 builder.create().show();
                 return true;
             }
