@@ -669,7 +669,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void registerMyReceiver() {
         IntentFilter intentFilter = new IntentFilter();
-//        intentFilter.addAction(BROADCAST_ACTION);
+        intentFilter.addAction(BROADCAST_ACTION);
         intentFilter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
         intentFilter.addAction(SCAN_RESULTS_AVAILABLE_ACTION);
 
@@ -696,18 +696,18 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
-//                if (intent.getAction().equals(BROADCAST_ACTION)) {
-//                    String fcmBody;
-//                    try {
-//                        fcmBody = intent.getStringExtra("fcmNotificationData");
-//
-//                        mWebView.evaluateJavascript("runRead(" + fcmBody + ")", null);
-//
-//                    } catch (Exception e) {
-//                        androidException(e);
-//                        mWebView.evaluateJavascript("runRead('1')", null);
-//                    }
-//                }
+                if (intent.getAction().equals(BROADCAST_ACTION)) {
+                    String fcmBody;
+                    try {
+                        fcmBody = intent.getStringExtra("fcmNotificationData");
+
+                        mWebView.evaluateJavascript("runRead(" + fcmBody + ")", null);
+
+                    } catch (Exception e) {
+                        androidException(e);
+                        mWebView.evaluateJavascript("runRead('1')", null);
+                    }
+                }
 
 
                 if (intent.getAction().equals(Intent.ACTION_AIRPLANE_MODE_CHANGED)) {
@@ -968,26 +968,24 @@ public class MainActivity extends AppCompatActivity {
                     }
                     return true;
                 }
-                if(url.startsWith("mailto:")) {
-                    MailTo mt = MailTo.parse(url);
-                    Intent mail = new Intent(Intent.ACTION_SEND);
-                    mail.putExtra(Intent.EXTRA_SUBJECT,mt.getSubject());
-                    mail.putExtra(Intent.EXTRA_CC,mt.getCc());
-                    mail.putExtra(Intent.EXTRA_EMAIL,mt.getTo());
-                    mail.putExtra(Intent.EXTRA_TEXT,mt.getBody());
-                    mail.setType("message/rfc822");
-                    startActivity(mail);
+                if(url.startsWith("mailto:") || url.startsWith("sms:") ) {
+
+                    startActivity(new Intent(Intent.ACTION_SENDTO, uri));
                     return true;
                 }
+
                 if(url.startsWith("tel:")) {
                     startActivity(new Intent(Intent.ACTION_DIAL,uri));
                     return true;
                 }
-                if(url.startsWith("sms:")) {
-                    handleSMSLink(url);
+
+                if (url.startsWith("https://wa.me")) {
+
+
+                    startActivity(new Intent(Intent.ACTION_VIEW,uri));
+
                     return true;
                 }
-
 
                 view.loadUrl(url);
                 return true;
@@ -1011,61 +1009,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-
-    protected void handleSMSLink(String url){
-        /*
-            If you want to ensure that your intent is handled only by a text messaging app (and not
-            other email or social apps), then use the ACTION_SENDTO action
-            and include the "smsto:" data scheme
-        */
-
-        // Initialize a new intent to send sms message
-        Intent intent = new Intent(Intent.ACTION_SENDTO);
-
-        // Extract the phoneNumber from sms url
-        String phoneNumber = url.split("[:?]")[1];
-
-        if(!TextUtils.isEmpty(phoneNumber)){
-            // Set intent data
-            // This ensures only SMS apps respond
-            intent.setData(Uri.parse("smsto:" + phoneNumber));
-
-            // Alternate data scheme
-            //intent.setData(Uri.parse("sms:" + phoneNumber));
-        }else {
-            // If the sms link built without phone number
-            intent.setData(Uri.parse("smsto:"));
-
-            // Alternate data scheme
-            //intent.setData(Uri.parse("sms:" + phoneNumber));
-        }
-
-
-        // Extract the sms body from sms url
-        if(url.contains("body=")){
-            String smsBody = url.split("body=")[1];
-
-            // Encode the sms body
-            try{
-                smsBody = URLDecoder.decode(smsBody,"UTF-8");
-            }catch (UnsupportedEncodingException e){
-                e.printStackTrace();
-            }
-
-            if(!TextUtils.isEmpty(smsBody)){
-                // Set intent body
-                intent.putExtra("sms_body",smsBody);
-            }
-        }
-
-        if(intent.resolveActivity(getPackageManager())!=null){
-            // Start the sms app
-            startActivity(intent);
-        }else {
-            Toast.makeText(mContext,"No SMS app found.",Toast.LENGTH_SHORT).show();
-        }
-    }
-
 
 
     private void webviewInstallDialog() {
@@ -1654,12 +1597,13 @@ public class MainActivity extends AppCompatActivity {
                 sendIntent.setType(data.getString("type"));
                 try {
                     JSONObject emailData = new JSONObject(data.getString("email"));
-                    Log.d("cc",emailData.getString("cc"));
-                    sendIntent.putExtra(Intent.EXTRA_CC,emailData.getString("cc"));
 
                     sendIntent.putExtra(Intent.EXTRA_SUBJECT,emailData.getString("subject"));
-                }catch (Exception ex) {
+                    sendIntent.putExtra(Intent.EXTRA_CC,new String[] { emailData.getString("cc") });
+                    sendIntent.putExtra(Intent.EXTRA_EMAIL, new String[] {emailData.getString("to")});
 
+                }catch (Exception ex) {
+                    ex.printStackTrace();
                 }
                 sendIntent.putExtra(Intent.EXTRA_TITLE, "Invite users");
 
