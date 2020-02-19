@@ -82,6 +82,7 @@ import java.io.*;
 import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 
@@ -93,6 +94,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.dynamiclinks.PendingDynamicLinkData;
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -104,7 +106,9 @@ import org.json.JSONObject;
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.content.Intent.EXTRA_CHOSEN_COMPONENT;
 import static android.net.wifi.WifiManager.SCAN_RESULTS_AVAILABLE_ACTION;
+import static android.util.Config.LOGD;
 import static com.facebook.FacebookSdk.getApplicationContext;
+import static com.google.firebase.analytics.FirebaseAnalytics.UserProperty.ALLOW_AD_PERSONALIZATION_SIGNALS;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -131,6 +135,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean hasPageFinished = false;
     private boolean nocacheLoadUrl = false;
     AppEventsLogger logger;
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     Uri deepLink = null;
 
     @Override
@@ -795,12 +801,14 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
 
-        mWebView.setWebContentsDebuggingEnabled(true);
-        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com/v2/");
+
+        mWebView.loadUrl("https://growthfile-207204.firebaseapp.com/v2/");
 
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
         logger = AppEventsLogger.newLogger(MainActivity.this);
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+
         FirebaseDynamicLinks.getInstance()
                 .getDynamicLink(getIntent())
                 .addOnSuccessListener(MainActivity.this, new OnSuccessListener<PendingDynamicLinkData>() {
@@ -1376,6 +1384,48 @@ public class MainActivity extends AppCompatActivity {
         return "";
     }
 
+    private void LOGD(String message) {
+        // Only log on debug builds, for privacy
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, message);
+        }
+    }
+
+    private Bundle bundleFromJson(String json) {
+        // [START_EXCLUDE]
+        if (TextUtils.isEmpty(json)) {
+            return new Bundle();
+        }
+
+        Bundle result = new Bundle();
+        try {
+            JSONObject jsonObject = new JSONObject(json);
+            Iterator<String> keys = jsonObject.keys();
+
+            while (keys.hasNext()) {
+                String key = keys.next();
+                Object value = jsonObject.get(key);
+
+                if (value instanceof String) {
+                    result.putString(key, (String) value);
+                } else if (value instanceof Integer) {
+                    result.putInt(key, (Integer) value);
+                } else if (value instanceof Double) {
+                    result.putDouble(key, (Double) value);
+                } else {
+                    Log.w(TAG, "Value for key " + key + " not one of [String, Integer, Double]");
+                }
+            }
+        } catch (JSONException e) {
+            Log.w(TAG, "Failed to parse JSON, returning empty Bundle.", e);
+            return new Bundle();
+        }
+
+        return result;
+        // [END_EXCLUDE]
+    }
+
+
 
     private class viewLoadJavaInterface {
         Context mContext;
@@ -1392,6 +1442,28 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appId)));
             }
         }
+        @JavascriptInterface
+        public void logFirebaseAnlyticsEvent(String name, String jsonParams) {
+            LOGD("logEvent:" + name);
+            mFirebaseAnalytics.logEvent(name, bundleFromJson(jsonParams));
+        }
+
+        @JavascriptInterface
+        public void setFirebaseAnalyticsUserProperty(String name, String value) {
+            LOGD("setUserProperty:" + name);
+            mFirebaseAnalytics.setUserProperty(name, value);
+        }
+
+        @JavascriptInterface
+        public  void setFirebaseAnalyticsUserId(String id) {
+            mFirebaseAnalytics.setUserId(id);
+        }
+
+        @JavascriptInterface
+        public void setAnalyticsCollectionEnabled(Boolean enable){
+            mFirebaseAnalytics.setAnalyticsCollectionEnabled(enable);
+        }
+
 
 
         @JavascriptInterface
