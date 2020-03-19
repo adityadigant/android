@@ -41,6 +41,7 @@ import android.provider.MediaStore;
 
 import android.provider.Settings;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.appcompat.app.AlertDialog;
@@ -90,6 +91,8 @@ import android.provider.Settings.Secure;
 import android.widget.Toast;
 
 import com.facebook.appevents.AppEventsLogger;
+import com.facebook.applinks.AppLinkData;
+import com.facebook.applinks.AppLinks;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -801,12 +804,35 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
         mWebView.setWebContentsDebuggingEnabled(true);
-        mWebView.loadUrl("https://growthfile-testing.firebaseapp.com/v2/");
+        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com/v2/");
 
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
         logger = AppEventsLogger.newLogger(MainActivity.this);
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+
+        Uri targetUrl = bolts.AppLinks.getTargetUrlFromInboundIntent(MainActivity.this,getIntent());
+        if(targetUrl != null) {
+            Log.i("Activity","App link target url : " + targetUrl.toString());
+        }
+
+
+        AppLinkData.fetchDeferredAppLinkData(MainActivity.this, new AppLinkData.CompletionHandler() {
+            @Override
+            public void onDeferredAppLinkDataFetched(@Nullable AppLinkData appLinkData) {
+
+                try {
+                    if(appLinkData != null) {
+                        Log.d("fb ddl", appLinkData.getAppLinkData().toString(4));
+//                        Log.d("fc ddr",appLinkData.getRefererData().toString());
+
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
 
         FirebaseDynamicLinks.getInstance()
                 .getDynamicLink(getIntent())
