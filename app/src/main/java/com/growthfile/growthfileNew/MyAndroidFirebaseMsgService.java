@@ -17,6 +17,7 @@ public class MyAndroidFirebaseMsgService extends FirebaseMessagingService{
         super.onNewToken(token);
         Log.e("newToken",token);
 
+
     }
 
     @Override
