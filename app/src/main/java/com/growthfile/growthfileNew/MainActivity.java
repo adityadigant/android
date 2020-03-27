@@ -815,8 +815,28 @@ public class MainActivity extends AppCompatActivity {
                     public void onSuccess(PendingDynamicLinkData pendingDynamicLinkData) {
                         // Get deep link from result (may be null if no link is found)
 
+//                        if (pendingDynamicLinkData != null) {
+//                            deepLink = pendingDynamicLinkData.getLink();
+//                        }
                         if (pendingDynamicLinkData != null) {
                             deepLink = pendingDynamicLinkData.getLink();
+                            Log.d("deeplink",deepLink.toString());
+
+                            if (pendingDynamicLinkData.getExtensions() != null) {
+
+                                Bundle ext = pendingDynamicLinkData.getExtensions();
+                                Log.i("Deeplink","keySet "+ext.keySet().isEmpty());
+                                Log.i("medium", "" + ext.getBundle("scionData").getBundle("dynamic_link_first_open").getString("medium")); //To Implement
+                                Log.i("source", "" + ext.getBundle("scionData").getBundle("dynamic_link_first_open").getString("source")); //To Implement
+                                Log.i("campaign", "" + ext.getBundle("scionData").getBundle("dynamic_link_first_open").getString("campaign")); //To Implement
+
+                                for (String key : ext.keySet()) {
+                                    Log.i("Deeplink", "Ket" + key + "value"
+                                            + ext.get(key).toString()); //To Implement
+                                }
+                            }
+
+
                         }
 
 
