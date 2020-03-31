@@ -811,11 +811,11 @@ public class MainActivity extends AppCompatActivity {
         logger = AppEventsLogger.newLogger(MainActivity.this);
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
-//        Uri targetUrl = bolts.AppLinks.getTargetUrlFromInboundIntent(MainActivity.this,getIntent());
-//        if(targetUrl != null) {
-//            Log.i("Activity","App link target url : " + targetUrl.toString());
-//
-//        }
+        Uri targetUrl = bolts.AppLinks.getTargetUrlFromInboundIntent(MainActivity.this,getIntent());
+        if(targetUrl != null) {
+            Log.i("Activity","App link target url : " + targetUrl.toString());
+
+        }
 
 
         AppLinkData.fetchDeferredAppLinkData(MainActivity.this, new AppLinkData.CompletionHandler() {
