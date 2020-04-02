@@ -35,7 +35,12 @@ import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.HandlerThread;
+import android.os.Looper;
+import android.os.Message;
+import android.os.RemoteException;
 import android.os.StrictMode;
+import android.os.Trace;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 
@@ -85,14 +90,23 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import  android.os.Handler;
+import java.util.logging.LogRecord;
 
 
 import android.provider.Settings.Secure;
 import android.widget.Toast;
 
+import com.android.installreferrer.api.InstallReferrerClient;
+import com.android.installreferrer.api.InstallReferrerStateListener;
+import com.android.installreferrer.api.ReferrerDetails;
 import com.facebook.appevents.AppEventsLogger;
 import com.facebook.applinks.AppLinkData;
 import com.facebook.applinks.AppLinks;
+import com.google.android.gms.analytics.CampaignTrackingReceiver;
+import com.google.android.gms.analytics.GoogleAnalytics;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -139,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean nocacheLoadUrl = false;
     AppEventsLogger logger;
     private FirebaseAnalytics mFirebaseAnalytics;
-
+    private final String prefKey = "checkedInstallReferrer";
     Uri deepLink = null;
 
     @Override
@@ -191,8 +205,74 @@ public class MainActivity extends AppCompatActivity {
         } else {
             LoadApp();
         }
+
+
+
+
+
+            if (getPreferences(MODE_PRIVATE).getBoolean(prefKey, false)) {
+                return;
+            }
+
+            InstallReferrerClient referrerClient = InstallReferrerClient.newBuilder(this).build();
+            getInstallReferrerFromClient(referrerClient);
+
+
+
     }
 
+    public  void   getInstallReferrerFromClient(InstallReferrerClient referrerClient) {
+
+        referrerClient.startConnection(new InstallReferrerStateListener() {
+            @Override
+            public void onInstallReferrerSetupFinished(int responseCode) {
+                switch (responseCode) {
+                    case InstallReferrerClient.InstallReferrerResponse.OK:
+                        ReferrerDetails response = null;
+                        try {
+                            response = referrerClient.getInstallReferrer();
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                            return;
+                        }
+                        final String referrerUrl = response.getInstallReferrer();
+                        trackInstallReferrer(referrerUrl);
+
+                        // Only check this once.
+                        getPreferences(MODE_PRIVATE).edit().putBoolean(prefKey, true).commit();
+
+                        // End the connection
+                        referrerClient.endConnection();
+
+                        break;
+                    case InstallReferrerClient.InstallReferrerResponse.FEATURE_NOT_SUPPORTED:
+                        // API not available on the current Play Store app.
+                        break;
+                    case InstallReferrerClient.InstallReferrerResponse.SERVICE_UNAVAILABLE:
+                        // Connection couldn't be established.
+                        break;
+                }
+            }
+
+            @Override
+            public void onInstallReferrerServiceDisconnected() {
+
+            }
+        });
+    }
+
+    private void trackInstallReferrer(final String referrerUrl) {
+
+        new Handler(getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                CampaignTrackingReceiver receiver = new CampaignTrackingReceiver();
+                Intent intent = new Intent("com.android.vending.INSTALL_REFERRER");
+                intent.putExtra("referrer", referrerUrl);
+                receiver.onReceive(getApplicationContext(), intent);
+            }
+        });
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -812,7 +892,8 @@ public class MainActivity extends AppCompatActivity {
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
         Uri targetUrl = bolts.AppLinks.getTargetUrlFromInboundIntent(MainActivity.this,getIntent());
-        if(targetUrl != null) {
+
+        if (targetUrl != null) {
             Log.i("Activity","App link target url : " + targetUrl.toString());
 
         }
@@ -825,8 +906,22 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     if(appLinkData != null) {
                         Log.d("fb ddl", appLinkData.getAppLinkData().toString(4));
-//                        Log.d("fc ddr",appLinkData.getRefererData().toString());
-
+                       Uri url = appLinkData.getTargetUri();
+//                        Bundle bundle = new Bundle();
+//                        bundle.putString(FirebaseAnalytics.Param.SOURCE, url.getQueryParameter("utm_source"));
+//                        bundle.putString(FirebaseAnalytics.Param.MEDIUM, url.getQueryParameter("utm_medium"));
+//                        bundle.putString(FirebaseAnalytics.Param.CAMPAIGN, url.getQueryParameter("utm_campaign"));
+//                        mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.CAMPAIGN_DETAILS,bundle);
+//
+                        GoogleAnalytics analytics = GoogleAnalytics.getInstance(MainActivity.this);
+                        AnalyticsSampleApp analyticsSampleApp = new AnalyticsSampleApp();
+                        Tracker t=  analyticsSampleApp.getTracker(AnalyticsSampleApp.TrackerName.APP_TRACKER);
+                        t.send(new HitBuilders.ScreenViewBuilder()
+                                .setCampaignParamsFromUrl("http://examplepetstore.com/index.html?\" +\n" +
+                                        "    \"utm_source=facebook&utm_medium=facebook_ad&utm_campaign=facebook_installer\" +\n" +
+                                        "    \"&utm_content=email_variation_1\"")
+                                .build()
+                        );
                     }
 
                 } catch (JSONException e) {
