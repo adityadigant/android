@@ -127,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int GALLERY_REQUEST = 118;
     private  static  final  int shareIntentCode = 119;
     public static final String BROADCAST_ACTION = "com.growthfile.growthfileNew";
+    public  static  final String FCM_TOKEN_REFRESH = "FCM_TOKEN_REFRESH";
     private static final String TAG = MainActivity.class.getSimpleName();
     private String pictureImagePath = "";
     private Uri cameraUri;
@@ -715,6 +716,10 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
+                if(intent.getAction().equals(FCM_TOKEN_REFRESH)) {
+                    mWebView.evaluateJavascript("native.setFCMToken('" + intent.getStringExtra("new_token") + "')", null);
+                }
+
 
                 if (intent.getAction().equals(Intent.ACTION_AIRPLANE_MODE_CHANGED)) {
                     boolean isOn = isAirplaneModeOn(context);
@@ -824,7 +829,13 @@ public class MainActivity extends AppCompatActivity {
                     if(appLinkData != null) {
                         Log.d("fb ddl", appLinkData.getAppLinkData().toString(4));
                         Uri url = appLinkData.getTargetUri();
-                        mWebView.evaluateJavascript("parseFacebookDeeplink('"+url.toString()+"')",null);
+                        mWebView.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                mWebView.evaluateJavascript("parseFacebookDeeplink('"+url.toString()+"')",null);
+                            }
+                        });
+
                     }
 
                 } catch (JSONException e) {
