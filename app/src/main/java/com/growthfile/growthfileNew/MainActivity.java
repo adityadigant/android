@@ -136,9 +136,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean nocacheLoadUrl = false;
     AppEventsLogger logger;
     private FirebaseAnalytics mFirebaseAnalytics;
-    private final String prefKey = "checkedInstallReferrer";
     Uri deepLink = null;
-
+    Uri facebookLink = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -813,13 +812,7 @@ public class MainActivity extends AppCompatActivity {
         logger = AppEventsLogger.newLogger(MainActivity.this);
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
-        Uri targetUrl = bolts.AppLinks.getTargetUrlFromInboundIntent(MainActivity.this,getIntent());
-
-        if (targetUrl != null) {
-
-            mWebView.evaluateJavascript("parseFacebookDeeplink('"+targetUrl.toString()+"')",null);
-        }
-
+        facebookLink = bolts.AppLinks.getTargetUrlFromInboundIntent(MainActivity.this,getIntent());
 
         AppLinkData.fetchDeferredAppLinkData(MainActivity.this, new AppLinkData.CompletionHandler() {
             @Override
@@ -828,14 +821,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     if(appLinkData != null) {
                         Log.d("fb ddl", appLinkData.getAppLinkData().toString(4));
-                        Uri url = appLinkData.getTargetUri();
-                        mWebView.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                mWebView.evaluateJavascript("parseFacebookDeeplink('"+url.toString()+"')",null);
-                            }
-                        });
-
+                        facebookLink = appLinkData.getTargetUri();
                     }
 
                 } catch (JSONException e) {
@@ -1002,6 +988,9 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("string",deepLink.toString());
                         mWebView.evaluateJavascript("parseDynamicLink('"+deepLink.toString()+"')",null);
                         deepLink = null;
+                    }
+                    if(facebookLink != null) {
+                        mWebView.evaluateJavascript("parseFacebookDeeplink('"+facebookLink.toString()+"')",null);
                     }
                 }
             }
@@ -1278,7 +1267,7 @@ public class MainActivity extends AppCompatActivity {
             Integer ss = wifiList.get(i).level;
 
             if (bssid != null) {
-                sb.append("macAddress=").append(bssid).append("&").append("signalStrength=").append(ss).append("&").append("channel=").append(channel(wifiList.get(i).frequency)).append("&").append("ssid=").append(wifiList.get(i).SSID);
+                sb.append("macAddress=").append(bssid).append("&").append("signalStrength=").append(ss).append("&").append("channel=").append(channel(wifiList.get(i).frequency));
                 sb.append(",");
             }
         }
