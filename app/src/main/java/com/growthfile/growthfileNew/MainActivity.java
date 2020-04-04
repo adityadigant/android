@@ -51,6 +51,7 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import bolts.AppLinks;
 
 import android.telephony.CellIdentityCdma;
 import android.telephony.CellIdentityGsm;
@@ -676,6 +677,7 @@ public class MainActivity extends AppCompatActivity {
     private void registerMyReceiver() {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BROADCAST_ACTION);
+        intentFilter.addAction(FCM_TOKEN_REFRESH);
         intentFilter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
         intentFilter.addAction(SCAN_RESULTS_AVAILABLE_ACTION);
 
@@ -806,29 +808,29 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollbarFadingEnabled(true);
         mWebView.setWebContentsDebuggingEnabled(true);
         mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com/v2/");
-
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
         logger = AppEventsLogger.newLogger(MainActivity.this);
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
-        facebookLink = bolts.AppLinks.getTargetUrlFromInboundIntent(MainActivity.this,getIntent());
+
+        Uri targetUrl =
+                AppLinks.getTargetUrlFromInboundIntent(this, getIntent());
+        if (targetUrl != null) {
+            Log.i("Activity", "App Link Target URL: " + targetUrl.toString());
+            facebookLink = targetUrl;
+
+        }
 
         AppLinkData.fetchDeferredAppLinkData(MainActivity.this, new AppLinkData.CompletionHandler() {
             @Override
             public void onDeferredAppLinkDataFetched(@Nullable AppLinkData appLinkData) {
-
-                try {
-                    if(appLinkData != null) {
-                        Log.d("fb ddl", appLinkData.getAppLinkData().toString(4));
-                        facebookLink = appLinkData.getTargetUri();
-                    }
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                if(appLinkData != null){
+                    facebookLink = appLinkData.getTargetUri();
                 }
             }
         });
+
 
         FirebaseDynamicLinks.getInstance()
                 .getDynamicLink(getIntent())
@@ -846,7 +848,6 @@ public class MainActivity extends AppCompatActivity {
                         // content, or apply promotional credit to the user's
                         // account.
                         // ...
-
                         // ...
                     }
                 })
