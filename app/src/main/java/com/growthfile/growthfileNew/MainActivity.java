@@ -813,7 +813,6 @@ public class MainActivity extends AppCompatActivity {
         logger = AppEventsLogger.newLogger(MainActivity.this);
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
-
         Uri targetUrl =
                 AppLinks.getTargetUrlFromInboundIntent(this, getIntent());
         if (targetUrl != null) {

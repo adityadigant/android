@@ -19,6 +19,7 @@ public class MyAndroidFirebaseMsgService extends FirebaseMessagingService{
         Intent broadCastIntent = new Intent();
         broadCastIntent.setAction(MainActivity.FCM_TOKEN_REFRESH);
         broadCastIntent.putExtra("new_token",token);
+        sendBroadcast(broadCastIntent);
     }
 
     @Override
