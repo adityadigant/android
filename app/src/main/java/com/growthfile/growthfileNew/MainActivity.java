@@ -35,16 +35,23 @@ import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.HandlerThread;
+import android.os.Looper;
+import android.os.Message;
+import android.os.RemoteException;
 import android.os.StrictMode;
+import android.os.Trace;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 
 import android.provider.Settings;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import bolts.AppLinks;
 
 import android.telephony.CellIdentityCdma;
 import android.telephony.CellIdentityGsm;
@@ -79,17 +86,14 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import java.io.*;
-import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-
-
 import android.provider.Settings.Secure;
 import android.widget.Toast;
-
 import com.facebook.appevents.AppEventsLogger;
+import com.facebook.applinks.AppLinkData;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -104,11 +108,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
-import static android.content.Intent.EXTRA_CHOSEN_COMPONENT;
 import static android.net.wifi.WifiManager.SCAN_RESULTS_AVAILABLE_ACTION;
-import static android.util.Config.LOGD;
-import static com.facebook.FacebookSdk.getApplicationContext;
-import static com.google.firebase.analytics.FirebaseAnalytics.UserProperty.ALLOW_AD_PERSONALIZATION_SIGNALS;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -128,6 +128,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int GALLERY_REQUEST = 118;
     private  static  final  int shareIntentCode = 119;
     public static final String BROADCAST_ACTION = "com.growthfile.growthfileNew";
+    public  static  final String FCM_TOKEN_REFRESH = "FCM_TOKEN_REFRESH";
     private static final String TAG = MainActivity.class.getSimpleName();
     private String pictureImagePath = "";
     private Uri cameraUri;
@@ -136,9 +137,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean nocacheLoadUrl = false;
     AppEventsLogger logger;
     private FirebaseAnalytics mFirebaseAnalytics;
-
     Uri deepLink = null;
-
+    Uri facebookLink = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -188,8 +188,9 @@ public class MainActivity extends AppCompatActivity {
         } else {
             LoadApp();
         }
-    }
 
+
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -676,6 +677,7 @@ public class MainActivity extends AppCompatActivity {
     private void registerMyReceiver() {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BROADCAST_ACTION);
+        intentFilter.addAction(FCM_TOKEN_REFRESH);
         intentFilter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
         intentFilter.addAction(SCAN_RESULTS_AVAILABLE_ACTION);
 
@@ -713,6 +715,10 @@ public class MainActivity extends AppCompatActivity {
                         androidException(e);
                         mWebView.evaluateJavascript("runRead('1')", null);
                     }
+                }
+
+                if(intent.getAction().equals(FCM_TOKEN_REFRESH)) {
+                    mWebView.evaluateJavascript("native.setFCMToken('" + intent.getStringExtra("new_token") + "')", null);
                 }
 
 
@@ -801,12 +807,29 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
         mWebView.setWebContentsDebuggingEnabled(true);
-        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com/v2/");
-
+        mWebView.loadUrl("https://growthfile-207204.firebaseapp.com/v2/");
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
         logger = AppEventsLogger.newLogger(MainActivity.this);
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+
+        Uri targetUrl =
+                AppLinks.getTargetUrlFromInboundIntent(this, getIntent());
+        if (targetUrl != null) {
+            Log.i("Activity", "App Link Target URL: " + targetUrl.toString());
+            facebookLink = targetUrl;
+
+        }
+
+        AppLinkData.fetchDeferredAppLinkData(MainActivity.this, new AppLinkData.CompletionHandler() {
+            @Override
+            public void onDeferredAppLinkDataFetched(@Nullable AppLinkData appLinkData) {
+                if(appLinkData != null){
+                    facebookLink = appLinkData.getTargetUri();
+                }
+            }
+        });
+
 
         FirebaseDynamicLinks.getInstance()
                 .getDynamicLink(getIntent())
@@ -844,7 +867,6 @@ public class MainActivity extends AppCompatActivity {
                         // content, or apply promotional credit to the user's
                         // account.
                         // ...
-
                         // ...
                     }
                 })
@@ -973,6 +995,7 @@ public class MainActivity extends AppCompatActivity {
                         }
 
 
+
                         try {
                             Log.d("fcmBody", fcmBody.toString(4));
                             mWebView.evaluateJavascript("runRead(" + fcmBody.toString(4) + ")", null);
@@ -985,6 +1008,9 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("string",deepLink.toString());
                         mWebView.evaluateJavascript("parseDynamicLink('"+deepLink.toString()+"')",null);
                         deepLink = null;
+                    }
+                    if(facebookLink != null) {
+                        mWebView.evaluateJavascript("parseFacebookDeeplink('"+facebookLink.toString()+"')",null);
                     }
                 }
             }
@@ -1261,7 +1287,7 @@ public class MainActivity extends AppCompatActivity {
             Integer ss = wifiList.get(i).level;
 
             if (bssid != null) {
-                sb.append("macAddress=").append(bssid).append("&").append("signalStrength=").append(ss).append("&").append("channel=").append(channel(wifiList.get(i).frequency)).append("&").append("ssid=").append(wifiList.get(i).SSID);
+                sb.append("macAddress=").append(bssid).append("&").append("signalStrength=").append(ss).append("&").append("channel=").append(channel(wifiList.get(i).frequency));
                 sb.append(",");
             }
         }

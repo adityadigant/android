@@ -61,6 +61,12 @@
                     android:scheme="http"/>
             </intent-filter>
 
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="growthfile"/>
+            </intent-filter>
+
         </activity>
         <service android:name=".MyAndroidFirebaseMsgService">
             <intent-filter>
