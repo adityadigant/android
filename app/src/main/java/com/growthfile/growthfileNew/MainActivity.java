@@ -92,6 +92,10 @@ import java.util.Iterator;
 import java.util.List;
 import android.provider.Settings.Secure;
 import android.widget.Toast;
+
+import com.android.installreferrer.api.InstallReferrerClient;
+import com.android.installreferrer.api.InstallReferrerStateListener;
+import com.android.installreferrer.api.ReferrerDetails;
 import com.facebook.appevents.AppEventsLogger;
 import com.facebook.applinks.AppLinkData;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -806,13 +810,46 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
-
-        mWebView.loadUrl("https://growthfile-207204.firebaseapp.com/v2/");
+        mWebView.setWebContentsDebuggingEnabled(true);
+        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com/v2/");
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
         logger = AppEventsLogger.newLogger(MainActivity.this);
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+        InstallReferrerClient referrerClient;
 
+        referrerClient = InstallReferrerClient.newBuilder(this).build();
+        referrerClient.startConnection(new InstallReferrerStateListener() {
+            @Override
+            public void onInstallReferrerSetupFinished(int responseCode) {
+                switch (responseCode) {
+                    case InstallReferrerClient.InstallReferrerResponse.OK:
+                        // Connection established.
+                        ReferrerDetails response = null;
+                        try {
+                            response = referrerClient.getInstallReferrer();
+                            String referrerUrl = response.getInstallReferrer();
+                            Log.d("reff",referrerUrl);
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        }
+
+                        break;
+                    case InstallReferrerClient.InstallReferrerResponse.FEATURE_NOT_SUPPORTED:
+                        // API not available on the current Play Store app.
+                        break;
+                    case InstallReferrerClient.InstallReferrerResponse.SERVICE_UNAVAILABLE:
+                        // Connection couldn't be established.
+                        break;
+                }
+            }
+
+            @Override
+            public void onInstallReferrerServiceDisconnected() {
+                // Try to restart the connection on the next request to
+                // Google Play by calling the startConnection() method.
+            }
+        });
         Uri targetUrl =
                 AppLinks.getTargetUrlFromInboundIntent(this, getIntent());
         if (targetUrl != null) {
@@ -829,6 +866,15 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        Uri URIdata = getIntent().getData();
+        if(URIdata != null){
+            String scheme = URIdata.getScheme();
+            String host = URIdata.getHost();
+
+            Log.d("scheme",scheme);
+            Log.d("query",URIdata.toString());
+        }
 
 
         FirebaseDynamicLinks.getInstance()

@@ -45,6 +45,8 @@ dependencies {
     implementation 'com.facebook.android:facebook-core:[5,6)'
     implementation 'com.facebook.android:facebook-applinks:[5,6)'
     implementation 'com.google.firebase:firebase-dynamic-links:19.1.0'
+    implementation 'com.android.installreferrer:installreferrer:1.1'
+
 
 }
 apply plugin: 'com.google.gms.google-services'
