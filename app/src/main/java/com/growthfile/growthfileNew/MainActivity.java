@@ -810,7 +810,6 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
-        mWebView.setWebContentsDebuggingEnabled(true);
         mWebView.loadUrl("https://growthfile-207204.firebaseapp.com/v2/");
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
@@ -1069,6 +1068,17 @@ public class MainActivity extends AppCompatActivity {
 
                     startActivity(new Intent(Intent.ACTION_VIEW,uri));
 
+                    return true;
+                }
+
+                if(url.startsWith("https://growthfile-207204.firebaseapp.com")) {
+                    view.loadUrl(url);
+                    return  true;
+                }
+
+                if(url.startsWith("https://")) {
+
+                    startActivity( new Intent(Intent.ACTION_VIEW, uri));
                     return true;
                 }
 
@@ -1615,7 +1625,7 @@ public class MainActivity extends AppCompatActivity {
                 return Integer.toString(packageInfo.versionCode);
 
             } catch (PackageManager.NameNotFoundException e) {
-                return "33";
+                return "34";
             }
         }
 
