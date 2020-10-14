@@ -713,11 +713,15 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         fcmBody = intent.getStringExtra("fcmNotificationData");
 
-                        mWebView.evaluateJavascript("runRead(" + fcmBody + ")", null);
+                        mWebView.evaluateJavascript(" navigator.serviceWorker.controller.postMessage({\n" +
+                                "            type: 'read'\n" +
+                                "          })", null);
 
                     } catch (Exception e) {
                         androidException(e);
-                        mWebView.evaluateJavascript("runRead('1')", null);
+                        mWebView.evaluateJavascript(" navigator.serviceWorker.controller.postMessage({\n" +
+                                "            type: 'read'\n" +
+                                "          })", null);
                     }
                 }
 
@@ -810,7 +814,7 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
-        mWebView.loadUrl("https://growthfile-207204.firebaseapp.com/v2/");
+        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com");
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
         logger = AppEventsLogger.newLogger(MainActivity.this);
@@ -1022,7 +1026,7 @@ public class MainActivity extends AppCompatActivity {
 
                         try {
                             Log.d("fcmBody", fcmBody.toString(4));
-                            mWebView.evaluateJavascript("runRead(" + fcmBody.toString(4) + ")", null);
+                            mWebView.evaluateJavascript("navigator.serviceWorker.controller.postMessage(" + fcmBody.toString(4) + ")", null);
 
                         } catch (JSONException e) {
                             androidException(e);
@@ -1030,11 +1034,11 @@ public class MainActivity extends AppCompatActivity {
                     }
                     if(deepLink != null) {
                         Log.d("string",deepLink.toString());
-                        mWebView.evaluateJavascript("parseDynamicLink('"+deepLink.toString()+"')",null);
+                        mWebView.evaluateJavascript("getDynamicLink('"+deepLink.toString()+"')",null);
                         deepLink = null;
                     }
                     if(facebookLink != null) {
-                        mWebView.evaluateJavascript("parseFacebookDeeplink('"+facebookLink.toString()+"')",null);
+                        mWebView.evaluateJavascript("getDynamicLink('"+facebookLink.toString()+"')",null);
                     }
                 }
             }
