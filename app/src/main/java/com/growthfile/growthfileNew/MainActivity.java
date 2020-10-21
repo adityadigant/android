@@ -355,7 +355,7 @@ public class MainActivity extends AppCompatActivity {
                 if (resultCode != RESULT_OK) {
                     final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_Material_Light_Dialog_Alert);
                     builder.setTitle("ALLOW WIFI SCANNING");
-                    builder.setMessage("Allowing wifi scanning improves location accuracy of your device.");
+                    builder.setMessage("WiFi scanning improves the location accuracy of your device.");
                     builder.setCancelable(false);
                     builder.setPositiveButton("Enable", new DialogInterface.OnClickListener() {
                         @Override
@@ -373,7 +373,7 @@ public class MainActivity extends AppCompatActivity {
 
                         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_Material_Light_Dialog_Alert);
                         builder.setTitle("ALLOW WIFI SCANNING");
-                        builder.setMessage("Allowing wifi scanning improves location accuracy of your device");
+                        builder.setMessage("WiFi scanning improves the location accuracy of your device.");
                         builder.setCancelable(false);
                         builder.setPositiveButton("Allow", new DialogInterface.OnClickListener() {
                             @Override
@@ -618,10 +618,10 @@ public class MainActivity extends AppCompatActivity {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, R.style.Theme_AppCompat_Dialog_Alert);
         if (VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             builder.setTitle("Location Service Not Enabled");
-            builder.setMessage("Growthfile requires Location Access. Click go to settings, To enable Location Services");
+            builder.setMessage("OnDuty requires Location access. Go to Settings to enable Location Services");
         } else {
-            builder.setTitle("Location Mode Not Set");
-            builder.setMessage("Growthfile requires Location Access. Click go to settings, to set location mode to high accuracy.");
+            builder.setTitle("Location Mode Not Accurate");
+            builder.setMessage("OnDuty requires accurate Location access. Go to Settings and set Location mode to High Accuracy");
         }
 
         builder.setCancelable(false);
@@ -664,7 +664,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void showOsUncompatibleDialog() {
 
-        String message = "This App is incompatible with your Android Device. Please upgrade your android version to use Growthfile";
+        String message = "This app is incompatible with your Android device. Please upgrade your Android version to use OnDuty";
         String title = "App Incompatible";
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, R.style.Theme_AppCompat_Dialog_Alert);
@@ -734,7 +734,7 @@ public class MainActivity extends AppCompatActivity {
                     boolean isOn = isAirplaneModeOn(context);
                     if (isOn) {
                         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                        builder.setMessage("Please turn off airplane mode");
+                        builder.setMessage("Please turn off Airplane mode");
                         builder.setCancelable(false);
                         airplaneDialog = builder.create();
                         airplaneDialog.show();
@@ -814,6 +814,7 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
+        mWebView.setWebContentsDebuggingEnabled(true);
         mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com");
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
@@ -940,7 +941,7 @@ public class MainActivity extends AppCompatActivity {
                                                 ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_PHOTO_CAMERA, PHOTO_CAMERA_REQUEST);
                                             } else {
                                                 String title = "Storage and Camera Permission";
-                                                String message = "Allow Storage and Camera Permission to get Picture";
+                                                String message = "OnDuty requires access to your phone Camera and Gallery for photo uploads.";
                                                 showPermissionNotAllowedDialog(title, message, true);
                                             }
                                         } else {
@@ -956,7 +957,7 @@ public class MainActivity extends AppCompatActivity {
                                                 ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_PHOTO_GALLERY, GALLERY_REQUEST);
                                             } else {
                                                 String title = "Storage and Camera Permission";
-                                                String message = "Allow Storage and Camera Permission to get Picture";
+                                                String message = "OnDuty requires access to your phone Camera and Gallery for photo uploads.";
                                                 showPermissionNotAllowedDialog(title, message, true);
                                             }
                                         } else {
@@ -1075,7 +1076,7 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 }
 
-                if(url.startsWith("https://growthfile-207204.firebaseapp.com")) {
+                if(url.startsWith("https://growthfilev2-0.firebaseapp.com")) {
                     view.loadUrl(url);
                     return  true;
                 }
@@ -1111,8 +1112,8 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void webviewInstallDialog() {
-        String message = "This app is incompatible with your Android device. To make your device compatible with this app, Click okay to install/update your System webview from Play store";
-        String title = "App Incompatibility Issue";
+        String message = "This app is incompatible with your Android device. To use this app, click Ok to install/update Android System WebView";
+        String title = "App Incompatibility Issue ";
         final String pckgName = "com.google.android.webview";
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, R.style.Theme_AppCompat_Dialog_Alert);
