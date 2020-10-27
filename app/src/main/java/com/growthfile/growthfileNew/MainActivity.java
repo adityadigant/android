@@ -78,9 +78,12 @@ import android.view.WindowManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 
+import android.webkit.ServiceWorkerClient;
+import android.webkit.ServiceWorkerController;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -93,6 +96,7 @@ import java.util.List;
 import android.provider.Settings.Secure;
 import android.widget.Toast;
 
+import com.android.installreferrer.BuildConfig;
 import com.android.installreferrer.api.InstallReferrerClient;
 import com.android.installreferrer.api.InstallReferrerStateListener;
 import com.android.installreferrer.api.ReferrerDetails;
@@ -814,8 +818,7 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
-        mWebView.setWebContentsDebuggingEnabled(true);
-        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com/v3/");
+        mWebView.loadUrl("https://growthfile-207204.firebaseapp.com/v3/");
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
         logger = AppEventsLogger.newLogger(MainActivity.this);
@@ -828,6 +831,8 @@ public class MainActivity extends AppCompatActivity {
             facebookLink = targetUrl;
 
         }
+
+
 
         AppLinkData.fetchDeferredAppLinkData(MainActivity.this, new AppLinkData.CompletionHandler() {
             @Override
@@ -1043,7 +1048,7 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 }
 
-                if(url.startsWith("https://growthfilev2-0.firebaseapp.com")) {
+                if(url.startsWith("https://growthfile-207204.firebaseapp.com")) {
                     view.loadUrl(url);
                     return  true;
                 }
@@ -1597,7 +1602,7 @@ public class MainActivity extends AppCompatActivity {
                 return Integer.toString(packageInfo.versionCode);
 
             } catch (PackageManager.NameNotFoundException e) {
-                return "34";
+                return "37";
             }
         }
 
