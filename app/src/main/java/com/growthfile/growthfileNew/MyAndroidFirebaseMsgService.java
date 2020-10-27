@@ -9,8 +9,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.Map;
 
-import static android.content.ContentValues.TAG;
-
 public class MyAndroidFirebaseMsgService extends FirebaseMessagingService{
     @Override
     public void onNewToken(String token) {

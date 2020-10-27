@@ -726,7 +726,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 if(intent.getAction().equals(FCM_TOKEN_REFRESH)) {
-                    mWebView.evaluateJavascript("native.setFCMToken('" + intent.getStringExtra("new_token") + "')", null);
+                    mWebView.evaluateJavascript("_native.setFCMToken('" + intent.getStringExtra("new_token") + "')", null);
                 }
 
 
@@ -815,45 +815,12 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
         mWebView.setWebContentsDebuggingEnabled(true);
-        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com");
+        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com/v3/");
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
         logger = AppEventsLogger.newLogger(MainActivity.this);
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
-        InstallReferrerClient referrerClient;
 
-        referrerClient = InstallReferrerClient.newBuilder(this).build();
-        referrerClient.startConnection(new InstallReferrerStateListener() {
-            @Override
-            public void onInstallReferrerSetupFinished(int responseCode) {
-                switch (responseCode) {
-                    case InstallReferrerClient.InstallReferrerResponse.OK:
-                        // Connection established.
-                        ReferrerDetails response = null;
-                        try {
-                            response = referrerClient.getInstallReferrer();
-                            String referrerUrl = response.getInstallReferrer();
-                            Log.d("reff",referrerUrl);
-                        } catch (RemoteException e) {
-                            e.printStackTrace();
-                        }
-
-                        break;
-                    case InstallReferrerClient.InstallReferrerResponse.FEATURE_NOT_SUPPORTED:
-                        // API not available on the current Play Store app.
-                        break;
-                    case InstallReferrerClient.InstallReferrerResponse.SERVICE_UNAVAILABLE:
-                        // Connection couldn't be established.
-                        break;
-                }
-            }
-
-            @Override
-            public void onInstallReferrerServiceDisconnected() {
-                // Try to restart the connection on the next request to
-                // Google Play by calling the startConnection() method.
-            }
-        });
         Uri targetUrl =
                 AppLinks.getTargetUrlFromInboundIntent(this, getIntent());
         if (targetUrl != null) {
@@ -986,7 +953,7 @@ public class MainActivity extends AppCompatActivity {
                 if (nocacheLoadUrl) return;
                 if (!hasPageFinished) {
                     Log.d("onPageFinished", "true");
-                    mWebView.evaluateJavascript("native.setName('Android')", null);
+                    mWebView.evaluateJavascript("_native.setName('Android')", null);
                     hasPageFinished = true;
 
 
@@ -1000,7 +967,7 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                     String token = task.getResult().getToken();
                                     Log.e("FCMToken", token);
-                                    mWebView.evaluateJavascript("native.setFCMToken('" + token + "')", null);
+                                    mWebView.evaluateJavascript("_native.setFCMToken('" + token + "')", null);
                                 }
                             });
 
