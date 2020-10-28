@@ -75,11 +75,11 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 
+import android.webkit.ConsoleMessage;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 
-import android.webkit.ServiceWorkerClient;
-import android.webkit.ServiceWorkerController;
+
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -720,7 +720,6 @@ public class MainActivity extends AppCompatActivity {
                         mWebView.evaluateJavascript(" navigator.serviceWorker.controller.postMessage({\n" +
                                 "            type: 'read'\n" +
                                 "          })", null);
-
                     } catch (Exception e) {
                         androidException(e);
                         mWebView.evaluateJavascript(" navigator.serviceWorker.controller.postMessage({\n" +
@@ -818,7 +817,7 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
-        mWebView.setWebContentsDebuggingEnabled(true);
+        WebView.setWebContentsDebuggingEnabled(true);
         mWebView.loadUrl("https://growthfile-207204.firebaseapp.com/v3/");
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
@@ -830,7 +829,6 @@ public class MainActivity extends AppCompatActivity {
         if (targetUrl != null) {
             Log.i("Activity", "App Link Target URL: " + targetUrl.toString());
             facebookLink = targetUrl;
-
         }
 
         AppLinkData.fetchDeferredAppLinkData(MainActivity.this, new AppLinkData.CompletionHandler() {
@@ -878,6 +876,11 @@ public class MainActivity extends AppCompatActivity {
                 });
 
         mWebView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+                android.util.Log.d("WebView message", consoleMessage.message()+" line number "+consoleMessage.lineNumber()+" of "+consoleMessage.sourceId()+"full"+consoleMessage.toString());
+                return true;
+            }
             @Override
             public void onGeolocationPermissionsShowPrompt(final String origin, final GeolocationPermissions.Callback callback) {
                 callback.invoke(origin, true, false);
@@ -959,7 +962,6 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("onPageFinished", "true");
                     mWebView.evaluateJavascript("_native.setName('Android')", null);
                     hasPageFinished = true;
-
 
                     FirebaseInstanceId.getInstance().getInstanceId()
                             .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
