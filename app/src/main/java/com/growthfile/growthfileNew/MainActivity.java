@@ -818,6 +818,7 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
+        mWebView.setWebContentsDebuggingEnabled(true);
         mWebView.loadUrl("https://growthfile-207204.firebaseapp.com/v3/");
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
@@ -831,8 +832,6 @@ public class MainActivity extends AppCompatActivity {
             facebookLink = targetUrl;
 
         }
-
-
 
         AppLinkData.fetchDeferredAppLinkData(MainActivity.this, new AppLinkData.CompletionHandler() {
             @Override
