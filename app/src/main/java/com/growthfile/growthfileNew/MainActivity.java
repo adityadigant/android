@@ -818,7 +818,7 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
         WebView.setWebContentsDebuggingEnabled(true);
-        mWebView.loadUrl("https://growthfile-207204.firebaseapp.com/v3/");
+        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com/v3/");
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
         logger = AppEventsLogger.newLogger(MainActivity.this);
@@ -1049,7 +1049,7 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 }
 
-                if(url.startsWith("https://growthfile-207204.firebaseapp.com")) {
+                if(url.startsWith("https://growthfilev2-0.firebaseapp.com")) {
                     view.loadUrl(url);
                     return  true;
                 }
