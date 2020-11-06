@@ -12,7 +12,7 @@ class CertPin extends AsyncTask<String,Void,Void> {
 
     @Override
     protected Void doInBackground(String... strings) {
-        String hostname = "growthfile-207204.firebaseapp.com/v3/";
+        String hostname = "app.growthfile.com";
 
         CertificatePinner certificatePinner = new CertificatePinner.Builder()
 
