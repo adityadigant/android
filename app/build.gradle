@@ -8,8 +8,8 @@ android {
         applicationId "com.growthfile.growthfileNew"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 45
-        versionName "1.1.25"
+        versionCode 47
+        versionName "1.1.26"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

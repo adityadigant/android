@@ -817,8 +817,8 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
-        WebView.setWebContentsDebuggingEnabled(true);
-        mWebView.loadUrl("app.growthfilehttps://.com");
+//        WebView.setWebContentsDebuggingEnabled(true);
+        mWebView.loadUrl("https://app.growthfile.com");
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
         logger = AppEventsLogger.newLogger(MainActivity.this);

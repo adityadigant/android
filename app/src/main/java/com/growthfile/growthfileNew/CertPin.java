@@ -15,10 +15,7 @@ class CertPin extends AsyncTask<String,Void,Void> {
         String hostname = "app.growthfile.com";
 
         CertificatePinner certificatePinner = new CertificatePinner.Builder()
-
-                .add(hostname, "sha256/LIZGjlRnvobyLt4gIE3du/7GQVU7VSjTD9UQmEv3enU=")
-                .add(hostname,"sha256/YZPgTZ+woNCCCIW3LH2CxQeLzB/1m42QcCTBSdgayjs=")
-                .add(hostname,"sha256/iie1VXtL7HzAMF+/PVPR9xzT80kQxdZeJ+zduCB3uj0=")
+                .add(hostname,"sha256/oqL8L0HOy50gpOp8x0ggPje9tAVfhHFkuJH4ChzbQ8k=")
                 .build();
 
         OkHttpClient client = new OkHttpClient.Builder()
