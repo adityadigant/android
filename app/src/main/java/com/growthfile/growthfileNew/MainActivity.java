@@ -2,6 +2,7 @@ package com.growthfile.growthfileNew;
 
 import android.Manifest;
 
+import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -22,8 +23,11 @@ import java.io.StringWriter;
 import java.io.PrintWriter;
 
 import android.graphics.Matrix;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.location.LocationManager;
 import android.media.ExifInterface;
+import android.media.Image;
 import android.net.ConnectivityManager;
 import android.net.MailTo;
 import android.net.NetworkInfo;
@@ -48,9 +52,19 @@ import android.provider.Settings;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.camera.core.Camera;
+import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ImageAnalysis;
+import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageProxy;
+import androidx.camera.core.Preview;
+import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LifecycleOwner;
 import bolts.AppLinks;
 
 import android.telephony.CellIdentityCdma;
@@ -72,6 +86,7 @@ import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
+import android.util.Size;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -91,8 +106,13 @@ import android.webkit.WebViewClient;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 import android.provider.Settings.Secure;
 import android.widget.Toast;
 
@@ -106,11 +126,16 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.dynamiclinks.PendingDynamicLinkData;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
+import com.google.mlkit.vision.barcode.Barcode;
+import com.google.mlkit.vision.barcode.BarcodeScanner;
+import com.google.mlkit.vision.barcode.BarcodeScanning;
+import com.google.mlkit.vision.common.InputImage;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -122,6 +147,8 @@ import static android.net.wifi.WifiManager.SCAN_RESULTS_AVAILABLE_ACTION;
 public class MainActivity extends AppCompatActivity {
 
     public static WebView mWebView;
+    public static PreviewView cameraView;
+
     private Context mContext;
     private BroadcastReceiver broadcastReceiver;
     private  BroadcastReceiver shareRec;
@@ -143,6 +170,10 @@ public class MainActivity extends AppCompatActivity {
     private ValueCallback<Uri[]> mUploadMsg;
     private boolean hasPageFinished = false;
     private boolean nocacheLoadUrl = false;
+
+    private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
+
+
     AppEventsLogger logger;
     private FirebaseAnalytics mFirebaseAnalytics;
     Uri deepLink = null;
@@ -200,6 +231,48 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    void bindPreview(@NonNull ProcessCameraProvider cameraProvider) {
+
+        Preview preview = new Preview.Builder().build();
+        CameraSelector cameraSelector = new CameraSelector.Builder()
+                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                .build();
+        findViewById(R.id.container).setVisibility(View.GONE);
+        findViewById(R.id.camera_view).setVisibility(View.VISIBLE);
+//        mWebView.setVisibility(View.GONE);
+//        cameraView.setVisibility(View.VISIBLE);
+//        findViewById(R.id.camera_capture_button).setVisibility(View.VISIBLE);
+        preview.setSurfaceProvider(cameraView.createSurfaceProvider());
+//        Camera camera = cameraProvider.bindToLifecycle((LifecycleOwner)this, cameraSelector, preview);
+
+        ImageAnalysis imageAnalysis =
+                new ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build();
+
+        ImageCapture imageCapture =
+                new ImageCapture.Builder()
+                        .setTargetRotation(cameraView.getDisplay().getRotation())
+                        .build();
+        imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor(), new ImageAnalysis.Analyzer() {
+            @Override
+            public void analyze(@NonNull ImageProxy imageProxy) {
+                int rotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
+                // insert your code here.
+                Log.d("rotation","deg: "+rotationDegrees);
+                BarcodeAnalyzer barcodeAnalyzer = new BarcodeAnalyzer();
+                barcodeAnalyzer.provider(cameraProvider);
+                barcodeAnalyzer.analyze(imageProxy);
+
+            }
+        });
+
+        cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, imageCapture, imageAnalysis, preview);
+    }
+
+
+
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
@@ -208,73 +281,89 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case CAMERA_ONLY_REQUEST:
                 if (resultCode == RESULT_OK) {
-                    File imgFile = new File(pictureImagePath);
-                    String callbackName = jsCallbackName.getName();
-                    if (imgFile.exists()) {
-                        Bitmap bitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-                        final int maxWidth = deviceWidth();
-                        final int maxHeight = deviceHeight();
-
-                        int inWidth = bitmap.getWidth();
-                        int inHeight = bitmap.getHeight();
-                        int outWidth = inWidth;
-                        int outHeight = inHeight;
-
-                        if (inWidth > inHeight) {
-                            if (inWidth > maxWidth) {
-                                outWidth = maxWidth;
-                                outHeight = (inHeight * maxWidth) / inWidth;
-                            }
-                        } else {
-                            if (inHeight > maxHeight) {
-                                outHeight = maxHeight;
-                                outWidth = (inWidth * maxHeight) / inHeight;
-                            }
-                        }
-                        ;
+//                    mWebView.setVisibility(View.GONE);
+//
+//                    cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+//                    cameraProviderFuture.addListener(()->{
+//                        try {
+//                            ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+//                            bindPreview(cameraProvider);
+//                        }catch (ExecutionException | InterruptedException e) {
+//                            // No errors need to be handled for this Future.
+//                            // This should never be reached.
+//                        }
+//
+//                    }, ContextCompat.getMainExecutor(this));
 
 
-                        Log.d("outWidth", "" + outWidth);
-                        Log.d("outHeight", "" + outHeight);
-                        Bitmap scaled = Bitmap.createScaledBitmap(bitmap, outWidth, outHeight, false);
 
-
-                        try {
-                            Bitmap changedBit = null;
-                            ExifInterface ei = new ExifInterface(imgFile.getAbsolutePath());
-                            int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-
-                            switch (orientation) {
-                                case ExifInterface.ORIENTATION_ROTATE_90:
-                                    changedBit = rotate(scaled, 90);
-                                    break;
-                                case ExifInterface.ORIENTATION_ROTATE_180:
-                                    changedBit = rotate(scaled, 180);
-                                    break;
-                                case ExifInterface.ORIENTATION_ROTATE_270:
-                                    changedBit = rotate(scaled, 270);
-                                    break;
-                                case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
-                                    changedBit = flip(scaled, true, false);
-                                    break;
-                                case ExifInterface.ORIENTATION_FLIP_VERTICAL:
-                                    changedBit = flip(scaled, false, true);
-                                    break;
-                                default:
-                                    changedBit = scaled;
-                            }
-
-                            mWebView.loadUrl("javascript:" + callbackName + "('" + encodeImage(changedBit) + "')");
-
-
-                        } catch (IOException e) {
-                            mWebView.loadUrl("javascript:" + callbackName + "('" + encodeImage(scaled) + "')");
-                            e.printStackTrace();
-
-                        }
-                        return;
-                    }
-                    mWebView.loadUrl("javascript:" + callbackName + "Failed('Please Try Again')");
+//                    File imgFile = new File(pictureImagePath);
+//                    String callbackName = jsCallbackName.getName();
+//                    if (imgFile.exists()) {
+//                        Bitmap bitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+//                        final int maxWidth = deviceWidth();
+//                        final int maxHeight = deviceHeight();
+//
+//                        int inWidth = bitmap.getWidth();
+//                        int inHeight = bitmap.getHeight();
+//                        int outWidth = inWidth;
+//                        int outHeight = inHeight;
+//
+//                        if (inWidth > inHeight) {
+//                            if (inWidth > maxWidth) {
+//                                outWidth = maxWidth;
+//                                outHeight = (inHeight * maxWidth) / inWidth;
+//                            }
+//                        } else {
+//                            if (inHeight > maxHeight) {
+//                                outHeight = maxHeight;
+//                                outWidth = (inWidth * maxHeight) / inHeight;
+//                            }
+//                        }
+//                        ;
+//
+//
+//                        Log.d("outWidth", "" + outWidth);
+//                        Log.d("outHeight", "" + outHeight);
+//                        Bitmap scaled = Bitmap.createScaledBitmap(bitmap, outWidth, outHeight, false);
+//
+//
+//                        try {
+//                            Bitmap changedBit = null;
+//                            ExifInterface ei = new ExifInterface(imgFile.getAbsolutePath());
+//                            int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+//
+//                            switch (orientation) {
+//                                case ExifInterface.ORIENTATION_ROTATE_90:
+//                                    changedBit = rotate(scaled, 90);
+//                                    break;
+//                                case ExifInterface.ORIENTATION_ROTATE_180:
+//                                    changedBit = rotate(scaled, 180);
+//                                    break;
+//                                case ExifInterface.ORIENTATION_ROTATE_270:
+//                                    changedBit = rotate(scaled, 270);
+//                                    break;
+//                                case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
+//                                    changedBit = flip(scaled, true, false);
+//                                    break;
+//                                case ExifInterface.ORIENTATION_FLIP_VERTICAL:
+//                                    changedBit = flip(scaled, false, true);
+//                                    break;
+//                                default:
+//                                    changedBit = scaled;
+//                            }
+//
+//                            mWebView.loadUrl("javascript:" + callbackName + "('" + encodeImage(changedBit) + "')");
+//
+//
+//                        } catch (IOException e) {
+//                            mWebView.loadUrl("javascript:" + callbackName + "('" + encodeImage(scaled) + "')");
+//                            e.printStackTrace();
+//
+//                        }
+//                        return;
+//                    }
+//                    mWebView.loadUrl("javascript:" + callbackName + "Failed('Please Try Again')");
 
                 }
 //                intentStarted = false;
@@ -397,6 +486,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void initCameraView() {
+
+        cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+        cameraProviderFuture.addListener(()->{
+            try {
+                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+
+                bindPreview(cameraProvider);
+            }catch (ExecutionException | InterruptedException e) {
+                // No errors need to be handled for this Future.
+                // This should never be reached.
+            }
+
+        }, ContextCompat.getMainExecutor(this));
+
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
@@ -406,7 +511,8 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == CAMERA_ONLY_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED && grantResults[2] == PackageManager.PERMISSION_GRANTED) {
 
-                startActivityForResult(photoCameraIntent(), CAMERA_ONLY_REQUEST);
+                initCameraView();
+//                startActivityForResult(photoCameraIntent(), CAMERA_ONLY_REQUEST);
 //                    intentStarted = true;
 
             }
@@ -618,6 +724,14 @@ public class MainActivity extends AppCompatActivity {
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
     }
 
+    public void handleBarcodeResult(String url) {
+        Log.d("barcode url",url);
+        mWebView.setVisibility(View.VISIBLE);
+
+        cameraView.setVisibility(View.GONE);
+        mWebView.loadUrl(url);
+    }
+
     public void showLocationModeChangeDialog() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, R.style.Theme_AppCompat_Dialog_Alert);
         if (VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -800,6 +914,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         this.mWebView = findViewById(R.id.activity_main_webview);
+        this.cameraView = findViewById(R.id.previewView);
+
         WebSettings webSettings = this.mWebView.getSettings();
         mWebView.addJavascriptInterface(new viewLoadJavaInterface(this), "AndroidInterface");
 
@@ -817,8 +933,8 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
-//        WebView.setWebContentsDebuggingEnabled(true);
-        mWebView.loadUrl("https://app.growthfile.com");
+        WebView.setWebContentsDebuggingEnabled(true);
+        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com");
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
         logger = AppEventsLogger.newLogger(MainActivity.this);
@@ -849,7 +965,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d("query",URIdata.toString());
         }
 
-
+        initCameraView();
         FirebaseDynamicLinks.getInstance()
                 .getDynamicLink(getIntent())
                 .addOnSuccessListener(MainActivity.this, new OnSuccessListener<PendingDynamicLinkData>() {
@@ -874,7 +990,6 @@ public class MainActivity extends AppCompatActivity {
                         Log.w(TAG, "getDynamicLink:onFailure", e);
                     }
                 });
-
         mWebView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
@@ -1049,7 +1164,7 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 }
 
-                if(url.startsWith("https://app.growthfile.com")) {
+                if(url.startsWith("https://growthfilev2-0.firebaseapp.com")) {
                     view.loadUrl(url);
                     return  true;
                 }
@@ -1498,7 +1613,17 @@ public class MainActivity extends AppCompatActivity {
         viewLoadJavaInterface(Context c) {
             mContext = c;
         }
+        @JavascriptInterface
+        public  void  loadQRPage(String url,String token,String latitude,String longitude,String timestamp) {
+            HashMap<String,String> headersMap = new HashMap<>();
+            headersMap.put("Authorization","Bearer "+token);
+            headersMap.put("timestamp",timestamp);
+            headersMap.put("latitude",latitude);
+            headersMap.put("longitude",longitude);
 
+            mWebView.loadUrl(url,headersMap);
+
+        }
         @JavascriptInterface
         public void openGooglePlayStore(String appId) {
             try {
@@ -1562,7 +1687,8 @@ public class MainActivity extends AppCompatActivity {
                 }
 
             } else {
-                startActivityForResult(photoCameraIntent(), CAMERA_ONLY_REQUEST);
+                initCameraView();
+//                startActivityForResult(photoCameraIntent(), CAMERA_ONLY_REQUEST);
             }
         }
 
@@ -1763,13 +1889,17 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+        if(cameraView.getVisibility() == View.VISIBLE) {
+            cameraView.setVisibility(View.GONE);
+            mWebView.setVisibility(View.VISIBLE);
+            return;
+        }
 
         if (mWebView.canGoBack()) {
             mWebView.goBack(); // emulates back history
-        } else {
-            super.onBackPressed();
+            return;
         }
-
+        super.onBackPressed();
     }
 
 }

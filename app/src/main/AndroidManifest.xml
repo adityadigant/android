@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-feature android:name="android.hardware.camera.any" />
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.hardware.location.network"/>
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
@@ -65,7 +66,8 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="growthfile"/>
+                <data android:host="shauryamuttreja.com"
+                    android:scheme="https"/>
             </intent-filter>
 
         </activity>

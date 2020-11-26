@@ -4,4 +4,5 @@
 
         <color name="transparent">#000000</color>
         <color name="blue">#0399f4</color>
+        <color name="selector_ic">#ffffff</color>
 </resources>
