@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -14,22 +15,15 @@ import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+
 
 import java.io.StringWriter;
 import java.io.PrintWriter;
 
-import android.graphics.Matrix;
-import android.graphics.Point;
-import android.graphics.Rect;
 import android.location.LocationManager;
-import android.media.ExifInterface;
-import android.media.Image;
+
 import android.net.ConnectivityManager;
-import android.net.MailTo;
 import android.net.NetworkInfo;
 import android.net.Uri;
 
@@ -39,25 +33,35 @@ import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.HandlerThread;
-import android.os.Looper;
-import android.os.Message;
-import android.os.RemoteException;
+
 import android.os.StrictMode;
-import android.os.Trace;
+import android.print.PrintAttributes;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 
 import android.provider.Settings;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+
+import androidx.camera.core.AspectRatio;
 import androidx.camera.core.Camera;
+import androidx.camera.core.CameraControl;
+import androidx.camera.core.CameraInfoUnavailableException;
 import androidx.camera.core.CameraSelector;
+import androidx.camera.core.CameraX;
+import androidx.camera.core.FocusMeteringAction;
+import androidx.camera.core.FocusMeteringResult;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
+import androidx.camera.core.MeteringPoint;
+import androidx.camera.core.MeteringPointFactory;
 import androidx.camera.core.Preview;
+import androidx.camera.core.SurfaceOrientedMeteringPointFactory;
+import androidx.camera.core.TorchState;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
@@ -84,9 +88,12 @@ import android.telephony.CellSignalStrengthWcdma;
 import android.telephony.TelephonyManager;
 
 import android.text.TextUtils;
-import android.util.Base64;
+
+import android.util.JsonReader;
 import android.util.Log;
 import android.util.Size;
+import android.view.OrientationEventListener;
+import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -98,7 +105,6 @@ import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -112,14 +118,15 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import android.provider.Settings.Secure;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.android.installreferrer.BuildConfig;
-import com.android.installreferrer.api.InstallReferrerClient;
-import com.android.installreferrer.api.InstallReferrerStateListener;
-import com.android.installreferrer.api.ReferrerDetails;
+
 import com.facebook.appevents.AppEventsLogger;
 import com.facebook.applinks.AppLinkData;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -132,10 +139,7 @@ import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.dynamiclinks.PendingDynamicLinkData;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
-import com.google.mlkit.vision.barcode.Barcode;
-import com.google.mlkit.vision.barcode.BarcodeScanner;
-import com.google.mlkit.vision.barcode.BarcodeScanning;
-import com.google.mlkit.vision.common.InputImage;
+
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -148,10 +152,12 @@ public class MainActivity extends AppCompatActivity {
 
     public static WebView mWebView;
     public static PreviewView cameraView;
+    public static FrameLayout cameraLayout;
+    public static FrameLayout containerLayout;
 
     private Context mContext;
     private BroadcastReceiver broadcastReceiver;
-    private  BroadcastReceiver shareRec;
+    private BroadcastReceiver shareRec;
     public AlertDialog airplaneDialog = null;
     public JsCallbackName jsCallbackName = null;
 
@@ -161,9 +167,9 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_SCAN_ALWAYS_AVAILABLE = 116;
     private static final int GET_CONTACT_REQUEST = 117;
     private static final int GALLERY_REQUEST = 118;
-    private  static  final  int shareIntentCode = 119;
+    private static final int shareIntentCode = 119;
     public static final String BROADCAST_ACTION = "com.growthfile.growthfileNew";
-    public  static  final String FCM_TOKEN_REFRESH = "FCM_TOKEN_REFRESH";
+    public static final String FCM_TOKEN_REFRESH = "FCM_TOKEN_REFRESH";
     private static final String TAG = MainActivity.class.getSimpleName();
     private String pictureImagePath = "";
     private Uri cameraUri;
@@ -172,12 +178,23 @@ public class MainActivity extends AppCompatActivity {
     private boolean nocacheLoadUrl = false;
 
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
+    ProcessCameraProvider cameraProvider;
+    Camera cameraLifeCycleBound;
+    private ImageCapture imageCapture;
+    private CameraSelector cameraSelector;
+    OrientationEventListener orientationEventListener;
+    int lensFacing = CameraSelector.LENS_FACING_BACK;
+    int flashMode = ImageCapture.FLASH_MODE_OFF;
+    int torchMode = TorchState.OFF;
+
+    Executor executor = Executors.newSingleThreadExecutor();
 
 
     AppEventsLogger logger;
     private FirebaseAnalytics mFirebaseAnalytics;
     Uri deepLink = null;
     Uri facebookLink = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -231,47 +248,199 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    void bindPreview(@NonNull ProcessCameraProvider cameraProvider) {
 
+    public void setCameraViewVisibility(int value) {
+        findViewById(R.id.camera_view).setVisibility(value);
+    }
+
+    public void setWebViewVisibility(int value) {
+        findViewById(R.id.container).setVisibility(value);
+    }
+
+    void bindPreview() {
         Preview preview = new Preview.Builder().build();
-        CameraSelector cameraSelector = new CameraSelector.Builder()
-                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-                .build();
-        findViewById(R.id.container).setVisibility(View.GONE);
-        findViewById(R.id.camera_view).setVisibility(View.VISIBLE);
-//        mWebView.setVisibility(View.GONE);
-//        cameraView.setVisibility(View.VISIBLE);
-//        findViewById(R.id.camera_capture_button).setVisibility(View.VISIBLE);
         preview.setSurfaceProvider(cameraView.createSurfaceProvider());
-//        Camera camera = cameraProvider.bindToLifecycle((LifecycleOwner)this, cameraSelector, preview);
+
+        cameraSelector = new CameraSelector.Builder()
+                .requireLensFacing(lensFacing)
+                .build();
 
         ImageAnalysis imageAnalysis =
                 new ImageAnalysis.Builder()
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build();
 
-        ImageCapture imageCapture =
+        ImageHandler imageHandler = new ImageHandler();
+
+        Size size = new Size(480,640);
+
+        imageCapture =
                 new ImageCapture.Builder()
                         .setTargetRotation(cameraView.getDisplay().getRotation())
+                        .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                        .setFlashMode(flashMode)
                         .build();
-        imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor(), new ImageAnalysis.Analyzer() {
+
+         orientationEventListener = new OrientationEventListener((Context)this) {
+            @Override
+            public void onOrientationChanged(int orientation) {
+
+                int rotation;
+                // Monitors orientation values to determine the target rotation value
+                if (orientation >= 45 && orientation < 135) {
+                    rotation = Surface.ROTATION_270;
+                } else if (orientation >= 135 && orientation < 225) {
+                    rotation = Surface.ROTATION_180;
+                } else if (orientation >= 225 && orientation < 315) {
+                    rotation = Surface.ROTATION_90;
+                } else {
+                    rotation = Surface.ROTATION_0;
+                }
+                Log.d("rotation", "deg: " + rotation);
+                imageCapture.setTargetRotation(rotation);
+            }
+        };
+        orientationEventListener.enable();
+
+
+        imageAnalysis.setAnalyzer(executor, new ImageAnalysis.Analyzer() {
             @Override
             public void analyze(@NonNull ImageProxy imageProxy) {
-                int rotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
                 // insert your code here.
-                Log.d("rotation","deg: "+rotationDegrees);
+
                 BarcodeAnalyzer barcodeAnalyzer = new BarcodeAnalyzer();
+                barcodeAnalyzer.orientation(orientationEventListener);
                 barcodeAnalyzer.provider(cameraProvider);
                 barcodeAnalyzer.analyze(imageProxy);
+            }
+        });
+        cameraProvider.unbindAll();
+        cameraLifeCycleBound = cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, imageCapture, imageAnalysis, preview);
+
+
+    }
+
+    void initCamera(@NonNull ProcessCameraProvider cameraProvider) {
+        containerLayout.setVisibility(View.GONE);
+        cameraLayout.setVisibility(View.VISIBLE);
+        bindPreview();
+        setCameraControls();
+    }
+
+    void setCameraControls() {
+        ImageButton captureButton = (ImageButton) this.findViewById(R.id.camera_capture_button);
+        ImageButton cameraSwitchButton = (ImageButton) this.findViewById(R.id.camera_switch_button);
+        ImageButton flashModeButton = (ImageButton) this.findViewById(R.id.camera_flash_mode);
+        ImageButton cameraTorch = (ImageButton) this.findViewById(R.id.camera_torch);
+
+
+        try {
+            boolean hasCamera = cameraProvider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA);
+            cameraSwitchButton.setVisibility(hasCamera ? View.VISIBLE : View.GONE);
+            cameraSwitchButton.setOnClickListener(new View.OnClickListener() {
+                @SuppressLint("RestrictedApi")
+                @Override
+                public void onClick(View view) {
+
+                    if (lensFacing == CameraSelector.LENS_FACING_BACK) {
+                        lensFacing = CameraSelector.LENS_FACING_FRONT;
+
+                    } else {
+                        lensFacing = CameraSelector.LENS_FACING_BACK;
+                    }
+                    bindPreview();
+                }
+            });
+        } catch (CameraInfoUnavailableException cameraInfoUnavailableException) {
+            System.out.println(cameraInfoUnavailableException);
+        }
+
+        flashModeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                switch (flashMode) {
+                    case ImageCapture.FLASH_MODE_OFF:
+                        flashMode = ImageCapture.FLASH_MODE_ON;
+                        flashModeButton.setImageResource(R.drawable.ic_flash_on);
+//                        flashModeButton.setBackgroundResource(R.drawable.ic_flash_on);
+
+                        break;
+                    case ImageCapture.FLASH_MODE_ON:
+                        flashMode = ImageCapture.FLASH_MODE_AUTO;
+                        flashModeButton.setImageResource(R.drawable.ic_flash_auto);
+//                        flashModeButton.setBackgroundResource(R.drawable.ic_flash_auto);
+                        break;
+                    case ImageCapture.FLASH_MODE_AUTO:
+                        flashMode = ImageCapture.FLASH_MODE_OFF;
+                        flashModeButton.setImageResource(R.drawable.ic_flash_off);
+//                        flashModeButton.setBackgroundResource(R.drawable.ic_flash_off);
+                        break;
+                }
+                bindPreview();
+            }
+        });
+
+
+        cameraTorch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+
+                if (torchMode == TorchState.OFF) {
+                    cameraLifeCycleBound.getCameraControl().enableTorch(true);
+                    torchMode = TorchState.ON;
+                    cameraTorch.setImageResource(R.drawable.ic_torch_on);
+                    return;
+                }
+
+                cameraLifeCycleBound.getCameraControl().enableTorch(false);
+                torchMode = TorchState.OFF;
+                cameraTorch.setImageResource(R.drawable.ic_torch_off);
+
 
             }
         });
 
-        cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, imageCapture, imageAnalysis, preview);
+        captureButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                File file = new File(getImageSavePath());
+                ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(file).build();
+                imageCapture.takePicture(outputFileOptions, executor, new ImageCapture.OnImageSavedCallback() {
+                    @Override
+                    public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
+                        Log.d("Image saved", "saved");
+                        orientationEventListener.disable();
+                        mWebView.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                ImageHandler imageHandler = new ImageHandler();
+                                String callbackName = jsCallbackName.getName();
+                                mWebView.loadUrl("javascript:"+callbackName+"('" + imageHandler.getImageOutput(file) + "')");
+                                findViewById(R.id.container).setVisibility(View.VISIBLE);
+                                findViewById(R.id.camera_view).setVisibility(View.GONE);
+                                cameraProvider.unbindAll();
+
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onError(@NonNull ImageCaptureException exception) {
+                        System.out.println(exception);
+                    }
+                });
+
+            }
+        });
     }
 
 
-
+    private void setmUploadMsgNull() {
+        mUploadMsg.onReceiveValue(null);
+        mUploadMsg = null;
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -279,114 +448,28 @@ public class MainActivity extends AppCompatActivity {
 
 
         switch (requestCode) {
-            case CAMERA_ONLY_REQUEST:
-                if (resultCode == RESULT_OK) {
-//                    mWebView.setVisibility(View.GONE);
-//
-//                    cameraProviderFuture = ProcessCameraProvider.getInstance(this);
-//                    cameraProviderFuture.addListener(()->{
-//                        try {
-//                            ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-//                            bindPreview(cameraProvider);
-//                        }catch (ExecutionException | InterruptedException e) {
-//                            // No errors need to be handled for this Future.
-//                            // This should never be reached.
-//                        }
-//
-//                    }, ContextCompat.getMainExecutor(this));
-
-
-
-//                    File imgFile = new File(pictureImagePath);
-//                    String callbackName = jsCallbackName.getName();
-//                    if (imgFile.exists()) {
-//                        Bitmap bitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-//                        final int maxWidth = deviceWidth();
-//                        final int maxHeight = deviceHeight();
-//
-//                        int inWidth = bitmap.getWidth();
-//                        int inHeight = bitmap.getHeight();
-//                        int outWidth = inWidth;
-//                        int outHeight = inHeight;
-//
-//                        if (inWidth > inHeight) {
-//                            if (inWidth > maxWidth) {
-//                                outWidth = maxWidth;
-//                                outHeight = (inHeight * maxWidth) / inWidth;
-//                            }
-//                        } else {
-//                            if (inHeight > maxHeight) {
-//                                outHeight = maxHeight;
-//                                outWidth = (inWidth * maxHeight) / inHeight;
-//                            }
-//                        }
-//                        ;
-//
-//
-//                        Log.d("outWidth", "" + outWidth);
-//                        Log.d("outHeight", "" + outHeight);
-//                        Bitmap scaled = Bitmap.createScaledBitmap(bitmap, outWidth, outHeight, false);
-//
-//
-//                        try {
-//                            Bitmap changedBit = null;
-//                            ExifInterface ei = new ExifInterface(imgFile.getAbsolutePath());
-//                            int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-//
-//                            switch (orientation) {
-//                                case ExifInterface.ORIENTATION_ROTATE_90:
-//                                    changedBit = rotate(scaled, 90);
-//                                    break;
-//                                case ExifInterface.ORIENTATION_ROTATE_180:
-//                                    changedBit = rotate(scaled, 180);
-//                                    break;
-//                                case ExifInterface.ORIENTATION_ROTATE_270:
-//                                    changedBit = rotate(scaled, 270);
-//                                    break;
-//                                case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
-//                                    changedBit = flip(scaled, true, false);
-//                                    break;
-//                                case ExifInterface.ORIENTATION_FLIP_VERTICAL:
-//                                    changedBit = flip(scaled, false, true);
-//                                    break;
-//                                default:
-//                                    changedBit = scaled;
-//                            }
-//
-//                            mWebView.loadUrl("javascript:" + callbackName + "('" + encodeImage(changedBit) + "')");
-//
-//
-//                        } catch (IOException e) {
-//                            mWebView.loadUrl("javascript:" + callbackName + "('" + encodeImage(scaled) + "')");
-//                            e.printStackTrace();
-//
-//                        }
-//                        return;
-//                    }
-//                    mWebView.loadUrl("javascript:" + callbackName + "Failed('Please Try Again')");
-
-                }
-//                intentStarted = false;
-                break;
+//            case CAMERA_ONLY_REQUEST:
+//                if (resultCode == RESULT_OK) {
+//                    initCameraView();
+//                }
+//                break;
 
             case GALLERY_REQUEST:
                 if (resultCode == RESULT_OK) {
                     Uri uri = intent.getData();
-
                     if (uri != null) {
                         mUploadMsg.onReceiveValue(new Uri[]{uri});
                         mUploadMsg = null;
-                    } else {
-                        mUploadMsg.onReceiveValue(null);
-                        mUploadMsg = null;
-
+                        return;
                     }
-                } else {
-                    mUploadMsg.onReceiveValue(null);
-                    mUploadMsg = null;
-
+                    setmUploadMsgNull();
+//                    mUploadMsg.onReceiveValue(null);
+//                    mUploadMsg = null;
+                    return;
                 }
-//                intentStarted = false;
+                setmUploadMsgNull();
+//                mUploadMsg.onReceiveValue(null);
+//                mUploadMsg = null;
                 break;
             case PHOTO_CAMERA_REQUEST:
                 if (resultCode == RESULT_OK) {
@@ -395,22 +478,25 @@ public class MainActivity extends AppCompatActivity {
                         if (cameraUri != null) {
                             mUploadMsg.onReceiveValue(new Uri[]{cameraUri});
                             mUploadMsg = null;
-                        } else {
-                            mUploadMsg.onReceiveValue(null);
-                            mUploadMsg = null;
+                            return;
                         }
-                    } else {
-                        pictureImagePath = null;
-                        Toast.makeText(MainActivity.this, "Please Try Again", Toast.LENGTH_LONG).show();
-                        mUploadMsg.onReceiveValue(null);
-                        mUploadMsg = null;
+                        setmUploadMsgNull();
+//                        mUploadMsg.onReceiveValue(null);
+//                        mUploadMsg = null;
+                        return;
                     }
-                } else {
-                    mUploadMsg.onReceiveValue(null);
-                    mUploadMsg = null;
+                    pictureImagePath = null;
+                    Toast.makeText(MainActivity.this, "Please Try Again", Toast.LENGTH_LONG).show();
+                    setmUploadMsgNull();
+//                    mUploadMsg.onReceiveValue(null);
+//                    mUploadMsg = null;
 
+                    return;
                 }
-//                intentStarted = false;
+//                mUploadMsg.onReceiveValue(null);
+//                mUploadMsg = null;
+                setmUploadMsgNull();
+
                 break;
             case GET_CONTACT_REQUEST:
                 if (resultCode == RESULT_OK) {
@@ -438,11 +524,11 @@ public class MainActivity extends AppCompatActivity {
                         mWebView.evaluateJavascript(callbackName + "Failed('" + e.getMessage() + " at line Number " + e.getStackTrace()[0].getLineNumber() + "')", null);
                         Toast.makeText(mContext, e.getMessage(), Toast.LENGTH_LONG).show();
                     }
-                } else {
-
-                    Toast.makeText(mContext, "Failed To Pick Contact", Toast.LENGTH_LONG).show();
+                    return;
                 }
-//                intentStarted = false;
+
+                Toast.makeText(mContext, "Failed To Pick Contact", Toast.LENGTH_LONG).show();
+
                 break;
             case REQUEST_SCAN_ALWAYS_AVAILABLE:
                 if (resultCode != RESULT_OK) {
@@ -460,28 +546,28 @@ public class MainActivity extends AppCompatActivity {
                     });
                     AlertDialog dialog = builder.create();
                     dialog.show();
-                } else {
-                    WifiManager wifiManager = (WifiManager) MainActivity.this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-                    if (!wifiManager.isScanAlwaysAvailable()) {
-
-                        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_Material_Light_Dialog_Alert);
-                        builder.setTitle("ALLOW WIFI SCANNING");
-                        builder.setMessage("WiFi scanning improves the location accuracy of your device.");
-                        builder.setCancelable(false);
-                        builder.setPositiveButton("Allow", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                startActivityForResult(new Intent(WifiManager.ACTION_REQUEST_SCAN_ALWAYS_AVAILABLE), 116);
-                                dialog.dismiss();
-                                dialog.cancel();
-                            }
-                        });
-                        AlertDialog dialog = builder.create();
-
-                        dialog.show();
-                    }
-//                    intentStarted = false;
+                    return;
                 }
+                WifiManager wifiManager = (WifiManager) MainActivity.this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                if (!wifiManager.isScanAlwaysAvailable()) {
+
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_Material_Light_Dialog_Alert);
+                    builder.setTitle("ALLOW WIFI SCANNING");
+                    builder.setMessage("WiFi scanning improves the location accuracy of your device.");
+                    builder.setCancelable(false);
+                    builder.setPositiveButton("Allow", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startActivityForResult(new Intent(WifiManager.ACTION_REQUEST_SCAN_ALWAYS_AVAILABLE), 116);
+                            dialog.dismiss();
+                            dialog.cancel();
+                        }
+                    });
+                    AlertDialog dialog = builder.create();
+
+                    dialog.show();
+                }
+
                 break;
         }
     }
@@ -489,75 +575,78 @@ public class MainActivity extends AppCompatActivity {
     private void initCameraView() {
 
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
-        cameraProviderFuture.addListener(()->{
-            try {
-                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+        cameraProviderFuture.addListener(() -> {
 
-                bindPreview(cameraProvider);
-            }catch (ExecutionException | InterruptedException e) {
+            try {
+                cameraProvider = cameraProviderFuture.get();
+
+                initCamera(cameraProvider);
+            } catch (ExecutionException | InterruptedException e) {
                 // No errors need to be handled for this Future.
                 // This should never be reached.
             }
-
         }, ContextCompat.getMainExecutor(this));
+    }
 
+    private Boolean isPermissionGranted(int[] grantResults) {
+        Boolean granted = true;
+        for (int grantResult : grantResults) {
+            if (grantResult == PackageManager.PERMISSION_DENIED) {
+                granted = false;
+            }
+        }
+        return granted;
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
+                                           String[] permissions, @NonNull int[] grantResults) {
 
+        Boolean isGranted = isPermissionGranted(grantResults);
+        switch (requestCode) {
+            case CAMERA_ONLY_REQUEST:
+                if (isGranted) {
+                    initCameraView();
+                    return;
+                }
+                Toast.makeText(MainActivity.this, "Permission not granted", Toast.LENGTH_LONG).show();
 
-        if (requestCode == CAMERA_ONLY_REQUEST) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED && grantResults[2] == PackageManager.PERMISSION_GRANTED) {
-
-                initCameraView();
-//                startActivityForResult(photoCameraIntent(), CAMERA_ONLY_REQUEST);
-//                    intentStarted = true;
-
-            }
-        } else if (requestCode == PHOTO_CAMERA_REQUEST) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED && grantResults[2] == PackageManager.PERMISSION_GRANTED) {
-
-                startActivityForResult(photoCameraIntent(), PHOTO_CAMERA_REQUEST);
-//                intentStarted = true;
-
-            } else {
+                break;
+            case PHOTO_CAMERA_REQUEST:
+                if (isGranted) {
+                    startActivityForResult(photoCameraIntent(), PHOTO_CAMERA_REQUEST);
+                    return;
+                }
                 pictureImagePath = null;
                 cameraUri = null;
-            }
-        } else if (requestCode == GALLERY_REQUEST) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                startActivityForResult(photoGalleryIntent(), GALLERY_REQUEST);
-//                intentStarted = true;
-            } else {
-                mUploadMsg.onReceiveValue(null);
-                mUploadMsg = null;
-            }
-        } else if (requestCode == LOCATION_PERMISSION_CODE) {
-            if (grantResults.length > 0) {
-                if (grantResults[0] != PackageManager.PERMISSION_GRANTED || grantResults[1] != PackageManager.PERMISSION_GRANTED) {
-
+                break;
+            case GALLERY_REQUEST:
+                if (isGranted) {
+                    startActivityForResult(photoGalleryIntent(), GALLERY_REQUEST);
+                    return;
+                }
+                setmUploadMsgNull();
+//                mUploadMsg.onReceiveValue(null);
+//                mUploadMsg = null;
+                break;
+            case LOCATION_PERMISSION_CODE:
+                if (isGranted) {
                     String title = "Location Permission";
                     String message = "You have Not allowed Growthfile to use location permission. Grant Growthfile Location Permission, to continue";
                     boolean cancelable = false;
-
                     showPermissionNotAllowedDialog(title, message, cancelable);
-
-                } else {
-                    LoadApp();
-//                    intentStarted = false;
+                    return;
                 }
-            }
-        } else if (requestCode == GET_CONTACT_REQUEST) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startActivityForResult(getContactIntent(), GET_CONTACT_REQUEST);
-//                intentStarted = true;
-            } else {
+                LoadApp();
+                break;
+            case GET_CONTACT_REQUEST:
+                if (isGranted) {
+                    startActivityForResult(getContactIntent(), GET_CONTACT_REQUEST);
+                    return;
+                }
                 Toast.makeText(MainActivity.this, "Permission not granted", Toast.LENGTH_LONG).show();
-            }
-
         }
+
     }
 
     @Override
@@ -573,7 +662,6 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(new Intent(WifiManager.ACTION_REQUEST_SCAN_ALWAYS_AVAILABLE), 116);
             }
         }
-
 
 
     }
@@ -702,35 +790,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public int deviceWidth() {
-        return Resources.getSystem().getDisplayMetrics().widthPixels;
+//    public int deviceWidth() {
+//        return Resources.getSystem().getDisplayMetrics().widthPixels;
+//
+//    }
+//
+//    public int deviceHeight() {
+//        return Resources.getSystem().getDisplayMetrics().heightPixels;
+//
+//    }
+//
+//    public static Bitmap rotate(Bitmap bitmap, float degrees) {
+//        Matrix matrix = new Matrix();
+//        matrix.postRotate(degrees);
+//        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+//    }
+//
+//    public static Bitmap flip(Bitmap bitmap, boolean horizontal, boolean vertical) {
+//        Matrix matrix = new Matrix();
+//        matrix.preScale(horizontal ? -1 : 1, vertical ? -1 : 1);
+//        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+//    }
 
-    }
-
-    public int deviceHeight() {
-        return Resources.getSystem().getDisplayMetrics().heightPixels;
-
-    }
-
-    public static Bitmap rotate(Bitmap bitmap, float degrees) {
-        Matrix matrix = new Matrix();
-        matrix.postRotate(degrees);
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-    }
-
-    public static Bitmap flip(Bitmap bitmap, boolean horizontal, boolean vertical) {
-        Matrix matrix = new Matrix();
-        matrix.preScale(horizontal ? -1 : 1, vertical ? -1 : 1);
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-    }
-
-    public void handleBarcodeResult(String url) {
-        Log.d("barcode url",url);
-        mWebView.setVisibility(View.VISIBLE);
-
-        cameraView.setVisibility(View.GONE);
-        mWebView.loadUrl(url);
-    }
 
     public void showLocationModeChangeDialog() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, R.style.Theme_AppCompat_Dialog_Alert);
@@ -759,14 +840,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private String encodeImage(Bitmap bm) {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        bm.compress(Bitmap.CompressFormat.JPEG, 50, byteArrayOutputStream);
-        byte[] byteArray = byteArrayOutputStream.toByteArray();
-        String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
-        Log.d("encoded", encoded);
-        return encoded;
-    }
+//    private String encodeImage(Bitmap bm) {
+//        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+//        bm.compress(Bitmap.CompressFormat.JPEG, 50, byteArrayOutputStream);
+//        byte[] byteArray = byteArrayOutputStream.toByteArray();
+//        String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
+//        Log.d("encoded", encoded);
+//        return encoded;
+//    }
 
 
     public void onConfigurationChanged(Configuration newConfig) {
@@ -812,16 +893,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.d("broadcastReceiver", "taken");
-                if(intent.getAction().equals(SCAN_RESULTS_AVAILABLE_ACTION)) {
+                if (intent.getAction().equals(SCAN_RESULTS_AVAILABLE_ACTION)) {
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
                         boolean success = intent.getBooleanExtra(
                                 WifiManager.EXTRA_RESULTS_UPDATED, false);
-                        if(success) {
+                        if (success) {
                             WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 
                             List<ScanResult> results = wifiManager.getScanResults();
                             String scanResult = scanNearbyWifi(results);
-                            mWebView.evaluateJavascript("updatedWifiScans('"+scanResult+"')",null);
+                            mWebView.evaluateJavascript("updatedWifiScans('" + scanResult + "')", null);
                         }
                     }
                 }
@@ -842,7 +923,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
-                if(intent.getAction().equals(FCM_TOKEN_REFRESH)) {
+                if (intent.getAction().equals(FCM_TOKEN_REFRESH)) {
                     mWebView.evaluateJavascript("_native.setFCMToken('" + intent.getStringExtra("new_token") + "')", null);
                 }
 
@@ -878,16 +959,21 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-
-    private Intent photoCameraIntent() {
-        Intent takePicture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+    private String getImageSavePath() {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = timeStamp + ".jpg";
 
         File storageDir = Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_PICTURES);
+
         pictureImagePath = storageDir.getAbsolutePath() + "/" + imageFileName;
-        File file = new File(pictureImagePath);
+        return pictureImagePath;
+
+    }
+
+    private Intent photoCameraIntent() {
+        Intent takePicture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        File file = new File(getImageSavePath());
         Uri outputFileUri = Uri.fromFile(file);
         cameraUri = outputFileUri;
         takePicture.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
@@ -939,6 +1025,8 @@ public class MainActivity extends AppCompatActivity {
         registerForContextMenu(mWebView);
         logger = AppEventsLogger.newLogger(MainActivity.this);
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+        cameraLayout = findViewById(R.id.camera_view);
+        containerLayout = findViewById(R.id.container);
 
         Uri targetUrl =
                 AppLinks.getTargetUrlFromInboundIntent(this, getIntent());
@@ -950,22 +1038,22 @@ public class MainActivity extends AppCompatActivity {
         AppLinkData.fetchDeferredAppLinkData(MainActivity.this, new AppLinkData.CompletionHandler() {
             @Override
             public void onDeferredAppLinkDataFetched(@Nullable AppLinkData appLinkData) {
-                if(appLinkData != null){
+                if (appLinkData != null) {
                     facebookLink = appLinkData.getTargetUri();
+
                 }
             }
         });
 
         Uri URIdata = getIntent().getData();
-        if(URIdata != null){
+        if (URIdata != null) {
             String scheme = URIdata.getScheme();
             String host = URIdata.getHost();
+            Log.d("scheme", scheme);
+            Log.d("query", URIdata.toString());
 
-            Log.d("scheme",scheme);
-            Log.d("query",URIdata.toString());
         }
 
-        initCameraView();
         FirebaseDynamicLinks.getInstance()
                 .getDynamicLink(getIntent())
                 .addOnSuccessListener(MainActivity.this, new OnSuccessListener<PendingDynamicLinkData>() {
@@ -974,7 +1062,7 @@ public class MainActivity extends AppCompatActivity {
 
                         if (pendingDynamicLinkData != null) {
                             deepLink = pendingDynamicLinkData.getLink();
-                            Log.d("deeplink",deepLink.toString());
+                            Log.d("deeplink", deepLink.toString());
                         }
 
                         // Handle the deep link. For example, open the linked
@@ -984,7 +1072,7 @@ public class MainActivity extends AppCompatActivity {
                         // ...
                     }
                 })
-                .addOnFailureListener(MainActivity.this , new OnFailureListener() {
+                .addOnFailureListener(MainActivity.this, new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         Log.w(TAG, "getDynamicLink:onFailure", e);
@@ -993,9 +1081,11 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-                android.util.Log.d("WebView message", consoleMessage.message()+" line number "+consoleMessage.lineNumber()+" of "+consoleMessage.sourceId()+"full"+consoleMessage.toString());
+
+                android.util.Log.d("WebView message", consoleMessage.message() + " line number " + consoleMessage.lineNumber() + " of " + consoleMessage.sourceId() + "full" + consoleMessage.toString());
                 return true;
             }
+
             @Override
             public void onGeolocationPermissionsShowPrompt(final String origin, final GeolocationPermissions.Callback callback) {
                 callback.invoke(origin, true, false);
@@ -1074,6 +1164,7 @@ public class MainActivity extends AppCompatActivity {
                 super.onPageFinished(view, url);
                 if (nocacheLoadUrl) return;
                 if (!hasPageFinished) {
+
                     Log.d("onPageFinished", "true");
                     mWebView.evaluateJavascript("_native.setName('Android')", null);
                     hasPageFinished = true;
@@ -1112,7 +1203,6 @@ public class MainActivity extends AppCompatActivity {
                         }
 
 
-
                         try {
                             Log.d("fcmBody", fcmBody.toString(4));
                             mWebView.evaluateJavascript("navigator.serviceWorker.controller.postMessage(" + fcmBody.toString(4) + ")", null);
@@ -1121,13 +1211,13 @@ public class MainActivity extends AppCompatActivity {
                             androidException(e);
                         }
                     }
-                    if(deepLink != null) {
-                        Log.d("string",deepLink.toString());
-                        mWebView.evaluateJavascript("getDynamicLink('"+deepLink.toString()+"')",null);
+                    if (deepLink != null) {
+                        Log.d("string", deepLink.toString());
+                        mWebView.evaluateJavascript("getDynamicLink('" + deepLink.toString() + "')", null);
                         deepLink = null;
                     }
-                    if(facebookLink != null) {
-                        mWebView.evaluateJavascript("getDynamicLink('"+facebookLink.toString()+"')",null);
+                    if (facebookLink != null) {
+                        mWebView.evaluateJavascript("getDynamicLink('" + facebookLink.toString() + "')", null);
                     }
                 }
             }
@@ -1138,40 +1228,37 @@ public class MainActivity extends AppCompatActivity {
                 Uri uri = Uri.parse(url);
 
                 if (url.contains("geo:")) {
-                    Intent mapIntent = new Intent("android.intent.action.VIEW",uri);
+                    Intent mapIntent = new Intent("android.intent.action.VIEW", uri);
                     mapIntent.setPackage("com.google.android.apps.maps");
                     if (mapIntent.resolveActivity(MainActivity.this.getPackageManager()) != null) {
                         MainActivity.this.startActivity(mapIntent);
                     }
                     return true;
                 }
-                if(url.startsWith("mailto:") || url.startsWith("sms:") ) {
+                if (url.startsWith("mailto:") || url.startsWith("sms:")) {
 
                     startActivity(new Intent(Intent.ACTION_SENDTO, uri));
                     return true;
                 }
 
-                if(url.startsWith("tel:")) {
-                    startActivity(new Intent(Intent.ACTION_DIAL,uri));
+                if (url.startsWith("tel:")) {
+                    startActivity(new Intent(Intent.ACTION_DIAL, uri));
                     return true;
                 }
 
                 if (url.startsWith("https://wa.me")) {
-
-
-                    startActivity(new Intent(Intent.ACTION_VIEW,uri));
-
+                    startActivity(new Intent(Intent.ACTION_VIEW, uri));
                     return true;
                 }
 
-                if(url.startsWith("https://growthfilev2-0.firebaseapp.com")) {
+                if (url.startsWith("https://growthfilev2-0.firebaseapp.com")) {
                     view.loadUrl(url);
-                    return  true;
+                    return true;
                 }
 
-                if(url.startsWith("https://")) {
+                if (url.startsWith("https://")) {
 
-                    startActivity( new Intent(Intent.ACTION_VIEW, uri));
+                    startActivity(new Intent(Intent.ACTION_VIEW, uri));
                     return true;
                 }
 
@@ -1606,24 +1693,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
-    private class viewLoadJavaInterface {
+    public class viewLoadJavaInterface {
         Context mContext;
 
         viewLoadJavaInterface(Context c) {
             mContext = c;
         }
+
         @JavascriptInterface
-        public  void  loadQRPage(String url,String token,String latitude,String longitude,String timestamp) {
-            HashMap<String,String> headersMap = new HashMap<>();
-            headersMap.put("Authorization","Bearer "+token);
-            headersMap.put("timestamp",timestamp);
-            headersMap.put("latitude",latitude);
-            headersMap.put("longitude",longitude);
+        public void loadQRPage(String token, String latitude, String longitude, String url) {
+            HashMap<String, String> headersMap = new HashMap<>();
 
-            mWebView.loadUrl(url,headersMap);
+            headersMap.put("Authorization", "Bearer " + token);
+            headersMap.put("latitude", latitude);
+            headersMap.put("longitude", longitude);
+            mWebView.post(new Runnable() {
+                @Override
+                public void run() {
+                    mWebView.loadUrl(url, headersMap);
 
+                }
+            });
         }
+
         @JavascriptInterface
         public void openGooglePlayStore(String appId) {
             try {
@@ -1632,6 +1724,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appId)));
             }
         }
+
         @JavascriptInterface
         public void logFirebaseAnlyticsEvent(String name, String jsonParams) {
             LOGD("logEvent:" + name);
@@ -1645,15 +1738,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @JavascriptInterface
-        public  void setFirebaseAnalyticsUserId(String id) {
+        public void setFirebaseAnalyticsUserId(String id) {
             mFirebaseAnalytics.setUserId(id);
         }
 
         @JavascriptInterface
-        public void setAnalyticsCollectionEnabled(Boolean enable){
+        public void setAnalyticsCollectionEnabled(Boolean enable) {
             mFirebaseAnalytics.setAnalyticsCollectionEnabled(enable);
         }
-
 
 
         @JavascriptInterface
@@ -1664,37 +1756,27 @@ public class MainActivity extends AppCompatActivity {
 
 
         @JavascriptInterface
-
         public void startCamera(String functionName) {
-
-
             String[] PERMISSIONS_CAMERA = {
                     Manifest.permission.CAMERA,
                     Manifest.permission.READ_EXTERNAL_STORAGE,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
             };
             jsCallbackName = new JsCallbackName(functionName);
-
-
             if (!hasPermissions(MainActivity.this, PERMISSIONS_CAMERA)) {
                 if (VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_CAMERA, CAMERA_ONLY_REQUEST);
-
-                } else {
-                    String title = "Storage and Camera Permission";
-                    String message = "Allow Storage and Camera Permission to get Picture";
-                    showPermissionNotAllowedDialog(title, message, true);
+                    return;
                 }
-
-            } else {
-                initCameraView();
-//                startActivityForResult(photoCameraIntent(), CAMERA_ONLY_REQUEST);
+                String title = "Storage and Camera Permission";
+                String message = "Allow Storage and Camera Permission to get Picture";
+                showPermissionNotAllowedDialog(title, message, true);
+                return;
             }
+            initCameraView();
         }
 
-        ;
-
-        // device Info //
+        // device Info
         @JavascriptInterface
         public String getId() {
             try {
@@ -1846,40 +1928,42 @@ public class MainActivity extends AppCompatActivity {
             }
 
         }
+
         @JavascriptInterface
-        public  void logEvent(String eventName) {
+        public void logEvent(String eventName) {
             logger.logEvent(eventName);
         }
+
         @JavascriptInterface
         public void share(String shareObject) {
             try {
                 JSONObject data = new JSONObject(shareObject);
                 Intent sendIntent = new Intent();
                 sendIntent.setAction(Intent.ACTION_SEND);
-                sendIntent.putExtra(Intent.EXTRA_TEXT,data.getString("shareText"));
+                sendIntent.putExtra(Intent.EXTRA_TEXT, data.getString("shareText"));
                 sendIntent.setType(data.getString("type"));
                 try {
                     JSONObject emailData = new JSONObject(data.getString("email"));
 
-                    sendIntent.putExtra(Intent.EXTRA_SUBJECT,emailData.getString("subject"));
-                    sendIntent.putExtra(Intent.EXTRA_CC,new String[] { emailData.getString("cc") });
-                    sendIntent.putExtra(Intent.EXTRA_EMAIL, new String[] {emailData.getString("to")});
+                    sendIntent.putExtra(Intent.EXTRA_SUBJECT, emailData.getString("subject"));
+                    sendIntent.putExtra(Intent.EXTRA_CC, new String[]{emailData.getString("cc")});
+                    sendIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{emailData.getString("to")});
 
-                }catch (Exception ex) {
+                } catch (Exception ex) {
                     ex.printStackTrace();
                 }
                 sendIntent.putExtra(Intent.EXTRA_TITLE, "Invite users");
 
                 PendingIntent pi = PendingIntent.getBroadcast(MainActivity.this, shareIntentCode,
-                        new Intent(MainActivity.this,ShareBroadcastReceiver.class),
+                        new Intent(MainActivity.this, ShareBroadcastReceiver.class),
                         FLAG_UPDATE_CURRENT);
 
 
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP_MR1) {
-                    Intent shareIntent = Intent.createChooser(sendIntent,"Invite users",pi.getIntentSender());
+                    Intent shareIntent = Intent.createChooser(sendIntent, "Invite users", pi.getIntentSender());
                     startActivity(shareIntent);
                 }
-            }catch (Exception ex) {
+            } catch (Exception ex) {
 
             }
 
@@ -1889,12 +1973,15 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if(cameraView.getVisibility() == View.VISIBLE) {
-            cameraView.setVisibility(View.GONE);
-            mWebView.setVisibility(View.VISIBLE);
+        if (cameraLayout.getVisibility() == View.VISIBLE) {
+            setCameraViewVisibility(View.GONE);
+            setWebViewVisibility(View.VISIBLE);
+            flashMode = ImageCapture.FLASH_MODE_AUTO;
+            lensFacing = CameraSelector.LENS_FACING_BACK;
+            cameraProvider.unbindAll();
+            orientationEventListener.disable();
             return;
         }
-
         if (mWebView.canGoBack()) {
             mWebView.goBack(); // emulates back history
             return;

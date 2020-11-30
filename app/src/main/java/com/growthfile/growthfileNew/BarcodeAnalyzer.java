@@ -1,13 +1,13 @@
 package com.growthfile.growthfileNew;
 
 import android.annotation.SuppressLint;
-import android.graphics.Camera;
+
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.media.Image;
-import android.util.Log;
+import android.view.OrientationEventListener;
 import android.view.View;
-import android.webkit.ValueCallback;
+
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -15,13 +15,10 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.mlkit.vision.barcode.Barcode;
 import com.google.mlkit.vision.barcode.BarcodeScanner;
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions;
 import com.google.mlkit.vision.barcode.BarcodeScanning;
 import com.google.mlkit.vision.common.InputImage;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.HashMap;
 import java.util.List;
 
 import androidx.annotation.NonNull;
@@ -32,8 +29,12 @@ import androidx.camera.lifecycle.ProcessCameraProvider;
 public class BarcodeAnalyzer  implements ImageAnalysis.Analyzer {
 
     private ProcessCameraProvider mCameraProvider;
+    private OrientationEventListener morientationEventListener;
     public void provider(ProcessCameraProvider cameraProvider) {
         mCameraProvider = cameraProvider;
+    }
+    public void  orientation(OrientationEventListener orientationEventListener) {
+        morientationEventListener = orientationEventListener;
     }
 
     @Override
@@ -67,13 +68,13 @@ public class BarcodeAnalyzer  implements ImageAnalysis.Analyzer {
                                         case Barcode.TYPE_URL:
                                             String title = barcode.getUrl().getTitle();
                                             String url = barcode.getUrl().getUrl();
-                                            mCameraProvider.unbindAll();
-                                            if(url.contains("https://shauryamuttreja.com")) {
-                                                MainActivity.mWebView.setVisibility(View.VISIBLE);
-                                                MainActivity.cameraView.setVisibility(View.GONE);
 
-                                                MainActivity.mWebView.evaluateJavascript("handleQRUrl",null);
-//                                                MainActivity.mWebView.evaluateJavascript("loadQRUrl('"+url+"')",null);
+                                            if(url.contains("https://shauryamuttreja.com")) {
+                                                mCameraProvider.unbindAll();
+                                                morientationEventListener.disable();
+                                                MainActivity.containerLayout.setVisibility(View.VISIBLE);
+                                                MainActivity.cameraLayout.setVisibility(View.GONE);
+                                                MainActivity.mWebView.evaluateJavascript("handleQRUrl('"+url+"')",null);
 
                                             }
                                             break;
@@ -98,6 +99,4 @@ public class BarcodeAnalyzer  implements ImageAnalysis.Analyzer {
                         });
             }
         }
-
-
 }

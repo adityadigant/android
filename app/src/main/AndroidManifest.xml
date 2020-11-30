@@ -11,7 +11,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-feature android:name="android.hardware.camera.any" />
+    <uses-feature android:name="android.hardware.camera" />
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.hardware.location.network"/>
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
@@ -28,6 +28,7 @@
         android:largeHeap="true"
         android:focusable="true"
         android:focusableInTouchMode="true"
+        android:requestLegacyExternalStorage="true"
         tools:ignore="HardcodedDebugMode">
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@mipmap/ic_launcher" />
