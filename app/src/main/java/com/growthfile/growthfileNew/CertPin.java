@@ -8,14 +8,24 @@ import okhttp3.CertificatePinner;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
-class CertPin extends AsyncTask<String,Void,Void> {
+class CertPin extends AsyncTask<String, Void, Void> {
+
+    private String hostname;
+
+    private String getHostname() {
+        return hostname;
+    }
+
+    public String setHostname(String appHostname) {
+        return hostname = appHostname;
+    }
+
 
     @Override
     protected Void doInBackground(String... strings) {
-        String hostname = "app.growthfile.com";
-
+        String hostname = getHostname();
         CertificatePinner certificatePinner = new CertificatePinner.Builder()
-                .add(hostname,"sha256/oqL8L0HOy50gpOp8x0ggPje9tAVfhHFkuJH4ChzbQ8k=")
+                .add(hostname, "sha256/oqL8L0HOy50gpOp8x0ggPje9tAVfhHFkuJH4ChzbQ8k=")
                 .build();
 
         OkHttpClient client = new OkHttpClient.Builder()
@@ -34,6 +44,7 @@ class CertPin extends AsyncTask<String,Void,Void> {
         }
         return null;
     }
+
 
 }
 

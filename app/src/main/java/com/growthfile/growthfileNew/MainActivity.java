@@ -208,7 +208,10 @@ public class MainActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 
-        new CertPin().execute();
+
+        CertPin certPin = new CertPin();
+        certPin.setHostname(getString(R.string.app_hostname));
+        certPin.execute();
 
         mContext = getApplicationContext();
 
@@ -236,16 +239,14 @@ public class MainActivity extends AppCompatActivity {
         if (!checkLocationPermission()) {
             if (VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, LOCATION_PERMISSION_CODE);
-            } else {
-                String title = "Location Permission Not Granted";
-                String message = "You have Not allowed Growthfile to use location permission. Grant Growthfile Location Permission, to continue";
-                showPermissionNotAllowedDialog(title, message, false);
+                return;
             }
-        } else {
-            LoadApp();
+            String title = "Location Permission Not Granted";
+            String message = "You have Not allowed Growthfile to use location permission. Grant Growthfile Location Permission, to continue";
+            showPermissionNotAllowedDialog(title, message, false);
+            return;
         }
-
-
+        LoadApp();
     }
 
 
@@ -272,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
 
         ImageHandler imageHandler = new ImageHandler();
 
-        Size size = new Size(480,640);
+        Size size = new Size(480, 640);
 
         imageCapture =
                 new ImageCapture.Builder()
@@ -281,7 +282,7 @@ public class MainActivity extends AppCompatActivity {
                         .setFlashMode(flashMode)
                         .build();
 
-         orientationEventListener = new OrientationEventListener((Context)this) {
+        orientationEventListener = new OrientationEventListener((Context) this) {
             @Override
             public void onOrientationChanged(int orientation) {
 
@@ -309,6 +310,7 @@ public class MainActivity extends AppCompatActivity {
                 // insert your code here.
 
                 BarcodeAnalyzer barcodeAnalyzer = new BarcodeAnalyzer();
+                barcodeAnalyzer.setContext(mContext);
                 barcodeAnalyzer.orientation(orientationEventListener);
                 barcodeAnalyzer.provider(cameraProvider);
                 barcodeAnalyzer.analyze(imageProxy);
@@ -417,7 +419,7 @@ public class MainActivity extends AppCompatActivity {
                             public void run() {
                                 ImageHandler imageHandler = new ImageHandler();
                                 String callbackName = jsCallbackName.getName();
-                                mWebView.loadUrl("javascript:"+callbackName+"('" + imageHandler.getImageOutput(file) + "')");
+                                mWebView.loadUrl("javascript:" + callbackName + "('" + imageHandler.getImageOutput(file) + "')");
                                 findViewById(R.id.container).setVisibility(View.VISIBLE);
                                 findViewById(R.id.camera_view).setVisibility(View.GONE);
                                 cameraProvider.unbindAll();
@@ -448,11 +450,6 @@ public class MainActivity extends AppCompatActivity {
 
 
         switch (requestCode) {
-//            case CAMERA_ONLY_REQUEST:
-//                if (resultCode == RESULT_OK) {
-//                    initCameraView();
-//                }
-//                break;
 
             case GALLERY_REQUEST:
                 if (resultCode == RESULT_OK) {
@@ -463,13 +460,11 @@ public class MainActivity extends AppCompatActivity {
                         return;
                     }
                     setmUploadMsgNull();
-//                    mUploadMsg.onReceiveValue(null);
-//                    mUploadMsg = null;
+
                     return;
                 }
                 setmUploadMsgNull();
-//                mUploadMsg.onReceiveValue(null);
-//                mUploadMsg = null;
+
                 break;
             case PHOTO_CAMERA_REQUEST:
                 if (resultCode == RESULT_OK) {
@@ -481,20 +476,16 @@ public class MainActivity extends AppCompatActivity {
                             return;
                         }
                         setmUploadMsgNull();
-//                        mUploadMsg.onReceiveValue(null);
-//                        mUploadMsg = null;
+
                         return;
                     }
                     pictureImagePath = null;
                     Toast.makeText(MainActivity.this, "Please Try Again", Toast.LENGTH_LONG).show();
                     setmUploadMsgNull();
-//                    mUploadMsg.onReceiveValue(null);
-//                    mUploadMsg = null;
 
                     return;
                 }
-//                mUploadMsg.onReceiveValue(null);
-//                mUploadMsg = null;
+
                 setmUploadMsgNull();
 
                 break;
@@ -626,8 +617,7 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 setmUploadMsgNull();
-//                mUploadMsg.onReceiveValue(null);
-//                mUploadMsg = null;
+
                 break;
             case LOCATION_PERMISSION_CODE:
                 if (isGranted) {
@@ -674,7 +664,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d("onReumse", "resume");
         if (checkLocationPermission()) {
             String script = "try { backgroundTransition() }catch(e){}";
-            if(mWebView != null) {
+            if (mWebView != null) {
                 mWebView.evaluateJavascript(script, null);
             }
         }
@@ -692,7 +682,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-//      swipeToRefresh.getViewTreeObserver().removeOnScrollChangedListener(mOnScrollChangedListener);
     }
 
     @Override
@@ -791,29 +780,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-//    public int deviceWidth() {
-//        return Resources.getSystem().getDisplayMetrics().widthPixels;
-//
-//    }
-//
-//    public int deviceHeight() {
-//        return Resources.getSystem().getDisplayMetrics().heightPixels;
-//
-//    }
-//
-//    public static Bitmap rotate(Bitmap bitmap, float degrees) {
-//        Matrix matrix = new Matrix();
-//        matrix.postRotate(degrees);
-//        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-//    }
-//
-//    public static Bitmap flip(Bitmap bitmap, boolean horizontal, boolean vertical) {
-//        Matrix matrix = new Matrix();
-//        matrix.preScale(horizontal ? -1 : 1, vertical ? -1 : 1);
-//        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-//    }
-
-
     public void showLocationModeChangeDialog() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, R.style.Theme_AppCompat_Dialog_Alert);
         if (VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -839,16 +805,6 @@ public class MainActivity extends AppCompatActivity {
         dialog.cancel();
         dialog.show();
     }
-
-
-//    private String encodeImage(Bitmap bm) {
-//        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-//        bm.compress(Bitmap.CompressFormat.JPEG, 50, byteArrayOutputStream);
-//        byte[] byteArray = byteArrayOutputStream.toByteArray();
-//        String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
-//        Log.d("encoded", encoded);
-//        return encoded;
-//    }
 
 
     public void onConfigurationChanged(Configuration newConfig) {
@@ -1018,7 +974,7 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
         WebView.setWebContentsDebuggingEnabled(true);
-        mWebView.loadUrl("https://growthfilev2-0.firebaseapp.com");
+        mWebView.loadUrl(getString(R.string.app_url));
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
         logger = AppEventsLogger.newLogger(MainActivity.this);
@@ -1249,7 +1205,7 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 }
 
-                if (url.startsWith("https://growthfilev2-0.firebaseapp.com")) {
+                if (url.startsWith(getString(R.string.app_url))) {
                     view.loadUrl(url);
                     return true;
                 }
