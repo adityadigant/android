@@ -1001,11 +1001,7 @@ public class MainActivity extends AppCompatActivity {
 
         Uri URIdata = getIntent().getData();
         if (URIdata != null) {
-            String scheme = URIdata.getScheme();
-            String host = URIdata.getHost();
-            Log.d("scheme", scheme);
-            Log.d("query", URIdata.toString());
-
+            mWebView.evaluateJavascript("localStorage.setItem('deep_link_app', '"+URIdata.toString()+"')",null);
         }
 
         FirebaseDynamicLinks.getInstance()
