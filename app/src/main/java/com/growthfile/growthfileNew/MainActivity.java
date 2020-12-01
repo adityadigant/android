@@ -589,7 +589,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private Boolean isPermissionGranted(int[] grantResults) {
-        Boolean granted = true;
+        boolean granted = true;
         for (int grantResult : grantResults) {
             if (grantResult == PackageManager.PERMISSION_DENIED) {
                 granted = false;
@@ -631,13 +631,14 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case LOCATION_PERMISSION_CODE:
                 if (isGranted) {
-                    String title = "Location Permission";
-                    String message = "You have Not allowed Growthfile to use location permission. Grant Growthfile Location Permission, to continue";
-                    boolean cancelable = false;
-                    showPermissionNotAllowedDialog(title, message, cancelable);
+                    LoadApp();
                     return;
                 }
-                LoadApp();
+                String title = "Location Permission";
+                String message = "You have Not allowed Growthfile to use location permission. Grant Growthfile Location Permission, to continue";
+                boolean cancelable = false;
+                showPermissionNotAllowedDialog(title, message, cancelable);
+
                 break;
             case GET_CONTACT_REQUEST:
                 if (isGranted) {
@@ -673,13 +674,13 @@ public class MainActivity extends AppCompatActivity {
         Log.d("onReumse", "resume");
         if (checkLocationPermission()) {
             String script = "try { backgroundTransition() }catch(e){}";
-            mWebView.evaluateJavascript(script, null);
+            if(mWebView != null) {
+                mWebView.evaluateJavascript(script, null);
+            }
         }
-
         if (!networkProviderEnabled()) {
             showLocationModeChangeDialog();
         }
-
     }
 
     @Override
@@ -945,13 +946,10 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if (intent.getAction().equals(LocationManager.PROVIDERS_CHANGED_ACTION)) {
                     boolean networkProviderAvailable = networkProviderEnabled();
-
                     if (!networkProviderAvailable) {
                         showLocationModeChangeDialog();
                     }
-
                 }
-
             }
         };
         registerReceiver(broadcastReceiver, intentFilter);
