@@ -242,7 +242,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             String title = "Location Permission Not Granted";
-            String message = "You have Not allowed Growthfile to use location permission. Grant Growthfile Location Permission, to continue";
+            String message = "You have Not allowed OnDuty to use location permission. Grant OnDuty Location Permission, to continue";
             showPermissionNotAllowedDialog(title, message, false);
             return;
         }
@@ -625,7 +625,7 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 String title = "Location Permission";
-                String message = "You have Not allowed Growthfile to use location permission. Grant Growthfile Location Permission, to continue";
+                String message = "You have Not allowed OnDuty to use location permission. Grant OnDuty Location Permission, to continue";
                 boolean cancelable = false;
                 showPermissionNotAllowedDialog(title, message, cancelable);
 

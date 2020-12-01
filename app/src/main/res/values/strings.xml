@@ -2,6 +2,7 @@
     <string name="app_name">Growthfile</string>
     <string name="facebook_app_id">425454438063638</string>
     <string name="fb_login_protocol_scheme">fb425454438063638</string>
+    <string name="app_deep_link_host">growthfile://</string>
     <string name="app_hostname">app.growthfile.com</string>
     <string name="app_url">https://app.growthfile.com</string>
     <string-array name="app_urls">
