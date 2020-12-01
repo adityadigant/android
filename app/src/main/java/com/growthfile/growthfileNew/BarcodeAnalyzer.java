@@ -9,6 +9,7 @@ import android.graphics.Rect;
 import android.media.Image;
 import android.view.OrientationEventListener;
 import android.view.View;
+import android.widget.Toast;
 
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -46,11 +47,22 @@ public class BarcodeAnalyzer implements ImageAnalysis.Analyzer {
         this.mContext = mContext;
     }
 
+    public boolean isValidUrl(String url) {
+        Resources res = mContext.getResources();
+        String[] vals = res.getStringArray(R.array.app_urls);
+        for(String val:vals) {
+            if(url.startsWith(val)) {
+                return  true;
+            }
+        }
+        return  false;
+    }
+
     @Override
     public void analyze(ImageProxy imageProxy) {
         @SuppressLint("UnsafeExperimentalUsageError") Image mediaImage = imageProxy.getImage();
-        Resources res = mContext.getResources();
-        List<String> valid_app_urls = Arrays.asList(res.getStringArray(R.array.app_urls));
+
+
         if (mediaImage != null) {
             InputImage image = InputImage.fromMediaImage(mediaImage, imageProxy.getImageInfo().getRotationDegrees());
             System.out.println("image: " + image.getHeight());
@@ -79,7 +91,7 @@ public class BarcodeAnalyzer implements ImageAnalysis.Analyzer {
                                     case Barcode.TYPE_URL:
                                         String title = barcode.getUrl().getTitle();
                                         String url = barcode.getUrl().getUrl();
-                                        if(valid_app_urls.contains(url)) {
+                                        if(isValidUrl(url)) {
                                             mCameraProvider.unbindAll();
                                             morientationEventListener.disable();
                                             MainActivity.containerLayout.setVisibility(View.VISIBLE);
@@ -92,10 +104,12 @@ public class BarcodeAnalyzer implements ImageAnalysis.Analyzer {
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
+                        @SuppressLint("ShowToast")
                         @Override
                         public void onFailure(@NonNull Exception e) {
                             // Task failed with an exception
                             // ...
+                            Toast.makeText(mContext,"Failed to read qr code",Toast.LENGTH_LONG);
                             System.out.println(e);
                         }
                     })

@@ -364,18 +364,14 @@ public class MainActivity extends AppCompatActivity {
                     case ImageCapture.FLASH_MODE_OFF:
                         flashMode = ImageCapture.FLASH_MODE_ON;
                         flashModeButton.setImageResource(R.drawable.ic_flash_on);
-//                        flashModeButton.setBackgroundResource(R.drawable.ic_flash_on);
-
                         break;
                     case ImageCapture.FLASH_MODE_ON:
                         flashMode = ImageCapture.FLASH_MODE_AUTO;
                         flashModeButton.setImageResource(R.drawable.ic_flash_auto);
-//                        flashModeButton.setBackgroundResource(R.drawable.ic_flash_auto);
                         break;
                     case ImageCapture.FLASH_MODE_AUTO:
                         flashMode = ImageCapture.FLASH_MODE_OFF;
                         flashModeButton.setImageResource(R.drawable.ic_flash_off);
-//                        flashModeButton.setBackgroundResource(R.drawable.ic_flash_off);
                         break;
                 }
                 bindPreview();
