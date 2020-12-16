@@ -969,7 +969,7 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
-        WebView.setWebContentsDebuggingEnabled(true);
+//        WebView.setWebContentsDebuggingEnabled(true);
         mWebView.loadUrl(getString(R.string.app_url));
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
@@ -997,6 +997,7 @@ public class MainActivity extends AppCompatActivity {
 
         Uri URIdata = getIntent().getData();
         if (URIdata != null) {
+
             mWebView.evaluateJavascript("localStorage.setItem('deep_link_app', '"+URIdata.toString()+"')",null);
         }
 
