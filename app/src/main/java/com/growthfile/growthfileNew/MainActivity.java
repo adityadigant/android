@@ -1116,7 +1116,18 @@ public class MainActivity extends AppCompatActivity {
                     mWebView.evaluateJavascript("_native.setName('Android')", null);
                     hasPageFinished = true;
 
-                    FirebaseInstanceId.getInstance().getInstanceId()
+                    // aditya's code
+                    FirebaseInstanceId.getInstance().getInstanceId().addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
+                        @Override
+                        public void onSuccess(InstanceIdResult instanceIdResult) {
+                            String token = instanceIdResult.getToken();
+                            Log.e("FCMToken", token);
+                            mWebView.evaluateJavascript("_native.setFCMToken('" + token + "')", null);
+                        }
+                    });
+                    // aditya's code ended
+
+                    /* FirebaseInstanceId.getInstance().getInstanceId()
                             .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
                                 @Override
                                 public void onComplete(@NonNull Task<InstanceIdResult> task) {
@@ -1128,7 +1139,7 @@ public class MainActivity extends AppCompatActivity {
                                     Log.e("FCMToken", token);
                                     mWebView.evaluateJavascript("_native.setFCMToken('" + token + "')", null);
                                 }
-                            });
+                            }); */
 
 
                     if (getIntent().getExtras() != null) {
