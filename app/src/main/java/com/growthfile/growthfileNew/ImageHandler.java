@@ -43,7 +43,6 @@ public class ImageHandler {
         bm.compress(Bitmap.CompressFormat.JPEG, 50, byteArrayOutputStream);
         byte[] byteArray = byteArrayOutputStream.toByteArray();
         String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
-        Log.d("encoded", encoded);
         return encoded;
     }
 

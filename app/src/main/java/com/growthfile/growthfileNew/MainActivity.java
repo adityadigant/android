@@ -5,9 +5,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -35,7 +33,6 @@ import android.os.Bundle;
 import android.os.Environment;
 
 import android.os.StrictMode;
-import android.print.PrintAttributes;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 
@@ -45,22 +42,17 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
-import androidx.camera.core.AspectRatio;
 import androidx.camera.core.Camera;
-import androidx.camera.core.CameraControl;
 import androidx.camera.core.CameraInfoUnavailableException;
 import androidx.camera.core.CameraSelector;
-import androidx.camera.core.CameraX;
-import androidx.camera.core.FocusMeteringAction;
-import androidx.camera.core.FocusMeteringResult;
+
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
-import androidx.camera.core.MeteringPoint;
-import androidx.camera.core.MeteringPointFactory;
+
 import androidx.camera.core.Preview;
-import androidx.camera.core.SurfaceOrientedMeteringPointFactory;
+
 import androidx.camera.core.TorchState;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
@@ -89,7 +81,6 @@ import android.telephony.TelephonyManager;
 
 import android.text.TextUtils;
 
-import android.util.JsonReader;
 import android.util.Log;
 import android.util.Size;
 import android.view.OrientationEventListener;
@@ -118,7 +109,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import android.provider.Settings.Secure;
 import android.widget.FrameLayout;
@@ -129,6 +119,8 @@ import com.android.installreferrer.BuildConfig;
 
 import com.facebook.appevents.AppEventsLogger;
 import com.facebook.applinks.AppLinkData;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -137,8 +129,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.dynamiclinks.PendingDynamicLinkData;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
+
+import com.google.firebase.messaging.FirebaseMessaging;
 
 
 import org.json.JSONException;
@@ -170,6 +162,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int shareIntentCode = 119;
     public static final String BROADCAST_ACTION = "com.growthfile.growthfileNew";
     public static final String FCM_TOKEN_REFRESH = "FCM_TOKEN_REFRESH";
+    public String FCM_TOKEN = "";
     private static final String TAG = MainActivity.class.getSimpleName();
     private String pictureImagePath = "";
     private Uri cameraUri;
@@ -203,7 +196,7 @@ public class MainActivity extends AppCompatActivity {
 
         StrictMode.setVmPolicy(builder.build());
         setContentView(R.layout.activity_main);
-
+        makeGooglePlayAvailable();
         getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
@@ -260,8 +253,7 @@ public class MainActivity extends AppCompatActivity {
 
     void bindPreview() {
         Preview preview = new Preview.Builder().build();
-        preview.setSurfaceProvider(cameraView.createSurfaceProvider());
-
+        preview.setSurfaceProvider(cameraView.getSurfaceProvider());
         cameraSelector = new CameraSelector.Builder()
                 .requireLensFacing(lensFacing)
                 .build();
@@ -585,6 +577,14 @@ public class MainActivity extends AppCompatActivity {
         return granted;
     }
 
+    private  void makeGooglePlayAvailable() {
+        GoogleApiAvailability googleApiAvailability = new GoogleApiAvailability();
+        int available = googleApiAvailability.isGooglePlayServicesAvailable(MainActivity.this);
+        if (available != ConnectionResult.SUCCESS) {
+            googleApiAvailability.makeGooglePlayServicesAvailable(MainActivity.this);
+        }
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String[] permissions, @NonNull int[] grantResults) {
@@ -656,7 +656,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        makeGooglePlayAvailable();
         registerMyReceiver();
+        GoogleApiAvailability.getInstance().makeGooglePlayServicesAvailable(MainActivity.this);
+
         Log.d("onReumse", "resume");
         if (checkLocationPermission()) {
             String script = "try { backgroundTransition() }catch(e){}";
@@ -865,12 +868,10 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         fcmBody = intent.getStringExtra("fcmNotificationData");
 
-                        mWebView.evaluateJavascript(" navigator.serviceWorker.controller.postMessage({\n" +
-                                "            type: 'read'\n" +
-                                "          })", null);
+                        mWebView.evaluateJavascript("navigator.serviceWorker.controller.postMessage("+fcmBody+")", null);
                     } catch (Exception e) {
                         androidException(e);
-                        mWebView.evaluateJavascript(" navigator.serviceWorker.controller.postMessage({\n" +
+                        mWebView.evaluateJavascript("navigator.serviceWorker.controller.postMessage({\n" +
                                 "            type: 'read'\n" +
                                 "          })", null);
                     }
@@ -969,7 +970,7 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
-//        WebView.setWebContentsDebuggingEnabled(true);
+        WebView.setWebContentsDebuggingEnabled(true);
         mWebView.loadUrl(getString(R.string.app_url));
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
@@ -977,6 +978,26 @@ public class MainActivity extends AppCompatActivity {
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         cameraLayout = findViewById(R.id.camera_view);
         containerLayout = findViewById(R.id.container);
+
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(new OnCompleteListener<String>() {
+                    @Override
+                    public void onComplete(@NonNull Task<String> task) {
+                        if (!task.isSuccessful()) {
+
+                            Log.w("MainActivity", "getInstanceId failed", task.getException());
+                            return;
+                        }
+                        String token = task.getResult();
+                        Log.e("FCMToken", token);
+                        FCM_TOKEN = token;
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(MainActivity.this,"Failure Listener: "+e.getMessage(),Toast.LENGTH_LONG).show();
+            }
+        });
 
         Uri targetUrl =
                 AppLinks.getTargetUrlFromInboundIntent(this, getIntent());
@@ -1025,6 +1046,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.w(TAG, "getDynamicLink:onFailure", e);
                     }
                 });
+
         mWebView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
@@ -1110,25 +1132,14 @@ public class MainActivity extends AppCompatActivity {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 if (nocacheLoadUrl) return;
+                String fcmScript = "if(_native) {_native.setFCMToken('"+FCM_TOKEN+"')}";
+                mWebView.evaluateJavascript(fcmScript, null);
                 if (!hasPageFinished) {
 
                     Log.d("onPageFinished", "true");
                     mWebView.evaluateJavascript("_native.setName('Android')", null);
                     hasPageFinished = true;
 
-                    FirebaseInstanceId.getInstance().getInstanceId()
-                            .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                                @Override
-                                public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                                    if (!task.isSuccessful()) {
-                                        Log.w("MainActivity", "getInstanceId failed", task.getException());
-                                        return;
-                                    }
-                                    String token = task.getResult().getToken();
-                                    Log.e("FCMToken", token);
-                                    mWebView.evaluateJavascript("_native.setFCMToken('" + token + "')", null);
-                                }
-                            });
 
 
                     if (getIntent().getExtras() != null) {
@@ -1758,7 +1769,7 @@ public class MainActivity extends AppCompatActivity {
                 return Integer.toString(packageInfo.versionCode);
 
             } catch (PackageManager.NameNotFoundException e) {
-                return "37";
+                return "50";
             }
         }
 
