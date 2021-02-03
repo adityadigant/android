@@ -370,12 +370,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
+        
         cameraTorch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-
+               
                 if (torchMode == TorchState.OFF) {
                     cameraLifeCycleBound.getCameraControl().enableTorch(true);
                     torchMode = TorchState.ON;
