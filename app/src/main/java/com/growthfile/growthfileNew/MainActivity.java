@@ -1897,12 +1897,12 @@ public class MainActivity extends AppCompatActivity {
             try {
                 JSONObject data = new JSONObject(shareObject);
                 Intent sendIntent = new Intent();
+                String title = data.getString("title");
                 sendIntent.setAction(Intent.ACTION_SEND);
                 sendIntent.putExtra(Intent.EXTRA_TEXT, data.getString("shareText"));
                 sendIntent.setType(data.getString("type"));
                 try {
                     JSONObject emailData = new JSONObject(data.getString("email"));
-
                     sendIntent.putExtra(Intent.EXTRA_SUBJECT, emailData.getString("subject"));
                     sendIntent.putExtra(Intent.EXTRA_CC, new String[]{emailData.getString("cc")});
                     sendIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{emailData.getString("to")});
@@ -1910,7 +1910,7 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
-                sendIntent.putExtra(Intent.EXTRA_TITLE, "Invite users");
+                sendIntent.putExtra(Intent.EXTRA_TITLE, title);
 
                 PendingIntent pi = PendingIntent.getBroadcast(MainActivity.this, shareIntentCode,
                         new Intent(MainActivity.this, ShareBroadcastReceiver.class),
@@ -1918,7 +1918,7 @@ public class MainActivity extends AppCompatActivity {
 
 
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP_MR1) {
-                    Intent shareIntent = Intent.createChooser(sendIntent, "Invite users", pi.getIntentSender());
+                    Intent shareIntent = Intent.createChooser(sendIntent, title, pi.getIntentSender());
                     startActivity(shareIntent);
                 }
             } catch (Exception ex) {
