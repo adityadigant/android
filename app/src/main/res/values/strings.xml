@@ -3,12 +3,13 @@
     <string name="facebook_app_id">425454438063638</string>
     <string name="fb_login_protocol_scheme">fb425454438063638</string>
     <string name="app_deep_link_host">growthfile://</string>
-    <string name="app_hostname">growthfilev2-0.firebaseapp.com</string>
-    <string name="app_url">https://growthfilev2-0.firebaseapp.com</string>
+    <string name="app_hostname">dev.pujacapital.com</string>
+    <string name="app_url">https://dev.pujacapital.com</string>
     <string-array name="app_urls">
         <item>https://app.growthfile.com</item>
         <item>https://growthfile.com</item>
         <item>https://onduty.growthfile.com</item>
         <item>https://shauryamuttreja.com</item>
+	<item>https://pujacapital.com</item>
     </string-array>
 </resources>

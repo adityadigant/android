@@ -10,6 +10,7 @@ import android.media.Image;
 import android.view.OrientationEventListener;
 import android.view.View;
 import android.widget.Toast;
+import android.util.Log;
 
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -73,7 +74,7 @@ public class BarcodeAnalyzer implements ImageAnalysis.Analyzer {
                         public void onSuccess(List<Barcode> barcodes) {
                             // Task completed successfully
                             // ...
-
+			    Log.d("barcode size","size"+barcodes.size());
                             for (Barcode barcode : barcodes) {
                                 Rect bounds = barcode.getBoundingBox();
                                 Point[] corners = barcode.getCornerPoints();
@@ -98,6 +99,7 @@ public class BarcodeAnalyzer implements ImageAnalysis.Analyzer {
                                             MainActivity.cameraLayout.setVisibility(View.GONE);
                                             MainActivity.mWebView.evaluateJavascript("handleQRUrl('" + url + "')", null);
                                         }
+					Log.d("barcode found","not found");
                                         break;
                                 }
                             }
@@ -109,7 +111,7 @@ public class BarcodeAnalyzer implements ImageAnalysis.Analyzer {
                         public void onFailure(@NonNull Exception e) {
                             // Task failed with an exception
                             // ...
-                            Toast.makeText(mContext,"Failed to read qr code",Toast.LENGTH_LONG);
+                            Toast.makeText(mContext,"Failed to read qr code",Toast.LENGTH_LONG).show();
                             System.out.println(e);
                         }
                     })
