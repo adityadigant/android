@@ -914,7 +914,7 @@ public class MainActivity extends AppCompatActivity {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = timeStamp + ".jpg";
 
-        File storageDir = getExternalFilesDir(
+        File storageDir = Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_PICTURES);
 
         pictureImagePath = storageDir.getAbsolutePath() + "/" + imageFileName;
