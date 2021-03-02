@@ -8,8 +8,8 @@ android {
         applicationId "com.growthfile.growthfileNew"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 50
-        versionName "1.1.28"
+        versionCode 51
+        versionName "1.1.29"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
