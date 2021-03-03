@@ -370,12 +370,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
+        
         cameraTorch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-
+               
                 if (torchMode == TorchState.OFF) {
                     cameraLifeCycleBound.getCameraControl().enableTorch(true);
                     torchMode = TorchState.ON;
@@ -914,7 +914,7 @@ public class MainActivity extends AppCompatActivity {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = timeStamp + ".jpg";
 
-        File storageDir = Environment.getExternalStoragePublicDirectory(
+        File storageDir = getExternalFilesDir(
                 Environment.DIRECTORY_PICTURES);
 
         pictureImagePath = storageDir.getAbsolutePath() + "/" + imageFileName;
@@ -970,7 +970,6 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setGeolocationDatabasePath(getApplicationContext().getFilesDir().getPath());
         mWebView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
-        WebView.setWebContentsDebuggingEnabled(true);
         mWebView.loadUrl(getString(R.string.app_url));
         mWebView.requestFocus(View.FOCUS_DOWN);
         registerForContextMenu(mWebView);
@@ -984,7 +983,9 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<String> task) {
                         if (!task.isSuccessful()) {
-
+                            try {
+                                mWebView.evaluateJavascript("fcmTokenRegistrationFailed('" + task.getException().getLocalizedMessage() + "')", null);
+                            }catch (Exception e) {}
                             Log.w("MainActivity", "getInstanceId failed", task.getException());
                             return;
                         }
@@ -992,12 +993,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.e("FCMToken", token);
                         FCM_TOKEN = token;
                     }
-                }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Toast.makeText(MainActivity.this,"Failure Listener: "+e.getMessage(),Toast.LENGTH_LONG).show();
-            }
-        });
+                });
 
         Uri targetUrl =
                 AppLinks.getTargetUrlFromInboundIntent(this, getIntent());
@@ -1769,7 +1765,7 @@ public class MainActivity extends AppCompatActivity {
                 return Integer.toString(packageInfo.versionCode);
 
             } catch (PackageManager.NameNotFoundException e) {
-                return "50";
+                return "51";
             }
         }
 
