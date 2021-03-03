@@ -4,11 +4,11 @@
     <string name="fb_login_protocol_scheme">fb425454438063638</string>
     <string name="app_deep_link_host">growthfile://</string>
 
-    <string name="app_hostname">app2.pujacapital.com</string>
-    <string name="app_url">dev2.pujacapital.com</string>
+    <string name="app_hostname">dev2.pujacapital.com</string>
+    <string name="app_url">https://dev2.pujacapital.com</string>
 
     <string-array name="app_urls">
-        <item>https://app2.growthfile.com</item>
+        <item>https://dev2.pujacapital.com</item>
         <item>https://growthfile.com</item>
         <item>https://onduty.growthfile.com</item>
         <item>https://shauryamuttreja.com</item>
