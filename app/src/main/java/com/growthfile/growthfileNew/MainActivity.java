@@ -972,6 +972,7 @@ public class MainActivity extends AppCompatActivity {
         mWebView.setScrollbarFadingEnabled(true);
         mWebView.loadUrl(getString(R.string.app_url));
         mWebView.requestFocus(View.FOCUS_DOWN);
+        mWebView.setWebContentsDebuggingEnabled(true);
         registerForContextMenu(mWebView);
         logger = AppEventsLogger.newLogger(MainActivity.this);
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
